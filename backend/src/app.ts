@@ -216,7 +216,6 @@ class App {
             if (NODE_ENV == 'development') {
               callback(null, true);
             } else {
-              console.log('ORIGIN', origin)
               callback(new Error('Not allowed by CORS'));
             }
           }
