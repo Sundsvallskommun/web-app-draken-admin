@@ -18,7 +18,6 @@ export const FeatureFlags: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
 
-  // const { resource: _resource } = useParams();
   const resource = 'featureFlags';
 
   const { data, refresh, loaded, loading } = useResource(resource as ResourceName);
