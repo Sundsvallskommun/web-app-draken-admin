@@ -1,4 +1,4 @@
-import { EditResourceTemplate } from '@components/edit-resource/edit-resouce-template.component';
+import { EditResourceFeatureFlag } from '@components/edit-resource/edit-resource-featureflag.component';
 import { EditorToolbar } from '@components/editor-toolbar/editor-toolbar';
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
 import { defaultInformationFields } from '@config/defaults';
@@ -19,12 +19,12 @@ import { useEffect, useState } from 'react';
 import { FieldValues, FormProvider, useForm } from 'react-hook-form';
 import { capitalize } from 'underscore.string';
 
-export const EditTemplates: React.FC = () => {
+export const EditFeatureFlag: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
 
   const { id: _id } = useParams();
-  const resource = 'templates';
+  const resource = 'featureFlags';
   if (!resource) {
     router.push('/');
   }
@@ -48,7 +48,7 @@ export const EditTemplates: React.FC = () => {
     formState: { isDirty },
   } = form;
 
-  const id = _id === 'new' ? undefined : _id;
+  const id = _id === 'new' ? undefined : parseInt(_id as string, 10);
 
   const [loaded, setLoaded] = useState<boolean>(false);
   const [isNew, setIsNew] = useState<boolean>(!id);
@@ -68,7 +68,7 @@ export const EditTemplates: React.FC = () => {
   useEffect(() => {
     if (id) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      handleGetOne<any>(() => getOne(id as any)).then((res) => {
+      handleGetOne<any>(() => getOne(id)).then((res) => {
         reset(res);
         setIsNew(false);
         setLoaded(true);
@@ -109,9 +109,8 @@ export const EditTemplates: React.FC = () => {
         break;
       case false:
         if (id) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          handleUpdate(() => update?.(id as any, data) as ResourceResponse<Partial<FieldValues>>).then((res) => {
-            reset(res?.data);
+          handleUpdate(() => update?.(id, data) as ResourceResponse<Partial<FieldValues>>).then((res) => {
+            reset(res);
             refresh();
           });
         }
@@ -123,7 +122,7 @@ export const EditTemplates: React.FC = () => {
       <LoaderFullScreen />
     : <EditLayout
         headerInfo={
-          !isNew && resource !== 'templates' ?
+          !isNew ?
             <ul className="text-small flex gap-16">
               {defaultInformationFields.map((field, index) => (
                 <li key={index + field}>
@@ -143,8 +142,8 @@ export const EditTemplates: React.FC = () => {
       >
         <FormProvider {...form}>
           <form className="flex flex-row gap-32 justify-between grow flex-wrap" onSubmit={handleSubmit(onSubmit)}>
-            <EditorToolbar resource={resource} isDirty={isDirty} />
-            <EditResourceTemplate isNew={isNew} />
+            <EditorToolbar resource={resource} isDirty={isDirty} id={id} />
+            <EditResourceFeatureFlag isNew={isNew} />
           </form>
         </FormProvider>
       </EditLayout>;
@@ -156,4 +155,4 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
   },
 });
 
-export default EditTemplates;
+export default EditFeatureFlag;

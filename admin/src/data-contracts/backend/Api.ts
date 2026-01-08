@@ -16,6 +16,7 @@ import {
   FeatureFlagDeleteApiResponse,
   FeatureFlagRequestDto,
   FeatureFlagsApiResponse,
+  NamespacesApiResponse,
   UpdateFeatureFlagDto,
   UserApiResponse,
 } from "./data-contracts";
@@ -36,103 +37,6 @@ export class Api<
     this.request<void, any>({
       path: `/api/`,
       method: "GET",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags User
-   * @name UserControllerGetUser
-   * @summary Return current user
-   * @request GET:/api/me
-   */
-  userControllerGetUser = (params: RequestParams = {}) =>
-    this.request<UserApiResponse, any>({
-      path: `/api/me`,
-      method: "GET",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Health
-   * @name HealthControllerUp
-   * @summary Return health check
-   * @request GET:/api/health/up
-   */
-  healthControllerUp = (params: RequestParams = {}) =>
-    this.request<void, any>({
-      path: `/api/health/up`,
-      method: "GET",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Template
-   * @name TemplateControllerGetTemplateUsingIdentifier
-   * @summary Get the latest version of a template by identifier, including content
-   * @request GET:/api/templates/{identifier}
-   */
-  templateControllerGetTemplateUsingIdentifier = (
-    identifier: string,
-    params: RequestParams = {},
-  ) =>
-    this.request<void, any>({
-      path: `/api/templates/${identifier}`,
-      method: "GET",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Template
-   * @name TemplateControllerGetAllTemplates
-   * @summary Get the latest version of templates
-   * @request GET:/api/templates
-   */
-  templateControllerGetAllTemplates = (params: RequestParams = {}) =>
-    this.request<void, any>({
-      path: `/api/templates`,
-      method: "GET",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Template
-   * @name TemplateControllerDecisionPreviewDirectPdf
-   * @summary Store a template
-   * @request POST:/api/templates
-   */
-  templateControllerDecisionPreviewDirectPdf = (
-    data?: DetailedTemplateResponseDTO,
-    params: RequestParams = {},
-  ) =>
-    this.request<void, any>({
-      path: `/api/templates`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Template
-   * @name TemplateControllerPreviewDirectPdf
-   * @summary Render pdf preview of decision from passed in template string
-   * @request POST:/api/templates/render
-   */
-  templateControllerPreviewDirectPdf = (
-    data?: string,
-    params: RequestParams = {},
-  ) =>
-    this.request<void, any>({
-      path: `/api/templates/render`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
       ...params,
     });
   /**
@@ -220,6 +124,117 @@ export class Api<
     this.request<FeatureFlagDeleteApiResponse, any>({
       path: `/api/featureflags/${id}`,
       method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Health
+   * @name HealthControllerUp
+   * @summary Return health check
+   * @request GET:/api/health/up
+   */
+  healthControllerUp = (params: RequestParams = {}) =>
+    this.request<void, any>({
+      path: `/api/health/up`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Namespace
+   * @name NamespaceControllerGetNamespaces
+   * @summary Get all namespaces
+   * @request GET:/api/namespaces
+   */
+  namespaceControllerGetNamespaces = (params: RequestParams = {}) =>
+    this.request<NamespacesApiResponse, any>({
+      path: `/api/namespaces`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Template
+   * @name TemplateControllerGetTemplateUsingIdentifier
+   * @summary Get the latest version of a template by identifier, including content
+   * @request GET:/api/templates/{identifier}
+   */
+  templateControllerGetTemplateUsingIdentifier = (
+    identifier: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/templates/${identifier}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Template
+   * @name TemplateControllerGetAllTemplates
+   * @summary Get the latest version of templates
+   * @request GET:/api/templates
+   */
+  templateControllerGetAllTemplates = (params: RequestParams = {}) =>
+    this.request<void, any>({
+      path: `/api/templates`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Template
+   * @name TemplateControllerDecisionPreviewDirectPdf
+   * @summary Store a template
+   * @request POST:/api/templates
+   */
+  templateControllerDecisionPreviewDirectPdf = (
+    data?: DetailedTemplateResponseDTO,
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/templates`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Template
+   * @name TemplateControllerPreviewDirectPdf
+   * @summary Render pdf preview of decision from passed in template string
+   * @request POST:/api/templates/render
+   */
+  templateControllerPreviewDirectPdf = (
+    data?: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/templates/render`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags User
+   * @name UserControllerGetUser
+   * @summary Return current user
+   * @request GET:/api/me
+   */
+  userControllerGetUser = (params: RequestParams = {}) =>
+    this.request<UserApiResponse, any>({
+      path: `/api/me`,
+      method: "GET",
       ...params,
     });
 }

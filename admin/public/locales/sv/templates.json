@@ -3,6 +3,7 @@
   "name_one": "mall",
   "name_many": "mallar",
   "name_other": "mallar",
+  "preview_template": "Förhandsgranska mall",
   "properties": {
     "id": "id",
     "identifier": "identifierare",

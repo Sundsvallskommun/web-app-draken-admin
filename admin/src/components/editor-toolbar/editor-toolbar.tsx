@@ -8,6 +8,7 @@ import resources from '@config/resources';
 import { useCrudHelper } from '@utils/use-crud-helpers';
 import { useFormContext } from 'react-hook-form';
 import { useResource } from '@utils/use-resource';
+import { PreviewTemplate } from '@services/templating/templating-service';
 
 interface ToolbarProps {
   resource: ResourceName;
@@ -40,7 +41,20 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
   const { refresh } = useResource(resource as ResourceName);
   const { handleRemove } = useCrudHelper(resource);
   const confirm = useConfirm();
-  const { reset } = useFormContext();
+  const { reset, watch } = useFormContext();
+
+  const content = watch('content');
+
+  const previewTemplate = () => {
+    PreviewTemplate(content as string).then((res) => {
+      const uri = `data:application/pdf;base64,${res.data?.output}`;
+      const link = document.createElement('a');
+      link.href = uri;
+      link.setAttribute('download', `preview.pdf`);
+      document.body.appendChild(link);
+      link.click();
+    });
+  };
 
   const onRemove = () => {
     if (remove && id) {
@@ -96,6 +110,20 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
             onClick={() => onRemove()}
           >
             <Icon icon={<Trash />} />
+          </Button>
+        </>
+      )}
+      {resource === 'templates' && (
+        <>
+          <Button
+            variant="tertiary"
+            showBackground={false}
+            data-cy="edit-toolbar-preview"
+            aria-label={t(`templates:preview_template`)}
+            size="sm"
+            onClick={() => previewTemplate()}
+          >
+            {t(`templates:preview_template`)}
           </Button>
         </>
       )}

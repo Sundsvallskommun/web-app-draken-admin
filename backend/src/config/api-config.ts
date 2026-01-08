@@ -4,9 +4,13 @@ export const APIS = [
     name: 'simulatorserver',
     version: '2.0',
   },
-    {
+  {
     name: 'templating',
     version: '2.0',
+  },
+  {
+    name: 'supportmanagement',
+    version: '12.1',
   },
 ] as const;
 

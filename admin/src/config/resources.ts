@@ -26,51 +26,7 @@ const featureFlags: Resource<FeatureFlag, FeatureFlagRequestDto, UpdateFeatureFl
   requiredFields: ['name', 'enabled', 'application', 'namespace']
 };
 
-// const featureFlags: Resource<FeatureFlag> = {
-//   name: 'featureFlags',
-
-//   getMany: async () => {
-//     return apiService.request<ServiceResponse<FeatureFlag[]>, unknown>({
-//       path: `${process.env.NEXT_PUBLIC_API_PATH}/flags`,
-//       method: 'GET',
-//     });
-//   },
-
-//   getOne: async (id: ID) => {
-//     const res = await apiService.request<ServiceResponse<FeatureFlag>, unknown>({
-//       path: `${process.env.NEXT_PUBLIC_API_PATH}/flags/id/${id}`,
-//       method: 'GET',
-//     });
-//     return res;
-//   },
-//   update: async (id: ID, data: Partial<FeatureFlag>) => {
-//     const numericId = typeof id === 'string' ? Number(id) : id;
-
-//     const response = await apiService.request<FeatureFlag, unknown>({
-//       path: `${process.env.NEXT_PUBLIC_API_PATH}/flags/${numericId}`,
-//       method: 'PUT',
-//       body: data,
-//     });
-
-//     return {
-//       ...response,
-//       data: { data: response.data },
-//     };
-//   },
-
-//   defaultValues: {
-//     id: undefined,
-//     name: '',
-//     enabled: false,
-//     application: '',
-//     createdAt: new Date().toISOString(),
-//     updatedAt: new Date().toISOString(),
-//   },
-
-//   requiredFields: ['name', 'enabled'],
-// };
-
-// TODO: Refactor templates to use apiService
+// TODO: Refactor templates to use apiService?
 const templates: Resource<Template> = {
   name: 'templates',
 

@@ -2,7 +2,7 @@ import { ListResources } from '@components/list-resources/list-resources';
 import resources from '@config/resources';
 import ListLayout from '@layouts/list-layout/list-layout.component';
 import { Template } from '@services/templating/templating-service';
-import { AutoTable, AutoTableHeader, Button, FormLabel, Icon, Input } from '@sk-web-gui/react';
+import { AutoTable, AutoTableHeader, Button, FormErrorMessage, FormLabel, Icon, Input } from '@sk-web-gui/react';
 import { getFormattedFields } from '@utils/formatted-field';
 import { useResource } from '@utils/use-resource';
 import { Pencil } from 'lucide-react';
@@ -16,6 +16,7 @@ export const Templates: React.FC = () => {
   const { t } = useTranslation();
   const [identifier, setIdentifier] = useState<string>('');
   const [fetchedTemplate, setFetchedTemplate] = useState<Template>();
+  const [error, setError] = useState<boolean>(false);
 
   const resource = 'templates';
   const properties = ['identifier', 'name', 'description', 'version'];
@@ -24,10 +25,18 @@ export const Templates: React.FC = () => {
   const { data, loaded } = useResource(resource);
 
   const getTemplate = (identifier: string) => {
+    setFetchedTemplate(undefined);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getOne(identifier as any).then((res) => {
-      setFetchedTemplate(res.data.data as Template);
-    });
+    getOne(identifier as any)
+      .then((res) => {
+        if (!res.data.data){
+          setError(true)
+          return;
+        }
+        setFetchedTemplate(res.data.data as Template);
+        setError(false);
+      })
+      .catch(() => setError(true));
   };
 
   const editHeader: AutoTableHeader = {
@@ -66,6 +75,7 @@ export const Templates: React.FC = () => {
         <Input onChange={(e) => setIdentifier(e.target.value)} className="w-[40rem]" />
         <Button onClick={() => getTemplate(identifier)}>Hämta mall</Button>
       </div>
+      {!!error && <FormErrorMessage>Ingen mall hittades</FormErrorMessage>}
       {!!fetchedTemplate && <AutoTable pageSize={1} autodata={formattedFetchedTemplate} autoheaders={autoHeaders} />}
     </ListLayout>
   );
