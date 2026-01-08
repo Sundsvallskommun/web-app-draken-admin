@@ -5,23 +5,21 @@ import { ResourceName } from '@interfaces/resource-name';
 import DefaultLayout from '@layouts/default-layout/default-layout.component';
 import { Header } from '@layouts/header/header.component';
 import Main from '@layouts/main/main.component';
-import { Spinner } from '@sk-web-gui/react';
-import { stringToResourceName } from '@utils/stringToResourceName';
+import { Link, Spinner } from '@sk-web-gui/react';
 import { useResource } from '@utils/use-resource';
 import { GetServerSideProps } from 'next';
 import { useTranslation } from 'next-i18next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { useParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { capitalize } from 'underscore.string';
 
-export const ListResource: React.FC = () => {
+export const FeatureFlags: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
 
-  const { resource: _resource } = useParams();
-  const resource = stringToResourceName(typeof _resource === 'object' ? _resource[0] : (_resource ?? ''));
+  // const { resource: _resource } = useParams();
+  const resource = 'featureFlags';
 
   const { data, refresh, loaded, loading } = useResource(resource as ResourceName);
 
@@ -51,6 +49,12 @@ export const ListResource: React.FC = () => {
               {loading && <Spinner size={2.5} className="leading-h4-sm" />}
             </span>
             <ListToolbar resource={resource} onRefresh={refresh} properties={getProperties()} />
+            <Link
+              target="_blank"
+              href="https://confluence.sundsvall.se/pages/viewpage.action?pageId=1259405457&spaceKey=OA&title=Feature%2Bflaggor%2Balla%2Bdrakar"
+            >
+              Länk till dokumentation för flaggor
+            </Link>
           </Header>
           {loaded && <ListResources resource={resource} data={data} />}
         </Main>
@@ -65,4 +69,4 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
   },
 });
 
-export default ListResource;
+export default FeatureFlags;
