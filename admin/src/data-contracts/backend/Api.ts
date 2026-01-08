@@ -16,6 +16,7 @@ import {
   FeatureFlagDeleteApiResponse,
   FeatureFlagRequestDto,
   FeatureFlagsApiResponse,
+  NamespaceApiResponse,
   NamespacesApiResponse,
   UpdateFeatureFlagDto,
   UserApiResponse,
@@ -137,6 +138,23 @@ export class Api<
   healthControllerUp = (params: RequestParams = {}) =>
     this.request<void, any>({
       path: `/api/health/up`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Namespace
+   * @name NamespaceControllerGetNamespace
+   * @summary Get a namespace using a namespace name
+   * @request GET:/api/namespaces/{name}
+   */
+  namespaceControllerGetNamespace = (
+    name: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespaceApiResponse, any>({
+      path: `/api/namespaces/${name}`,
       method: "GET",
       ...params,
     });

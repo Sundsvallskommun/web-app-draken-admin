@@ -1,13 +1,16 @@
 import ApiResponse from '@/interfaces/api-service.interface';
 import { FeatureFlags as _FeatureFlag } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class FeatureFlag implements Partial<_FeatureFlag> {
   @IsInt()
   id: number;
   @IsString()
   name: string;
+  @IsString()
+  @IsOptional()
+  value?: string;
   @IsBoolean()
   enabled: boolean;
   @IsString()

@@ -6,6 +6,7 @@
   "properties": {
     "id": "ID",
     "name": "Namn",
+    "value": "Värde",
     "enabled": "Aktiverad",
     "application": "Applikation",
     "namespace": "Namnrymd",

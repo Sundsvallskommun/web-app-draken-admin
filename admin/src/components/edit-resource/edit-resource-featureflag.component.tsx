@@ -85,13 +85,13 @@ export const EditResourceFeatureFlag: React.FC<EditResourceProps> = ({ isNew }) 
             <Switch {...register('enabled')} />
           </FormControl>
         </div>
-        <FormControl required readOnly={!isNew}>
-          <FormLabel>{capitalize(t(`featureFlags:properties.application`))}</FormLabel>
-          <Input {...register('application')} className="w-[36rem]" />
+        <FormControl>
+          <FormLabel>{capitalize(t(`featureFlags:properties.value`))}</FormLabel>
+          <Input {...register('value')} className="w-[36rem]" />
         </FormControl>
         <FormControl required>
           <FormLabel>{capitalize(t(`featureFlags:properties.namespace`))}</FormLabel>
-          <Select {...register('namespace')} className="w-[36rem]" readOnly={!isNew}>
+          <Select {...register('namespace')} className="w-[36rem]" readOnly={!isNew} invalid={!namespace}>
             {namespaces.map((namespace, index) => {
               return (
                 <Select.Option value={namespace.namespace} key={index}>
@@ -100,6 +100,10 @@ export const EditResourceFeatureFlag: React.FC<EditResourceProps> = ({ isNew }) 
               );
             })}
           </Select>
+        </FormControl>
+        <FormControl required readOnly={!isNew}>
+          <FormLabel>{capitalize(t(`featureFlags:properties.application`))}</FormLabel>
+          <Input {...register('application')} className="w-[36rem]" />
         </FormControl>
       </div>
     </>

@@ -29,6 +29,7 @@ export interface UpdateFeatureFlagDto {
 export interface FeatureFlag {
   id: number;
   name: string;
+  value?: string;
   enabled: boolean;
   application: string;
   namespace: string;
@@ -52,6 +53,14 @@ export interface FeatureFlagApiResponse {
 export interface Namespace {
   namespace: string;
   displayName: string;
+  shortCode?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface NamespaceApiResponse {
+  data: Namespace[];
+  message: string;
 }
 
 export interface NamespacesApiResponse {

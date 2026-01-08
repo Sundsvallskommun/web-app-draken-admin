@@ -71,7 +71,6 @@ export class FeatureFlagController {
     try {
       const data = await prisma.featureFlags.findFirst({
         where: { id },
-        select: { id: true, name: true, enabled: true, application: true, namespace: true, createdAt: true, updatedAt: true},
       });
 
       return response.send({ data, message: 'success' });
