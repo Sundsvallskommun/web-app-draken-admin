@@ -1,14 +1,14 @@
 import resources from '@config/resources';
-import { ResourceName } from '@interfaces/resource-name';
+import { FeatureFlag } from '@data-contracts/backend/data-contracts';
+import { Template } from '@services/templating/templating-service';
 import 'dotenv';
 import { useCallback, useEffect } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useCrudHelper } from './use-crud-helpers';
 import { useLocalStorage } from './use-localstorage.hook';
-import { useShallow } from 'zustand/react/shallow';
-import { Template } from '@services/templating/templating-service';
-import { FeatureFlag } from '@data-contracts/backend/data-contracts';
+import { ResourceName } from '@interfaces/resource-name';
 
-export const useResource = (resource: ResourceName) => {
+export const useResource = <TFilter = undefined>(resource: ResourceName, filter?: TFilter) => {
   const [resourceData, setData, setLoaded, setLoading] = useLocalStorage(
     useShallow((state) => [state.resourceData, state.setData, state.setLoaded, state.setLoading])
   );
@@ -23,7 +23,8 @@ export const useResource = (resource: ResourceName) => {
   const refresh = useCallback(() => {
     if (getMany) {
       setLoading(resource, true);
-      handleGetMany<Template | FeatureFlag>(() => getMany())
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      handleGetMany<Template | FeatureFlag>(() => getMany(filter as any))
         .then((res) => {
           if (res) {
             setData(resource, res);
@@ -34,7 +35,7 @@ export const useResource = (resource: ResourceName) => {
         .catch(() => setLoading(resource, false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resource]);
+  }, [resource, filter]);
 
   useEffect(() => {
     if (!loaded || !resourceData) {

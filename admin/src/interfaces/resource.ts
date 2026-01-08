@@ -13,10 +13,11 @@ export type Resource<
   TCreate extends Record<string, any> = Partial<T>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TUpdate extends Record<string, any> = Partial<T>,
+  TFilter = undefined,
 > = {
   name: string;
   getOne: GetOne<ResourceResponse<T>>;
-  getMany: GetMany<ResourceResponse<T[]>>;
+  getMany: GetMany<ResourceResponse<T[]>, TFilter>;
   create?: Create<TCreate, ResourceResponse<T>>;
   update?: Update<TUpdate, ResourceResponse<T>>;
   remove?: Remove;
