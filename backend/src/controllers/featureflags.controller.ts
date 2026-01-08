@@ -8,12 +8,11 @@ import { FeatureFlagApiResponse, FeatureFlagDeleteApiResponse, FeatureFlagsApiRe
 import { logger } from '@/utils/logger';
 import prisma from '@/utils/prisma';
 import { Response } from 'express';
-import { Body, Controller, Delete, Get, Param, Post, Put, Req, Res, UseBefore } from 'routing-controllers';
+import { Body, Controller, Delete, Get, Param, Post, Put, QueryParam, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 @Controller()
 export class FeatureFlagController {
-
   @Post('/featureflags')
   @UseBefore(authMiddleware, hasPermissions(['canUseAdminPanel']))
   @OpenAPI({ summary: 'Create a new feature flag' })
@@ -43,9 +42,14 @@ export class FeatureFlagController {
   @Get('/featureflags')
   @OpenAPI({ summary: 'Get all feature flags' })
   @ResponseSchema(FeatureFlagsApiResponse)
-  async getFeatureFlags(@Res() response: Response<FeatureFlagsApiResponse>): Promise<Response<FeatureFlagsApiResponse>> {
+  async getFeatureFlags(
+    @Res() response: Response<FeatureFlagsApiResponse>,
+    @QueryParam('namespace') namespace?: string,
+  ): Promise<Response<FeatureFlagsApiResponse>> {
     try {
-      const data = await prisma.featureFlags.findMany();
+      const data = await prisma.featureFlags.findMany({
+        where: namespace ? { namespace } : undefined,
+      });
 
       return response.send({ data, message: 'success' });
     } catch (error) {
@@ -102,7 +106,7 @@ export class FeatureFlagController {
     try {
       const data = await prisma.featureFlags.update({
         where: { id },
-        data: body ,
+        data: body,
       });
 
       return response.send({ data, message: 'success' });

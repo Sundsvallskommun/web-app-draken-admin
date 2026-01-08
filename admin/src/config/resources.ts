@@ -23,7 +23,7 @@ const featureFlags: Resource<FeatureFlag, FeatureFlagRequestDto, UpdateFeatureFl
     application: '',
     namespace: '',
   },
-  requiredFields: ['name', 'enabled', 'application', 'namespace']
+  requiredFields: ['name', 'enabled', 'application', 'namespace'],
 };
 
 // TODO: Refactor templates to use apiService?

@@ -67,10 +67,16 @@ export class Api<
    * @summary Get all feature flags
    * @request GET:/api/featureflags
    */
-  featureFlagControllerGetFeatureFlags = (params: RequestParams = {}) =>
+  featureFlagControllerGetFeatureFlags = (
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
     this.request<FeatureFlagsApiResponse, any>({
       path: `/api/featureflags`,
       method: "GET",
+      query: query,
       ...params,
     });
   /**
