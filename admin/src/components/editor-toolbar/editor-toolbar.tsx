@@ -16,24 +16,6 @@ interface ToolbarProps {
   isDirty?: boolean;
 }
 
-// export const EditorToolbar: React.FC<ToolbarProps> = ({ isDirty }) => {
-//   const { t } = useTranslation();
-//   return (
-//     <Button.Group className="absolute top-40 right-48 w-fit">
-//       <Button
-//         type="submit"
-//         color="vattjom"
-//         size="sm"
-//         showBackground={false}
-//         leftIcon={<Save />}
-//         disabled={!isDirty}
-//         iconButton
-//         aria-label={capitalize(t('common:save'))}
-//       ></Button>
-//     </Button.Group>
-//   );
-// };
-
 export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id }) => {
   const router = useRouter();
   const parentPath = resource ? `/${resource}` : router.pathname.split('/[')[0].replace('/new', '');

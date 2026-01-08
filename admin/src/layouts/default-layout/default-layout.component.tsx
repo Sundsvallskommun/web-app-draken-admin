@@ -1,12 +1,12 @@
 import { Menu } from '@components/menu/menu';
 import { useUserStore } from '@services/user-service/user-service';
-import { Avatar, ColorSchemeMode, Icon, Logo, PopupMenu } from '@sk-web-gui/react';
+import { Avatar, Button, ColorSchemeMode, Icon, Logo, PopupMenu } from '@sk-web-gui/react';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
+import { Check, ChevronRight, ExternalLink, Monitor, Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
 import NextLink from 'next/link';
 import { capitalize } from 'underscore.string';
-import { ChevronRight, Sun, Moon, Monitor, Check } from 'lucide-react';
-import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useShallow } from 'zustand/react/shallow';
 
 interface DefaultLayoutProps {
@@ -30,6 +30,12 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
     const contentElement = document.getElementById('content');
     contentElement?.focus();
   };
+
+  const isTest =
+    typeof window !== 'undefined' &&
+    (window.location.hostname.includes('test') || window.location.hostname.includes('localhost'));
+
+  const url = isTest ? 'https://smaug-test.sundsvall.se/start' : 'https://smaug.sundsvall.se/start';
 
   const colorSchemeIcons: Record<ColorSchemeMode, JSX.Element> = {
     light: <Sun />,
@@ -58,7 +64,12 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
             </NextLink>
             <Menu />
           </div>
-          <div className="relative flex flex-col w-full">
+          <div className="relative flex flex-col w-full gap-[1.2rem]">
+            <NextLink href={url} target="_blank">
+              <Button className="w-full" rightIcon={<ExternalLink />}>
+                Smaug
+              </Button>
+            </NextLink>
             <PopupMenu>
               <PopupMenu.Button variant="tertiary" showBackground={false} className="justify-start">
                 <Avatar

@@ -56,7 +56,7 @@ export class NamespaceController {
       }));
 
       // Add casedata namespaces
-      const data = supportmanagementNameSpaces
+      const data = MUNICIPALITY_ID === '2281' && supportmanagementNameSpaces
         .concat([
           { namespace: 'SBK_MEX', displayName: 'Mark och exploatering' },
           { namespace: 'SBK_PARKING_PERMIT', displayName: 'Parkeringstillstånd' },
