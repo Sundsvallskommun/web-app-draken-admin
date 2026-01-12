@@ -7,18 +7,20 @@ import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { FeatureFlagApiResponse, FeatureFlagDeleteApiResponse, FeatureFlagsApiResponse } from '@/responses/featureflag.response';
 import { logger } from '@/utils/logger';
 import prisma from '@/utils/prisma';
+import { Prisma } from '@prisma/client';
 import { Response } from 'express';
 import { Body, Controller, Delete, Get, Param, Post, Put, QueryParam, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 @Controller()
 export class FeatureFlagController {
-  @Post('/featureflags')
+  @Post('/featureflags/:municipalityId')
   @UseBefore(authMiddleware, hasPermissions(['canUseAdminPanel']))
   @OpenAPI({ summary: 'Create a new feature flag' })
   @ResponseSchema(FeatureFlagApiResponse)
   async createFeatureFlag(
     @Req() req: RequestWithUser,
+    @Param('municipalityId') municipalityId: number,
     @Body() body: FeatureFlagRequestDto,
     @Res() response: Response<FeatureFlagApiResponse>,
   ): Promise<Response<FeatureFlagApiResponse>> {
@@ -28,7 +30,7 @@ export class FeatureFlagController {
 
     try {
       const data = await prisma.featureFlags.create({
-        data: body,
+        data: { ...body, municipalityId: municipalityId },
       });
 
       return response.send({ data, message: 'success' });
@@ -39,16 +41,25 @@ export class FeatureFlagController {
     }
   }
 
-  @Get('/featureflags')
+  @Get('/featureflags/:municipalityId')
   @OpenAPI({ summary: 'Get all feature flags' })
   @ResponseSchema(FeatureFlagsApiResponse)
   async getFeatureFlags(
     @Res() response: Response<FeatureFlagsApiResponse>,
+    @Param('municipalityId') municipalityId: number,
     @QueryParam('namespace') namespace?: string,
   ): Promise<Response<FeatureFlagsApiResponse>> {
     try {
+      const where: Prisma.FeatureFlagsWhereInput = {
+        municipalityId,
+      };
+
+      if (namespace?.trim()) {
+        where.namespace = namespace;
+      }
+
       const data = await prisma.featureFlags.findMany({
-        where: namespace ? { namespace } : undefined,
+        where,
       });
 
       return response.send({ data, message: 'success' });
@@ -59,13 +70,14 @@ export class FeatureFlagController {
     }
   }
 
-  @Get('/featureflags/:id')
+  @Get('/featureflags/:municipalityId/:id')
   @UseBefore(authMiddleware, hasPermissions(['canUseAdminPanel']))
   @OpenAPI({ summary: 'Get a feature flag using id' })
   @ResponseSchema(FeatureFlagApiResponse)
   async getFeatureFlag(
     @Req() req: RequestWithUser,
     @Param('id') id: number,
+    @Param('municipalityId') municipalityId: number,
     @Res() response: Response<FeatureFlagApiResponse>,
   ): Promise<Response<FeatureFlagApiResponse>> {
     if (!req.user) {
@@ -74,7 +86,7 @@ export class FeatureFlagController {
 
     try {
       const data = await prisma.featureFlags.findFirst({
-        where: { id },
+        where: { id, municipalityId },
       });
 
       return response.send({ data, message: 'success' });
@@ -85,12 +97,13 @@ export class FeatureFlagController {
     }
   }
 
-  @Put('/featureflags/:id')
+  @Put('/featureflags/:municipalityId/:id')
   @UseBefore(authMiddleware, hasPermissions(['canUseAdminPanel']))
   @OpenAPI({ summary: 'Update a new feature flag' })
   @ResponseSchema(FeatureFlagApiResponse)
   async updateFeatureFlag(
     @Req() req: RequestWithUser,
+    @Param('municipalityId') municipalityId: number,
     @Param('id') id: number,
     @Body() body: UpdateFeatureFlagDto,
     @Res() response: Response<FeatureFlagApiResponse>,
@@ -105,7 +118,7 @@ export class FeatureFlagController {
 
     try {
       const data = await prisma.featureFlags.update({
-        where: { id },
+        where: { id, municipalityId },
         data: body,
       });
 
@@ -117,10 +130,11 @@ export class FeatureFlagController {
     }
   }
 
-  @Delete('/featureflags/:id')
+  @Delete('/featureflags/:municipalityId/:id')
   @ResponseSchema(FeatureFlagDeleteApiResponse)
   async deleteFeatureFlag(
     @Req() req: RequestWithUser,
+    @Param('municipalityId') municipalityId: number,
     @Param('id') id: number,
     @Res() response: Response<ApiResponse<boolean>>,
   ): Promise<Response<ApiResponse<boolean>>> {
@@ -130,7 +144,7 @@ export class FeatureFlagController {
 
     try {
       await prisma.featureFlags.delete({
-        where: { id },
+        where: { id, municipalityId },
       });
 
       return response.send({ data: true, message: 'success' });

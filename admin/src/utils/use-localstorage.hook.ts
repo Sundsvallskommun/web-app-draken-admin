@@ -13,6 +13,8 @@ const newResource = {
 export const useLocalStorage = create(
   persist<LocalStorage>(
     (set) => ({
+      municipalityId: 2281,
+      setMunicipalityId: (municipalityId) => set(() => ({ municipalityId })),
       colorScheme: ColorSchemeMode.System,
       setColorScheme: (colorScheme) => set(() => ({ colorScheme })),
       headers: {},

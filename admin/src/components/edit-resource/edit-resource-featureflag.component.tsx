@@ -1,6 +1,7 @@
 import { Api } from '@data-contracts/backend/Api';
 import { Namespace } from '@data-contracts/backend/data-contracts';
 import { FormControl, FormLabel, Input, Select, Spinner, Switch } from '@sk-web-gui/react';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useTranslation } from 'next-i18next';
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -17,11 +18,13 @@ export const EditResourceFeatureFlag: React.FC<EditResourceProps> = ({ isNew }) 
 
   const namespace = watch('namespace');
 
+  const { municipalityId } = useLocalStorage();
+
   const [namespaces, setNamespaces] = useState<Namespace[]>([]);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
-    apiService.namespaceControllerGetNamespaces().then((res) => {
+    apiService.namespaceControllerGetNamespaces(municipalityId).then((res) => {
       setNamespaces(res.data.data);
       setIsLoaded(true);
     });

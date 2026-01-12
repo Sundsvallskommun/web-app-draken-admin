@@ -30,24 +30,29 @@ const featureFlags: Resource<FeatureFlag, FeatureFlagRequestDto, UpdateFeatureFl
 const templates: Resource<Template> = {
   name: 'templates',
 
-  getMany: async () => {
+  getMany: async (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    }
+  ) => {
     return httpClient.request<ServiceResponse<Template[]>, unknown>({
-      path: `${process.env.NEXT_PUBLIC_API_PATH}/templates`,
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/templates/${municipalityId}?namespace=${query?.namespace}`,
       method: 'GET',
     });
   },
 
-  getOne: async (identifier: ID) => {
+  getOne: async (municipalityId: number, identifier: ID) => {
     const res = await httpClient.request<ServiceResponse<Template>, unknown>({
-      path: `${process.env.NEXT_PUBLIC_API_PATH}/templates/${identifier}`,
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/templates/${municipalityId}/${identifier}`,
       method: 'GET',
     });
     return res;
   },
 
-  update: async (identifier: ID, data: Partial<Template>) => {
+  update: async (municipalityId: number, identifier: ID, data: Partial<Template>) => {
     const response = await httpClient.request<Template, unknown>({
-      path: `${process.env.NEXT_PUBLIC_API_PATH}/templates`,
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/templates/${municipalityId}`,
       method: 'POST',
       body: data,
     });
@@ -58,9 +63,9 @@ const templates: Resource<Template> = {
     };
   },
 
-  create: async (data: Partial<Template>) => {
+  create: async (municipalityId: number, data: Partial<Template>) => {
     const response = await httpClient.request<Template, unknown>({
-      path: `${process.env.NEXT_PUBLIC_API_PATH}/templates`,
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/templates/${municipalityId}`,
       method: 'POST',
       body: data,
     });

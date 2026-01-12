@@ -8,12 +8,13 @@ datasource db {
 }
 
 model FeatureFlags {
-  id          Int    @id @default(autoincrement())
-  name        String
-  value       String?
-  enabled     Boolean @default(false)
-  application String
-  namespace   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  name           String
+  value          String?
+  enabled        Boolean  @default(false)
+  application    String
+  namespace      String
+  municipalityId Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

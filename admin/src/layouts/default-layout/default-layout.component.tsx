@@ -1,11 +1,12 @@
 import { Menu } from '@components/menu/menu';
 import { useUserStore } from '@services/user-service/user-service';
-import { Avatar, Button, ColorSchemeMode, Icon, Logo, PopupMenu } from '@sk-web-gui/react';
+import { Avatar, Button, ColorSchemeMode, Icon, Logo, PopupMenu, Select } from '@sk-web-gui/react';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { Check, ChevronRight, ExternalLink, Monitor, Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
 import NextLink from 'next/link';
+import { useRouter } from 'next/router';
 import { capitalize } from 'underscore.string';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -23,8 +24,12 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
   const [colorScheme, setColorScheme] = useLocalStorage(
     useShallow((state) => [state.colorScheme, state.setColorScheme])
   );
+  const [municipalityId, setMunicipalityId] = useLocalStorage(
+    useShallow((state) => [state.municipalityId, state.setMunicipalityId])
+  );
   const { t } = useTranslation();
   const user = useUserStore(useShallow((state) => state.user));
+  const router = useRouter();
 
   const setFocusToMain = () => {
     const contentElement = document.getElementById('content');
@@ -34,6 +39,8 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
   const isTest =
     typeof window !== 'undefined' &&
     (window.location.hostname.includes('test') || window.location.hostname.includes('localhost'));
+
+  const isEditingResource = router.pathname !== '/' && router.pathname.includes('[id]');
 
   const url = isTest ? 'https://smaug-test.sundsvall.se/start' : 'https://smaug.sundsvall.se/start';
 
@@ -65,6 +72,18 @@ export default function DefaultLayout({ title, postTitle, headerSubtitle, childr
             <Menu />
           </div>
           <div className="relative flex flex-col w-full gap-[1.2rem]">
+            <Select
+              className="w-full"
+              readOnly={isEditingResource}
+              value={municipalityId}
+              onChange={(e) => {
+                setMunicipalityId(parseInt(e.target.value));
+                router.push('/');
+              }}
+            >
+              <Select.Option value={2281}>Sundsvall</Select.Option>
+              <Select.Option value={2260}>Ånge</Select.Option>
+            </Select>
             <NextLink href={url} target="_blank">
               <Button className="w-full" rightIcon={<ExternalLink />}>
                 Smaug

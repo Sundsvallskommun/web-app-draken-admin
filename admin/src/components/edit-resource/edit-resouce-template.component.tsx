@@ -12,8 +12,8 @@ interface EditResourceProps {
 }
 
 export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew }) => {
-  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
-  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
+  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[1];
+  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[2];
   type DataType = CreateType | UpdateType;
 
   const { t } = useTranslation();

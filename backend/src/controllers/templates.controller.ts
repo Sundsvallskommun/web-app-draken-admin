@@ -7,7 +7,7 @@ import { hasPermissions } from '@/middlewares/permissions.middleware';
 import { DetailedTemplateResponseDTO } from '@/responses/template.response';
 import ApiService from '@/services/api.service';
 import authMiddleware from '@middlewares/auth.middleware';
-import { Body, Controller, Get, Param, Post, Req, UseBefore } from 'routing-controllers';
+import { Body, Controller, Get, Param, Post, QueryParam, Req, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 
 @Controller()
@@ -15,55 +15,29 @@ export class TemplateController {
   private apiService = new ApiService();
   SERVICE = apiServiceName('templating');
 
-  @Get('/templates/:identifier')
-  @OpenAPI({ summary: 'Get the latest version of a template by identifier, including content' })
-  @UseBefore(authMiddleware)
-  async GetTemplateUsingIdentifier(
-    @Param('identifier') identifier: string,
-    @Req() req: RequestWithUser,
-  ): Promise<ApiResponse<DetailedTemplateResponseDTO>> {
-    try {
-      const url = `${this.SERVICE}/${MUNICIPALITY_ID}/templates/${identifier}`;
-      const res = await this.apiService.get<DetailedTemplateResponse>({ url }, req.user);
-
-      let decodedContent = res.data.content;
-      if (decodedContent && typeof decodedContent === 'string') {
-        decodedContent = Buffer.from(decodedContent, 'base64').toString();
-      }
-
-      return {
-        data: {
-          ...res.data,
-          content: decodedContent,
-          metadata: JSON.stringify(res.data.metadata, null, 2),
-          defaultValues: JSON.stringify(res.data.defaultValues, null, 2),
-        },
-        message: 'success',
-      };
-    } catch (error: any) {
-      console.error('Error fetching template:', error);
-
-      return {
-        data: null,
-        message: error?.message || 'Failed to fetch template',
-      };
-    }
-  }
-
-  @Get('/templates')
+  @Get('/templates/:municipalityId')
   @OpenAPI({ summary: 'Get the latest version of templates' })
   @UseBefore(authMiddleware)
-  async GetAllTemplates(@Req() req: RequestWithUser): Promise<ApiResponse<TemplateResponse[]>> {
-    const url = `${this.SERVICE}/${MUNICIPALITY_ID}/templates/search`;
+  async GetAllTemplates(
+    @Req() req: RequestWithUser,
+    @Param('municipalityId') municipalityId: number,
+    @QueryParam('namespace') namespace?: string,
+  ): Promise<ApiResponse<TemplateResponse[]>> {
+    const url = `${this.SERVICE}/${municipalityId}/templates/search`;
+
+    const filters: any[] = [{ eq: { application: 'draken' } }];
+
+    if (namespace && namespace !== 'undefined') {
+      filters.push({
+        or: [{ eq: { namespace } }],
+      });
+    }
+
     const res = await this.apiService.post<TemplateResponse[]>(
       {
         url,
         data: {
-          and: [
-            { eq: { application: 'draken' } },
-            //TODO: Filter Templates using Namespace?
-            // { or: [{ eq: { namespace: CASEDATA_NAMESPACE } }, { eq: { namespace: SUPPORTMANAGEMENT_NAMESPACE } }] },
-          ],
+          and: filters,
         },
       },
       req.user,
@@ -104,6 +78,42 @@ export class TemplateController {
     return { data, message: 'success' };
   }
 
+  @Get('/templates/:municipalityId/:identifier')
+  @OpenAPI({ summary: 'Get the latest version of a template by identifier, including content' })
+  @UseBefore(authMiddleware)
+  async GetTemplateUsingIdentifier(
+    @Param('municipalityId') municipalityId: number,
+    @Param('identifier') identifier: string,
+    @Req() req: RequestWithUser,
+  ): Promise<ApiResponse<DetailedTemplateResponseDTO>> {
+    try {
+      const url = `${this.SERVICE}/${municipalityId}/templates/${identifier}`;
+      const res = await this.apiService.get<DetailedTemplateResponse>({ url }, req.user);
+
+      let decodedContent = res.data.content;
+      if (decodedContent && typeof decodedContent === 'string') {
+        decodedContent = Buffer.from(decodedContent, 'base64').toString();
+      }
+
+      return {
+        data: {
+          ...res.data,
+          content: decodedContent,
+          metadata: JSON.stringify(res.data.metadata, null, 2),
+          defaultValues: JSON.stringify(res.data.defaultValues, null, 2),
+        },
+        message: 'success',
+      };
+    } catch (error: any) {
+      console.error('Error fetching template:', error);
+
+      return {
+        data: null,
+        message: error?.message || 'Failed to fetch template',
+      };
+    }
+  }
+
   @Post('/templates/render')
   @OpenAPI({ summary: 'Render pdf preview of decision from passed in template string' })
   @UseBefore(authMiddleware)
@@ -115,14 +125,15 @@ export class TemplateController {
     return { data: response.data, message: `PDF rendered` };
   }
 
-  @Post('/templates')
+  @Post('/templates/:municipalityId')
   @OpenAPI({ summary: 'Store a template' })
   @UseBefore(authMiddleware, hasPermissions(['canUseAdminPanel']))
   async decisionPreviewDirectPdf(
     @Req() req: RequestWithUser,
+    @Param('municipalityId') municipalityId: number,
     @Body() template: DetailedTemplateResponseDTO,
   ): Promise<ApiResponse<DetailedTemplateResponseDTO>> {
-    const url = `${this.SERVICE}/${MUNICIPALITY_ID}/templates`;
+    const url = `${this.SERVICE}/${municipalityId}/templates`;
 
     let parsedMetadata = template.metadata;
     let parsedDefaultValues = template.defaultValues;

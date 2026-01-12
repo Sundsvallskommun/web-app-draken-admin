@@ -46,14 +46,15 @@ export class Api<
    * @tags Feature Flag
    * @name FeatureFlagControllerCreateFeatureFlag
    * @summary Create a new feature flag
-   * @request POST:/api/featureflags
+   * @request POST:/api/featureflags/{municipalityId}
    */
   featureFlagControllerCreateFeatureFlag = (
+    municipalityId: number,
     data?: FeatureFlagRequestDto,
     params: RequestParams = {},
   ) =>
     this.request<FeatureFlagApiResponse, any>({
-      path: `/api/featureflags`,
+      path: `/api/featureflags/${municipalityId}`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -65,16 +66,17 @@ export class Api<
    * @tags Feature Flag
    * @name FeatureFlagControllerGetFeatureFlags
    * @summary Get all feature flags
-   * @request GET:/api/featureflags
+   * @request GET:/api/featureflags/{municipalityId}
    */
   featureFlagControllerGetFeatureFlags = (
+    municipalityId: number,
     query?: {
       namespace?: string;
     },
     params: RequestParams = {},
   ) =>
     this.request<FeatureFlagsApiResponse, any>({
-      path: `/api/featureflags`,
+      path: `/api/featureflags/${municipalityId}`,
       method: "GET",
       query: query,
       ...params,
@@ -85,14 +87,15 @@ export class Api<
    * @tags Feature Flag
    * @name FeatureFlagControllerGetFeatureFlag
    * @summary Get a feature flag using id
-   * @request GET:/api/featureflags/{id}
+   * @request GET:/api/featureflags/{municipalityId}/{id}
    */
   featureFlagControllerGetFeatureFlag = (
+    municipalityId: number,
     id: number,
     params: RequestParams = {},
   ) =>
     this.request<FeatureFlagApiResponse, any>({
-      path: `/api/featureflags/${id}`,
+      path: `/api/featureflags/${municipalityId}/${id}`,
       method: "GET",
       ...params,
     });
@@ -102,15 +105,16 @@ export class Api<
    * @tags Feature Flag
    * @name FeatureFlagControllerUpdateFeatureFlag
    * @summary Update a new feature flag
-   * @request PUT:/api/featureflags/{id}
+   * @request PUT:/api/featureflags/{municipalityId}/{id}
    */
   featureFlagControllerUpdateFeatureFlag = (
+    municipalityId: number,
     id: number,
     data?: UpdateFeatureFlagDto,
     params: RequestParams = {},
   ) =>
     this.request<FeatureFlagApiResponse, any>({
-      path: `/api/featureflags/${id}`,
+      path: `/api/featureflags/${municipalityId}/${id}`,
       method: "PUT",
       body: data,
       type: ContentType.Json,
@@ -122,14 +126,15 @@ export class Api<
    * @tags Feature Flag
    * @name FeatureFlagControllerDeleteFeatureFlag
    * @summary Delete feature flag
-   * @request DELETE:/api/featureflags/{id}
+   * @request DELETE:/api/featureflags/{municipalityId}/{id}
    */
   featureFlagControllerDeleteFeatureFlag = (
+    municipalityId: number,
     id: number,
     params: RequestParams = {},
   ) =>
     this.request<FeatureFlagDeleteApiResponse, any>({
-      path: `/api/featureflags/${id}`,
+      path: `/api/featureflags/${municipalityId}/${id}`,
       method: "DELETE",
       ...params,
     });
@@ -151,16 +156,16 @@ export class Api<
    * No description
    *
    * @tags Namespace
-   * @name NamespaceControllerGetNamespace
-   * @summary Get a namespace using a namespace name
-   * @request GET:/api/namespaces/{name}
+   * @name NamespaceControllerGetNamespaces
+   * @summary Get all namespaces
+   * @request GET:/api/namespaces/{municipalityId}
    */
-  namespaceControllerGetNamespace = (
-    name: string,
+  namespaceControllerGetNamespaces = (
+    municipalityId: number,
     params: RequestParams = {},
   ) =>
-    this.request<NamespaceApiResponse, any>({
-      path: `/api/namespaces/${name}`,
+    this.request<NamespacesApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}`,
       method: "GET",
       ...params,
     });
@@ -168,30 +173,17 @@ export class Api<
    * No description
    *
    * @tags Namespace
-   * @name NamespaceControllerGetNamespaces
-   * @summary Get all namespaces
-   * @request GET:/api/namespaces
+   * @name NamespaceControllerGetNamespace
+   * @summary Get a namespace using a namespace name
+   * @request GET:/api/namespaces/{municipalityId}/{name}
    */
-  namespaceControllerGetNamespaces = (params: RequestParams = {}) =>
-    this.request<NamespacesApiResponse, any>({
-      path: `/api/namespaces`,
-      method: "GET",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Template
-   * @name TemplateControllerGetTemplateUsingIdentifier
-   * @summary Get the latest version of a template by identifier, including content
-   * @request GET:/api/templates/{identifier}
-   */
-  templateControllerGetTemplateUsingIdentifier = (
-    identifier: string,
+  namespaceControllerGetNamespace = (
+    municipalityId: number,
+    name: string,
     params: RequestParams = {},
   ) =>
-    this.request<void, any>({
-      path: `/api/templates/${identifier}`,
+    this.request<NamespaceApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}/${name}`,
       method: "GET",
       ...params,
     });
@@ -201,12 +193,19 @@ export class Api<
    * @tags Template
    * @name TemplateControllerGetAllTemplates
    * @summary Get the latest version of templates
-   * @request GET:/api/templates
+   * @request GET:/api/templates/{municipalityId}
    */
-  templateControllerGetAllTemplates = (params: RequestParams = {}) =>
+  templateControllerGetAllTemplates = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
     this.request<void, any>({
-      path: `/api/templates`,
+      path: `/api/templates/${municipalityId}`,
       method: "GET",
+      query: query,
       ...params,
     });
   /**
@@ -215,17 +214,36 @@ export class Api<
    * @tags Template
    * @name TemplateControllerDecisionPreviewDirectPdf
    * @summary Store a template
-   * @request POST:/api/templates
+   * @request POST:/api/templates/{municipalityId}
    */
   templateControllerDecisionPreviewDirectPdf = (
+    municipalityId: number,
     data?: DetailedTemplateResponseDTO,
     params: RequestParams = {},
   ) =>
     this.request<void, any>({
-      path: `/api/templates`,
+      path: `/api/templates/${municipalityId}`,
       method: "POST",
       body: data,
       type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Template
+   * @name TemplateControllerGetTemplateUsingIdentifier
+   * @summary Get the latest version of a template by identifier, including content
+   * @request GET:/api/templates/{municipalityId}/{identifier}
+   */
+  templateControllerGetTemplateUsingIdentifier = (
+    municipalityId: number,
+    identifier: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/templates/${municipalityId}/${identifier}`,
+      method: "GET",
       ...params,
     });
   /**

@@ -33,6 +33,7 @@ export interface FeatureFlag {
   enabled: boolean;
   application: string;
   namespace: string;
+  municipalityId: number;
 }
 
 export interface FeatureFlagDeleteApiResponse {

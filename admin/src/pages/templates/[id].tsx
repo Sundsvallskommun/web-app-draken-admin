@@ -9,6 +9,7 @@ import EditLayout from '@layouts/edit-layout/edit-layout.component';
 import { getFormattedFields } from '@utils/formatted-field';
 import { useRouteGuard } from '@utils/routeguard.hook';
 import { useCrudHelper } from '@utils/use-crud-helpers';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useResource } from '@utils/use-resource';
 import { GetServerSideProps } from 'next';
 import { useTranslation } from 'next-i18next';
@@ -22,20 +23,18 @@ import { capitalize } from 'underscore.string';
 export const EditTemplates: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
+  const { municipalityId } = useLocalStorage();
 
   const { id: _id } = useParams();
   const resource = 'templates';
-  if (!resource) {
-    router.push('/');
-  }
 
   const { create, update, getOne, defaultValues } = resources[resource as ResourceName];
   const { refresh } = useResource(resource as ResourceName);
 
   const { handleGetOne, handleCreate, handleUpdate } = useCrudHelper(resource as ResourceName);
 
-  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
-  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
+  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[1];
+  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[2];
   type DataType = CreateType | UpdateType;
 
   const form = useForm<DataType>({
@@ -68,7 +67,7 @@ export const EditTemplates: React.FC = () => {
   useEffect(() => {
     if (id) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      handleGetOne<any>(() => getOne(id as any)).then((res) => {
+      handleGetOne<any>(() => getOne(municipalityId, id as any)).then((res) => {
         reset(res);
         setIsNew(false);
         setLoaded(true);
@@ -95,11 +94,11 @@ export const EditTemplates: React.FC = () => {
   }, [formdata?.id, isNew, isDirty]);
 
   const onSubmit = (data: DataType) => {
-    const createFunc: (data: DataType) => ReturnType<NonNullable<Resource<FieldValues>['create']>> =
+    const createFunc: (municipalityId: number, data: DataType) => ReturnType<NonNullable<Resource<FieldValues>['create']>> =
       create as NonNullable<Resource<FieldValues>['create']>;
     switch (isNew) {
       case true:
-        handleCreate(() => createFunc(data as CreateType)).then((res) => {
+        handleCreate(() => createFunc(municipalityId, data as CreateType)).then((res) => {
           if (res) {
             reset(res);
             refresh();
@@ -110,7 +109,7 @@ export const EditTemplates: React.FC = () => {
       case false:
         if (id) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          handleUpdate(() => update?.(id as any, data) as ResourceResponse<Partial<FieldValues>>).then((res) => {
+          handleUpdate(() => update?.(municipalityId, id as any, data) as ResourceResponse<Partial<FieldValues>>).then((res) => {
             reset(res?.data);
             refresh();
           });

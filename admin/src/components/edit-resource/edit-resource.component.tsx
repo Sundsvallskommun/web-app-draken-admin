@@ -19,8 +19,8 @@ export const EditResource: React.FC<EditResourceProps> = ({ resource }) => {
   const { t } = useTranslation();
   const { requiredFields } = resources[resource];
 
-  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
-  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
+  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[1];
+  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[2];
   type DataType = CreateType | UpdateType;
 
   const { watch } = useFormContext<DataType>();

@@ -15,6 +15,8 @@ export interface DataStorage {
 export type ResourceData = Partial<Record<ResourceName, DataStorage>>;
 
 export interface LocalStorage {
+  municipalityId: number;
+  setMunicipalityId: (municipalityId: number) => void;
   colorScheme: ColorSchemeMode;
   setColorScheme: (color: ColorSchemeMode) => void;
   headers: Headers;
