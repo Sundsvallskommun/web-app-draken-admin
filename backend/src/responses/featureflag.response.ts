@@ -1,7 +1,7 @@
 import ApiResponse from '@/interfaces/api-service.interface';
 import { FeatureFlags as _FeatureFlag } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class FeatureFlag implements Partial<_FeatureFlag> {
   @IsInt()
@@ -17,6 +17,8 @@ export class FeatureFlag implements Partial<_FeatureFlag> {
   application: string;
   @IsString()
   namespace: string;
+  @IsNumber()
+  municipalityId: number;
 }
 
 export class FeatureFlagDeleteApiResponse implements ApiResponse<boolean> {

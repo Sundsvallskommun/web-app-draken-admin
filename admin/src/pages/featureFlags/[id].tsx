@@ -9,6 +9,7 @@ import EditLayout from '@layouts/edit-layout/edit-layout.component';
 import { getFormattedFields } from '@utils/formatted-field';
 import { useRouteGuard } from '@utils/routeguard.hook';
 import { useCrudHelper } from '@utils/use-crud-helpers';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useResource } from '@utils/use-resource';
 import { GetServerSideProps } from 'next';
 import { useTranslation } from 'next-i18next';
@@ -25,17 +26,16 @@ export const EditFeatureFlag: React.FC = () => {
 
   const { id: _id } = useParams();
   const resource = 'featureFlags';
-  if (!resource) {
-    router.push('/');
-  }
+
+  const { municipalityId } = useLocalStorage();
 
   const { create, update, getOne, defaultValues } = resources[resource as ResourceName];
   const { refresh } = useResource(resource as ResourceName);
 
   const { handleGetOne, handleCreate, handleUpdate } = useCrudHelper(resource as ResourceName);
 
-  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
-  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
+  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[1];
+  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[2];
   type DataType = CreateType | UpdateType;
 
   const form = useForm<DataType>({
@@ -68,7 +68,7 @@ export const EditFeatureFlag: React.FC = () => {
   useEffect(() => {
     if (id) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      handleGetOne<any>(() => getOne(id)).then((res) => {
+      handleGetOne<any>(() => getOne(municipalityId, id)).then((res) => {
         reset(res);
         setIsNew(false);
         setLoaded(true);
@@ -95,11 +95,15 @@ export const EditFeatureFlag: React.FC = () => {
   }, [formdata?.id, isNew, isDirty]);
 
   const onSubmit = (data: DataType) => {
-    const createFunc: (data: DataType) => ReturnType<NonNullable<Resource<FieldValues>['create']>> =
-      create as NonNullable<Resource<FieldValues>['create']>;
+    const createFunc: (
+      municipalityId: number,
+      data: DataType
+    ) => ReturnType<NonNullable<Resource<FieldValues>['create']>> = create as NonNullable<
+      Resource<FieldValues>['create']
+    >;
     switch (isNew) {
       case true:
-        handleCreate(() => createFunc(data as CreateType)).then((res) => {
+        handleCreate(() => createFunc(municipalityId, data as CreateType)).then((res) => {
           if (res) {
             reset(res);
             refresh();
@@ -109,10 +113,12 @@ export const EditFeatureFlag: React.FC = () => {
         break;
       case false:
         if (id) {
-          handleUpdate(() => update?.(id, data) as ResourceResponse<Partial<FieldValues>>).then((res) => {
-            reset(res);
-            refresh();
-          });
+          handleUpdate(() => update?.(municipalityId, id, data) as ResourceResponse<Partial<FieldValues>>).then(
+            (res) => {
+              reset(res);
+              refresh();
+            }
+          );
         }
         break;
     }

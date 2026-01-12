@@ -10,6 +10,7 @@
     "enabled": "Aktiverad",
     "application": "Applikation",
     "namespace": "Namnrymd",
+    "municipalityId": "Kommun-ID",
     "createdAt": "Skapad",
     "updatedAt": "Uppdaterad"
   }

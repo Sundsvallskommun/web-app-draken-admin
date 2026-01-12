@@ -15,7 +15,7 @@ export const Menu = () => {
       return path.startsWith(`${process.env.NEXT_PUBLIC_BASE_PATH}/${resource}`);
     });
     if (resource) {
-      setCurrent(`${resource}${path.endsWith('/new') ? '-new' : ''}`);
+      setCurrent(`${resource}${path.endsWith('/new') ? '-new' : path.endsWith('/search') ? '-search' : ''}`);
     } else {
       setCurrent('');
     }
@@ -54,6 +54,13 @@ export const Menu = () => {
                     <MenuVertical.Item menuIndex={`${resource.name}-new`}>
                       <NextLink href={`/${resource.name}/new`}>
                         {capitalize(t('common:create_new', { resource: t(`${resource.name}:name_one`) }))}
+                      </NextLink>
+                    </MenuVertical.Item>
+                  )}
+                  {resourcename === 'templates' &&  (
+                    <MenuVertical.Item menuIndex={`${resource.name}-search`}>
+                      <NextLink href={`/${resource.name}/search`}>
+                        Sök efter mall
                       </NextLink>
                     </MenuVertical.Item>
                   )}

@@ -1,0 +1,91 @@
+import resources from '@config/resources';
+import ListLayout from '@layouts/list-layout/list-layout.component';
+import { Template } from '@services/templating/templating-service';
+import { AutoTable, AutoTableHeader, Button, FormErrorMessage, FormLabel, Icon, Input } from '@sk-web-gui/react';
+import { getFormattedFields } from '@utils/formatted-field';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
+import { Pencil } from 'lucide-react';
+import { GetServerSideProps } from 'next';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import NextLink from 'next/link';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+export const TemplateSearch: React.FC = () => {
+  const { t } = useTranslation();
+  const [identifier, setIdentifier] = useState<string>('');
+  const [fetchedTemplate, setFetchedTemplate] = useState<Template>();
+  const [error, setError] = useState<boolean>(false);
+
+  const resource = 'templates';
+  const properties = ['identifier', 'name', 'description', 'version'];
+
+  const { municipalityId } = useLocalStorage();
+
+  const { getOne } = resources[resource];
+
+  const getTemplate = (identifier: string) => {
+    setFetchedTemplate(undefined);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getOne(municipalityId, identifier as any)
+      .then((res) => {
+        if (!res.data.data) {
+          setError(true);
+          return;
+        }
+        setFetchedTemplate(res.data.data as Template);
+        setError(false);
+      })
+      .catch(() => setError(true));
+  };
+
+  const editHeader: AutoTableHeader = {
+    label: 'edit',
+    property: 'identifier',
+    isColumnSortable: false,
+    screenReaderOnly: true,
+    sticky: true,
+    renderColumn: (value) => (
+      <div className="text-right w-full">
+        <NextLink href={`/${resource}/${value}`} aria-label="Redigera">
+          <Icon.Padded icon={<Pencil />} variant="tertiary" className="link-btn" />
+        </NextLink>
+      </div>
+    ),
+  };
+
+  const translatedHeaders: AutoTableHeader[] =
+    properties?.map((header) => ({
+      label: t(`${resource}:properties.${header}`, { defaultValue: header }),
+      property: header,
+    })) || [];
+
+  const autoHeaders = [...translatedHeaders, editHeader];
+
+  const formattedFetchedTemplate = useMemo(
+    () => (fetchedTemplate ? [getFormattedFields(fetchedTemplate)] : []),
+    [fetchedTemplate]
+  );
+
+  return (
+    resource && (
+      <ListLayout resource={resource} properties={properties}>
+        <FormLabel>Sök efter mall med identifierare</FormLabel>
+        <div className="flex flex-row gap-8 my-16">
+          <Input onChange={(e) => setIdentifier(e.target.value)} className="w-[40rem]" />
+          <Button onClick={() => getTemplate(identifier)}>Sök</Button>
+        </div>
+        {!!error && <FormErrorMessage>Ingen mall hittades</FormErrorMessage>}
+        {!!fetchedTemplate && <AutoTable pageSize={1} autodata={formattedFetchedTemplate} autoheaders={autoHeaders} />}
+      </ListLayout>
+    )
+  );
+};
+
+export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
+  props: {
+    ...(await serverSideTranslations(locale, ['common', 'layout', 'crud', ...Object.keys(resources)])),
+  },
+});
+
+export default TemplateSearch;

@@ -1,14 +1,15 @@
+import resources from '@config/resources';
 import { ResourceName } from '@interfaces/resource-name';
+import { PreviewTemplate } from '@services/templating/templating-service';
 import { Button, Icon, useConfirm } from '@sk-web-gui/react';
+import { useCrudHelper } from '@utils/use-crud-helpers';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
+import { useResource } from '@utils/use-resource';
 import { Save, Trash } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { capitalize } from 'underscore.string';
-import resources from '@config/resources';
-import { useCrudHelper } from '@utils/use-crud-helpers';
-import { useFormContext } from 'react-hook-form';
-import { useResource } from '@utils/use-resource';
-import { PreviewTemplate } from '@services/templating/templating-service';
 
 interface ToolbarProps {
   resource: ResourceName;
@@ -24,6 +25,7 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
   const { handleRemove } = useCrudHelper(resource);
   const confirm = useConfirm();
   const { reset, watch } = useFormContext();
+  const { municipalityId } = useLocalStorage();
 
   const content = watch('content');
 
@@ -50,7 +52,7 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
         )
         .then((confirm) => {
           if (confirm) {
-            handleRemove(() => remove?.(id)).then((res) => {
+            handleRemove(() => remove?.(municipalityId, id)).then((res) => {
               if (res) {
                 reset();
                 refresh();

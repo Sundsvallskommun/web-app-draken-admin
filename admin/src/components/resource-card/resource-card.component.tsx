@@ -1,5 +1,6 @@
 import { ResourceName } from '@interfaces/resource-name';
 import { Card, Spinner } from '@sk-web-gui/react';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useResource } from '@utils/use-resource';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,14 +11,14 @@ interface ResourceCardProps {
 }
 
 export const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
-  const { data, loaded, loading, refresh } = useResource(resource);
+  const { data, loading, refresh } = useResource(resource);
   const { t } = useTranslation();
 
+  const { municipalityId } = useLocalStorage();
+
   useEffect(() => {
-    if (!loaded) {
-      refresh();
-    }
-  }, [loaded, refresh]);
+    refresh();
+  }, [municipalityId, refresh]);
 
   return (
     <Card

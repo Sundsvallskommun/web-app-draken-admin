@@ -34,8 +34,8 @@ export const EditResourceObject: React.FC<EditResourceObjectProps> = ({
 
   const { t } = useTranslation();
 
-  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[0];
-  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[1];
+  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[1];
+  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[2];
   type DataType = CreateType | UpdateType;
 
   const dataTypeKey = parents ? `${parents}.${property}` : property;
