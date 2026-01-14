@@ -19,11 +19,13 @@ import { capitalize } from 'underscore.string';
 export const ListResource: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
+  const { namespace } = router.query;
 
   const { resource: _resource } = useParams();
   const resource = stringToResourceName(typeof _resource === 'object' ? _resource[0] : (_resource ?? ''));
+  const filter = typeof namespace === 'string' ? { namespace } : undefined;
 
-  const { data, refresh, loaded, loading } = useResource(resource as ResourceName);
+  const { data, refresh, loaded, loading } = useResource(resource as ResourceName, filter);
 
   useEffect(() => {
     if (!resource) {

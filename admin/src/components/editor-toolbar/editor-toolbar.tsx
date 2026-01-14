@@ -28,6 +28,7 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
   const { municipalityId } = useLocalStorage();
 
   const content = watch('content');
+  const namespace = watch('namespace');
 
   const previewTemplate = () => {
     PreviewTemplate(content as string).then((res) => {
@@ -52,7 +53,7 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
         )
         .then((confirm) => {
           if (confirm) {
-            handleRemove(() => remove?.(municipalityId, id)).then((res) => {
+            handleRemove(() => remove?.(municipalityId, namespace, id)).then((res) => {
               if (res) {
                 reset();
                 refresh();

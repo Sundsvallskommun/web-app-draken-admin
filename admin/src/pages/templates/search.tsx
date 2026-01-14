@@ -26,17 +26,19 @@ export const TemplateSearch: React.FC = () => {
 
   const getTemplate = (identifier: string) => {
     setFetchedTemplate(undefined);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getOne(municipalityId, identifier as any)
-      .then((res) => {
-        if (!res.data.data) {
-          setError(true);
-          return;
-        }
-        setFetchedTemplate(res.data.data as Template);
-        setError(false);
-      })
-      .catch(() => setError(true));
+    if (getOne) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      getOne(municipalityId, identifier as any)
+        .then((res) => {
+          if (!res.data.data) {
+            setError(true);
+            return;
+          }
+          setFetchedTemplate(res.data.data as Template);
+          setError(false);
+        })
+        .catch(() => setError(true));
+    }
   };
 
   const editHeader: AutoTableHeader = {

@@ -96,3 +96,32 @@ export interface UserApiResponse {
   data: User;
   message: string;
 }
+
+export interface RoleRequestDto {
+  name: string;
+  displayName: string;
+  namespace: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  displayName?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RoleDeleteApiResponse {
+  data: boolean;
+  message: string;
+}
+
+export interface RolesApiResponse {
+  data: Role[];
+  message: string;
+}
+
+export interface RoleApiResponse {
+  data: Role;
+  message: string;
+}

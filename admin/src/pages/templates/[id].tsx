@@ -65,7 +65,7 @@ export const EditTemplates: React.FC = () => {
   }, [id]);
 
   useEffect(() => {
-    if (id) {
+    if (id && getOne) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       handleGetOne<any>(() => getOne(municipalityId, id as any)).then((res) => {
         reset(res);
