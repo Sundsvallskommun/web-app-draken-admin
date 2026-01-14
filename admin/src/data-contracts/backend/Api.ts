@@ -22,6 +22,10 @@ import {
   RoleDeleteApiResponse,
   RoleRequestDto,
   RolesApiResponse,
+  StatusApiResponse,
+  StatusDeleteApiResponse,
+  StatusesApiResponse,
+  StatusRequestDto,
   UpdateFeatureFlagDto,
   UserApiResponse,
 } from "./data-contracts";
@@ -195,6 +199,126 @@ export class Api<
   /**
    * No description
    *
+   * @tags Roles
+   * @name RolesControllerCreateRole
+   * @summary Create new role
+   * @request POST:/api/roles/{municipalityId}
+   */
+  rolesControllerCreateRole = (
+    municipalityId: number,
+    data?: RoleRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<RoleApiResponse, any>({
+      path: `/api/roles/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Roles
+   * @name RolesControllerGetRoles
+   * @summary Get all roles
+   * @request GET:/api/roles/{municipalityId}
+   */
+  rolesControllerGetRoles = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<RolesApiResponse, any>({
+      path: `/api/roles/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Roles
+   * @name RolesControllerDeleteRole
+   * @summary Delete role
+   * @request DELETE:/api/roles/{municipalityId}/{namespace}/{role}
+   */
+  rolesControllerDeleteRole = (
+    municipalityId: number,
+    namespace: string,
+    role: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<RoleDeleteApiResponse, any>({
+      path: `/api/roles/${municipalityId}/${namespace}/${role}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statuses
+   * @name StatusesControllerCreateStatus
+   * @summary Create new status
+   * @request POST:/api/statuses/{municipalityId}
+   */
+  statusesControllerCreateStatus = (
+    municipalityId: number,
+    data?: StatusRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatusApiResponse, any>({
+      path: `/api/statuses/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statuses
+   * @name StatusesControllerGetStatuses
+   * @summary Get all statuses
+   * @request GET:/api/statuses/{municipalityId}
+   */
+  statusesControllerGetStatuses = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<StatusesApiResponse, any>({
+      path: `/api/statuses/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statuses
+   * @name StatusesControllerDeleteStatus
+   * @summary Delete status
+   * @request DELETE:/api/statuses/{municipalityId}/{namespace}/{status}
+   */
+  statusesControllerDeleteStatus = (
+    municipalityId: number,
+    namespace: string,
+    status: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatusDeleteApiResponse, any>({
+      path: `/api/statuses/${municipalityId}/${namespace}/${status}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
    * @tags Template
    * @name TemplateControllerGetAllTemplates
    * @summary Get the latest version of templates
@@ -282,66 +406,6 @@ export class Api<
     this.request<UserApiResponse, any>({
       path: `/api/me`,
       method: "GET",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Roles
-   * @name RolesControllerCreateRole
-   * @summary Create new role
-   * @request POST:/api/roles/{municipalityId}
-   */
-  rolesControllerCreateRole = (
-    municipalityId: number,
-    data?: RoleRequestDto,
-    params: RequestParams = {},
-  ) =>
-    this.request<RoleApiResponse, any>({
-      path: `/api/roles/${municipalityId}`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Roles
-   * @name RolesControllerGetRoles
-   * @summary Get all roles
-   * @request GET:/api/roles/{municipalityId}
-   */
-  rolesControllerGetRoles = (
-    municipalityId: number,
-    query?: {
-      namespace?: string;
-    },
-    params: RequestParams = {},
-  ) =>
-    this.request<RolesApiResponse, any>({
-      path: `/api/roles/${municipalityId}`,
-      method: "GET",
-      query: query,
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Roles
-   * @name RolesControllerDeleteRole
-   * @summary Delete role
-   * @request DELETE:/api/roles/{municipalityId}/{namespace}/{role}
-   */
-  rolesControllerDeleteRole = (
-    municipalityId: number,
-    namespace: string,
-    role: string,
-    params: RequestParams = {},
-  ) =>
-    this.request<RoleDeleteApiResponse, any>({
-      path: `/api/roles/${municipalityId}/${namespace}/${role}`,
-      method: "DELETE",
       ...params,
     });
 }

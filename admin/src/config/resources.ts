@@ -4,6 +4,8 @@ import {
   FeatureFlagRequestDto,
   Role,
   RoleRequestDto,
+  Status,
+  StatusRequestDto,
   UpdateFeatureFlagDto,
 } from '@data-contracts/backend/data-contracts';
 import { Resource } from '@interfaces/resource';
@@ -35,7 +37,6 @@ const featureFlags: Resource<FeatureFlag, FeatureFlagRequestDto, UpdateFeatureFl
 const roles: Resource<Role, RoleRequestDto> = {
   name: 'roles',
 
-  // getOne: apiService.rolesControllerGetRole,
   getMany: apiService.rolesControllerGetRoles,
   create: apiService.rolesControllerCreateRole,
   remove: apiService.rolesControllerDeleteRole,
@@ -45,7 +46,21 @@ const roles: Resource<Role, RoleRequestDto> = {
     displayName: '',
     namespace: '',
   },
-  requiredFields: ['name', 'displayName'],
+  requiredFields: ['name', 'displayName', 'namespace'],
+};
+
+const statuses: Resource<Status, StatusRequestDto> = {
+  name: 'statuses',
+
+  getMany: apiService.statusesControllerGetStatuses,
+  create: apiService.statusesControllerCreateStatus,
+  remove: apiService.statusesControllerDeleteStatus,
+
+  defaultValues: {
+    name: '',
+    namespace: '',
+  },
+  requiredFields: ['name', 'namespace'],
 };
 
 // TODO: Refactor templates to use apiService?
@@ -112,5 +127,5 @@ const templates: Resource<Template> = {
   requiredFields: ['identifier'],
 };
 
-const resources = { featureFlags, templates, roles };
+const resources = { featureFlags, templates, roles, statuses };
 export default resources;

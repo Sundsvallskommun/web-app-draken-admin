@@ -1,10 +1,10 @@
 import { apiServiceName } from '@/config/api-config';
 import { NamespaceConfig, Role as supportmanagementRole } from '@/data-contracts/supportmanagement/data-contracts';
-import { RoleRequestDto } from '@/dtos/roles.dto';
+import { RoleRequestDto } from '@/dtos/role.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import ApiResponse from '@/interfaces/api-service.interface';
 import { RequestWithUser } from '@/interfaces/auth.interface';
-import { Role, RoleApiResponse, RoleDeleteApiResponse, RolesApiResponse } from '@/responses/roles.response';
+import { Role, RoleApiResponse, RoleDeleteApiResponse, RolesApiResponse } from '@/responses/role.response';
 import ApiService from '@/services/api.service';
 import { logger } from '@/utils/logger';
 import authMiddleware from '@middlewares/auth.middleware';
