@@ -1,0 +1,9 @@
+{
+  "name_zero": "statusar",
+  "name_one": "status",
+  "name_many": "statusar",
+  "name_other": "statusar",
+  "properties": {
+    "name": "namn"
+  }
+}

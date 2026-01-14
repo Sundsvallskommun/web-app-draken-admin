@@ -8,16 +8,16 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
-export const Roles: React.FC = () => {
+export const Statuses: React.FC = () => {
   const router = useRouter();
   const { namespace } = router.query;
 
   const { municipalityId } = useLocalStorage();
 
   const filter = typeof namespace === 'string' ? { namespace } : undefined;
-  const resource = 'roles';
+  const resource = 'statuses';
 
-  const properties = ['name', 'displayName', 'createdAt', 'updatedAt'];
+  const properties = ['name', 'createdAt', 'updatedAt'];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, refresh, loaded } = useResource(resource, filter as any);
@@ -42,4 +42,4 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
   },
 });
 
-export default Roles;
+export default Statuses;

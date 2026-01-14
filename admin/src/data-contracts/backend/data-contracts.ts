@@ -69,34 +69,6 @@ export interface NamespacesApiResponse {
   message: string;
 }
 
-export interface DetailedTemplateResponseDTO {
-  identifier?: string;
-  version?: string;
-  type?: "PEBBLE" | "WORD";
-  name?: string;
-  description?: string;
-  metadata?: string;
-  defaultValues?: string;
-  changeLog?: string;
-  lastModifiedAt?: string;
-  content?: string;
-}
-
-export interface Permissions {
-  canUseAdminPanel: boolean;
-}
-
-export interface User {
-  name: string;
-  username: string;
-  permissions: Permissions;
-}
-
-export interface UserApiResponse {
-  data: User;
-  message: string;
-}
-
 export interface RoleRequestDto {
   name: string;
   displayName: string;
@@ -123,5 +95,60 @@ export interface RolesApiResponse {
 
 export interface RoleApiResponse {
   data: Role;
+  message: string;
+}
+
+export interface StatusRequestDto {
+  name: string;
+  namespace: string;
+}
+
+export interface Status {
+  id: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StatusDeleteApiResponse {
+  data: boolean;
+  message: string;
+}
+
+export interface StatusesApiResponse {
+  data: Status[];
+  message: string;
+}
+
+export interface StatusApiResponse {
+  data: Status;
+  message: string;
+}
+
+export interface DetailedTemplateResponseDTO {
+  identifier?: string;
+  version?: string;
+  type?: "PEBBLE" | "WORD";
+  name?: string;
+  description?: string;
+  metadata?: string;
+  defaultValues?: string;
+  changeLog?: string;
+  lastModifiedAt?: string;
+  content?: string;
+}
+
+export interface Permissions {
+  canUseAdminPanel: boolean;
+}
+
+export interface User {
+  name: string;
+  username: string;
+  permissions: Permissions;
+}
+
+export interface UserApiResponse {
+  data: User;
   message: string;
 }

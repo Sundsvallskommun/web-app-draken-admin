@@ -1,4 +1,4 @@
-import { EditResourceRole } from '@components/edit-resource/edit-resource-role.component';
+import { EditResourceStatus } from '@components/edit-resource/edit-resource-status.component';
 import { EditorToolbar } from '@components/editor-toolbar/editor-toolbar';
 import LoaderFullScreen from '@components/loader/loader-fullscreen';
 import resources from '@config/resources';
@@ -15,11 +15,11 @@ import { useEffect, useState } from 'react';
 import { FieldValues, FormProvider, useForm } from 'react-hook-form';
 import { capitalize } from 'underscore.string';
 
-export const NewRole: React.FC = () => {
+export const NewStatus: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
 
-  const resource = 'roles';
+  const resource = 'statuses';
 
   const { municipalityId } = useLocalStorage();
 
@@ -71,7 +71,7 @@ export const NewRole: React.FC = () => {
         <FormProvider {...form}>
           <form className="flex flex-row gap-32 justify-between grow flex-wrap" onSubmit={handleSubmit(onSubmit)}>
             <EditorToolbar resource={resource} isDirty={isDirty} />
-            <EditResourceRole />
+            <EditResourceStatus />
           </form>
         </FormProvider>
       </EditLayout>;
@@ -83,4 +83,4 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
   },
 });
 
-export default NewRole;
+export default NewStatus;
