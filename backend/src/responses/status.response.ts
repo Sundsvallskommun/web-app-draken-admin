@@ -16,7 +16,6 @@ export class Status implements supportmanagementStatus {
   updatedAt?: string;
 }
 
-
 export class StatusDeleteApiResponse implements ApiResponse<boolean> {
   @IsBoolean()
   data: boolean;

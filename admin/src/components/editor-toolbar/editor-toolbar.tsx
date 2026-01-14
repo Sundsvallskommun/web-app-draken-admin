@@ -13,7 +13,8 @@ import { capitalize } from 'underscore.string';
 
 interface ToolbarProps {
   resource: ResourceName;
-  id?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  id?: any;
   isDirty?: boolean;
 }
 

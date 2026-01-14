@@ -43,6 +43,8 @@ export const ListResource: React.FC = () => {
       : undefined;
   };
 
+  const editProperty = resource === 'namespaces' ? 'namespace' : 'id';
+
   return (
     resource && (
       <DefaultLayout title={`${capitalize(t(`${resource}:name_many`))} - ${process.env.NEXT_PUBLIC_APP_NAME}`}>
@@ -54,7 +56,7 @@ export const ListResource: React.FC = () => {
             </span>
             <ListToolbar resource={resource} onRefresh={refresh} properties={getProperties()} />
           </Header>
-          {loaded && <ListResources resource={resource} data={data} />}
+          {loaded && <ListResources resource={resource} data={data} editProperty={editProperty} />}
         </Main>
       </DefaultLayout>
     )

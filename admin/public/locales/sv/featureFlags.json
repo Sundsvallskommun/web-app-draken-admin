@@ -9,7 +9,7 @@
     "value": "Värde",
     "enabled": "Aktiverad",
     "application": "Applikation",
-    "namespace": "Namnrymd",
+    "namespace": "Namespace",
     "municipalityId": "Kommun-ID",
     "createdAt": "Skapad",
     "updatedAt": "Uppdaterad"

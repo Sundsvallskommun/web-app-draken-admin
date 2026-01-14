@@ -9,12 +9,14 @@ interface EditResourceInputProps extends Omit<InputProps, 'ref' | 'key'> {
   property: string;
   index: number;
   required?: boolean;
+  isNew?: boolean;
 }
 
-export const EditResourceInput: React.FC<EditResourceInputProps> = ({ label, property, required, ...rest }) => {
+export const EditResourceInput: React.FC<EditResourceInputProps> = ({ label, property, required, isNew, ...rest }) => {
   const { register, watch } = useFormContext();
   const data = watch(property);
   const type = typeof data;
+  const readOnly = !isNew && property === 'namespace';
 
   return type === 'object' ?
       <></>
@@ -25,7 +27,7 @@ export const EditResourceInput: React.FC<EditResourceInputProps> = ({ label, pro
           </Switch>
         : <>
             <FormLabel>{label}</FormLabel>
-            <Input type={type === 'number' ? 'number' : 'text'} {...register(property)} {...rest} />
+            <Input type={type === 'number' ? 'number' : 'text'} {...register(property, {valueAsNumber: type === 'number'})} readOnly={readOnly} {...rest} />
           </>
         }
       </FormControl>;

@@ -2,6 +2,8 @@ import { Api } from '@data-contracts/backend/Api';
 import {
   FeatureFlag,
   FeatureFlagRequestDto,
+  Namespace,
+  NamespaceRequestDto,
   Role,
   RoleRequestDto,
   Status,
@@ -34,9 +36,26 @@ const featureFlags: Resource<FeatureFlag, FeatureFlagRequestDto, UpdateFeatureFl
   requiredFields: ['name', 'enabled', 'application', 'namespace'],
 };
 
+const namespaces: Resource<Namespace, NamespaceRequestDto, NamespaceRequestDto> = {
+  name: 'namespaces',
+  getOne: apiService.namespaceControllerGetNamespace,
+  getMany: apiService.namespaceControllerGetSupportManagementNamespaces,
+  create: apiService.namespaceControllerCreateNamespace,
+  update: apiService.namespaceControllerUpdateNamespace,
+
+  defaultValues: {
+    namespace: '',
+    displayName: '',
+    shortCode: '',
+    notificationTTLInDays: 40,
+    accessControl: false,
+    notifyReporter: false,
+  },
+  requiredFields: ['namespace', 'displayName', 'shortCode', 'notificationTTLInDays'],
+};
+
 const roles: Resource<Role, RoleRequestDto> = {
   name: 'roles',
-
   getMany: apiService.rolesControllerGetRoles,
   create: apiService.rolesControllerCreateRole,
   remove: apiService.rolesControllerDeleteRole,
@@ -51,7 +70,6 @@ const roles: Resource<Role, RoleRequestDto> = {
 
 const statuses: Resource<Status, StatusRequestDto> = {
   name: 'statuses',
-
   getMany: apiService.statusesControllerGetStatuses,
   create: apiService.statusesControllerCreateStatus,
   remove: apiService.statusesControllerDeleteStatus,
@@ -127,5 +145,5 @@ const templates: Resource<Template> = {
   requiredFields: ['identifier'],
 };
 
-const resources = { featureFlags, templates, roles, statuses };
+const resources = { featureFlags, templates, roles, statuses, namespaces };
 export default resources;

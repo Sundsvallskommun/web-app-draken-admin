@@ -15,7 +15,7 @@ interface EditResourceProps {
   isNew?: boolean;
 }
 
-export const EditResource: React.FC<EditResourceProps> = ({ resource }) => {
+export const EditResource: React.FC<EditResourceProps> = ({ resource, isNew }) => {
   const { t } = useTranslation();
   const { requiredFields } = resources[resource];
 
@@ -36,6 +36,7 @@ export const EditResource: React.FC<EditResourceProps> = ({ resource }) => {
             return (
               <Fragment key={`formc-${index}`}>
                 <EditResourceInput
+                isNew={isNew}
                   property={key}
                   index={index}
                   required={isRequired}
