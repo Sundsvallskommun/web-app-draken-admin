@@ -1,10 +1,12 @@
 import { defaultInformationFields } from '@config/defaults';
 import resources from '@config/resources';
 import { ResourceName } from '@interfaces/resource-name';
-import { AutoTable, AutoTableHeader, Icon } from '@sk-web-gui/react';
+import { AutoTable, AutoTableHeader, Icon, useConfirm } from '@sk-web-gui/react';
 import { getFormattedFields } from '@utils/formatted-field';
+import { useCrudHelper } from '@utils/use-crud-helpers';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { Check, Pencil } from 'lucide-react';
+import { useResource } from '@utils/use-resource';
+import { Check, Pencil, Trash } from 'lucide-react';
 import NextLink from 'next/link';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +19,7 @@ interface ListResourcesProps {
   headers?: AutoTableHeader[];
   data?: Array<Record<string, unknown>>;
   editProperty?: string;
+  filter?: string;
 }
 
 export const ListResources: React.FC<ListResourcesProps> = ({
@@ -25,12 +28,40 @@ export const ListResources: React.FC<ListResourcesProps> = ({
   headers: _headers,
   data,
   editProperty = 'id',
+  filter,
 }) => {
-  const { update } = resources[resource];
+  const { update, remove } = resources[resource];
   const { t } = useTranslation();
+  const confirm = useConfirm();
   const [{ [resource]: storeHeaders }, setHeaders] = useLocalStorage(
     useShallow((state) => [state.headers, state.setHeaders])
   );
+  const { refresh } = useResource(resource as ResourceName);
+  const { handleRemove } = useCrudHelper(resource);
+  const { municipalityId } = useLocalStorage();
+
+  const onRemove = (value: string) => {
+    if (remove) {
+      confirm
+        .showConfirmation(
+          capitalize(t('common:remove_resource', { resource: t(`${resource}:name_one`) })),
+          capitalize(t('common:can_not_be_undone')),
+          capitalize(t('common:remove')),
+          capitalize(t('common:close')),
+          'error'
+        )
+        .then((confirm) => {
+          if (confirm) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            handleRemove(() => remove?.(municipalityId, filter as any, value)).then((res) => {
+              if (res) {
+                refresh();
+              }
+            });
+          }
+        });
+    }
+  };
 
   useEffect(() => {
     if (!storeHeaders && data) {
@@ -112,6 +143,24 @@ export const ListResources: React.FC<ListResourcesProps> = ({
     ),
   };
 
+  const removeHeader: AutoTableHeader = {
+    label: 'remove',
+    property: editProperty,
+    isColumnSortable: false,
+    screenReaderOnly: true,
+    sticky: true,
+    renderColumn: (value) => (
+      <div className="text-right w-full">
+        <Icon.Padded
+          icon={<Trash />}
+          variant="tertiary"
+          className="link-btn cursor-pointer"
+          onClick={() => onRemove(value)}
+        />
+      </div>
+    ),
+  };
+
   const translatedHeaders: AutoTableHeader[] =
     headers?.map((header) =>
       typeof header === 'object' ?
@@ -124,7 +173,11 @@ export const ListResources: React.FC<ListResourcesProps> = ({
 
   const formattedData = useMemo(() => data?.map((row) => getFormattedFields(row)), [data]);
 
-  const autoHeaders = [...translatedHeaders, ...(update ? [editHeader] : [])];
+  const autoHeaders = [
+    ...translatedHeaders,
+    ...(update ? [editHeader] : []),
+    ...(resource === 'roles' ? [removeHeader] : []),
+  ];
 
   return (
     <div>

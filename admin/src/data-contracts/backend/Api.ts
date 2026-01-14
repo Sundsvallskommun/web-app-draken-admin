@@ -18,6 +18,10 @@ import {
   FeatureFlagsApiResponse,
   NamespaceApiResponse,
   NamespacesApiResponse,
+  RoleApiResponse,
+  RoleDeleteApiResponse,
+  RoleRequestDto,
+  RolesApiResponse,
   UpdateFeatureFlagDto,
   UserApiResponse,
 } from "./data-contracts";
@@ -126,15 +130,16 @@ export class Api<
    * @tags Feature Flag
    * @name FeatureFlagControllerDeleteFeatureFlag
    * @summary Delete feature flag
-   * @request DELETE:/api/featureflags/{municipalityId}/{id}
+   * @request DELETE:/api/featureflags/{municipalityId}/{namespace}/{id}
    */
   featureFlagControllerDeleteFeatureFlag = (
     municipalityId: number,
+    namespace: string,
     id: number,
     params: RequestParams = {},
   ) =>
     this.request<FeatureFlagDeleteApiResponse, any>({
-      path: `/api/featureflags/${municipalityId}/${id}`,
+      path: `/api/featureflags/${municipalityId}/${namespace}/${id}`,
       method: "DELETE",
       ...params,
     });
@@ -277,6 +282,66 @@ export class Api<
     this.request<UserApiResponse, any>({
       path: `/api/me`,
       method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Roles
+   * @name RolesControllerCreateRole
+   * @summary Create new role
+   * @request POST:/api/roles/{municipalityId}
+   */
+  rolesControllerCreateRole = (
+    municipalityId: number,
+    data?: RoleRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<RoleApiResponse, any>({
+      path: `/api/roles/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Roles
+   * @name RolesControllerGetRoles
+   * @summary Get all roles
+   * @request GET:/api/roles/{municipalityId}
+   */
+  rolesControllerGetRoles = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<RolesApiResponse, any>({
+      path: `/api/roles/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Roles
+   * @name RolesControllerDeleteRole
+   * @summary Delete role
+   * @request DELETE:/api/roles/{municipalityId}/{namespace}/{role}
+   */
+  rolesControllerDeleteRole = (
+    municipalityId: number,
+    namespace: string,
+    role: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<RoleDeleteApiResponse, any>({
+      path: `/api/roles/${municipalityId}/${namespace}/${role}`,
+      method: "DELETE",
       ...params,
     });
 }

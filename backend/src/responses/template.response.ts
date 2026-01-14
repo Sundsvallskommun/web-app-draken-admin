@@ -1,39 +1,39 @@
-import { IsEnum, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export enum DetailedTemplateResponseTypeEnum {
   PEBBLE = 'PEBBLE',
   WORD = 'WORD',
 }
 
-export class DetailedTemplateResponseDTO  {
-@IsString()
-@IsOptional()
+export class DetailedTemplateResponseDTO {
+  @IsString()
+  @IsOptional()
   identifier?: string;
   @IsString()
-@IsOptional()
+  @IsOptional()
   version?: string;
   @IsEnum(DetailedTemplateResponseTypeEnum)
-@IsOptional()
+  @IsOptional()
   type?: DetailedTemplateResponseTypeEnum;
   @IsString()
-@IsOptional()
+  @IsOptional()
   name?: string;
   @IsString()
-@IsOptional()
+  @IsOptional()
   description?: string;
   @IsString()
-@IsOptional()
+  @IsOptional()
   metadata?: string;
   @IsString()
-@IsOptional()
+  @IsOptional()
   defaultValues?: string;
   @IsString()
-@IsOptional()
+  @IsOptional()
   changeLog?: string;
-@IsString()
-@IsOptional()
+  @IsString()
+  @IsOptional()
   lastModifiedAt?: string;
   @IsString()
-@IsOptional()
+  @IsOptional()
   content?: string;
 }

@@ -16,8 +16,9 @@ export type Resource<
   TFilter = undefined,
 > = {
   name: string;
-  getOne: GetOne<ResourceResponse<T>>;
+  
   getMany: GetMany<ResourceResponse<T[]>, TFilter>;
+  getOne?: GetOne<ResourceResponse<T>>;
   create?: Create<TCreate, ResourceResponse<T>>;
   update?: Update<TUpdate, ResourceResponse<T>>;
   remove?: Remove;

@@ -66,7 +66,7 @@ export const EditFeatureFlag: React.FC = () => {
   }, [id]);
 
   useEffect(() => {
-    if (id) {
+    if (id && getOne) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       handleGetOne<any>(() => getOne(municipalityId, id)).then((res) => {
         reset(res);

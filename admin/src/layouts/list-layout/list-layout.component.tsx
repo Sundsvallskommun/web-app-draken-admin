@@ -25,7 +25,7 @@ export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, chi
   const { t } = useTranslation();
   const router = useRouter();
   const { namespace } = router.query;
-    const filter = typeof namespace === 'string' ? { namespace } : undefined;
+  const filter = typeof namespace === 'string' ? { namespace } : undefined;
   const { loading, refresh } = useResource(resource, filter);
 
   const { municipalityId } = useLocalStorage();
@@ -54,17 +54,17 @@ export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, chi
         <Main>
           <Header>
             <div className="relative flex items-center gap-36">
-              <div className='flex flex-col'>
-              <h1 className="leading-h4-sm">{capitalize(t(`${resource}:name_many`))}</h1>
-              {resource === 'featureFlags' && (
-          <Link
-              target="_blank"
-              href="https://confluence.sundsvall.se/pages/viewpage.action?pageId=1259405457&spaceKey=OA&title=Feature%2Bflaggor%2Balla%2Bdrakar"
-            >
-              Länk till dokumentation för flaggor
-            </Link>
-            )}
-            </div>
+              <div className="flex flex-col">
+                <h1 className="leading-h4-sm">{capitalize(t(`${resource}:name_many`))}</h1>
+                {resource === 'featureFlags' && (
+                  <Link
+                    target="_blank"
+                    href="https://confluence.sundsvall.se/pages/viewpage.action?pageId=1259405457&spaceKey=OA&title=Feature%2Bflaggor%2Balla%2Bdrakar"
+                  >
+                    Länk till dokumentation för flaggor
+                  </Link>
+                )}
+              </div>
               <span className="flex items-center gap-16">
                 {showFilter && isLoaded && (
                   <FormControl>
@@ -98,9 +98,8 @@ export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, chi
                 )}
                 {loading && <Spinner size={2.5} />}
               </span>
-              </div>
-              <ListToolbar resource={resource} onRefresh={refresh} properties={properties} />
-            
+            </div>
+            <ListToolbar resource={resource} onRefresh={refresh} properties={properties} />
           </Header>
           {children}
         </Main>

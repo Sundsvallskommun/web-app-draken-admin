@@ -1,0 +1,10 @@
+{
+  "name_zero": "roller",
+  "name_one": "roll",
+  "name_many": "roller",
+  "name_other": "roller",
+  "properties": {
+    "name": "namn",
+    "displayName": "Visningsnamn"
+  }
+}

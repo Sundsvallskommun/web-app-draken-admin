@@ -76,39 +76,37 @@ export const EditResourceFeatureFlag: React.FC<EditResourceProps> = ({ isNew }) 
   }
 
   return (
-    <>
-      <div className="flex flex-col gap-12">
-        <div className="flex flex-row gap-24">
-          <FormControl required readOnly={!isNew}>
-            <FormLabel>{capitalize(t(`featureFlags:properties.name`))}</FormLabel>
-            <Input {...register('name')} className="w-[36rem]" />
-          </FormControl>
-          <FormControl required>
-            <FormLabel>{capitalize(t(`featureFlags:properties.enabled`))}</FormLabel>
-            <Switch {...register('enabled')} />
-          </FormControl>
-        </div>
-        <FormControl>
-          <FormLabel>{capitalize(t(`featureFlags:properties.value`))}</FormLabel>
-          <Input {...register('value')} className="w-[36rem]" />
+    <div className="flex flex-col gap-12">
+      <div className="flex flex-row gap-24">
+        <FormControl required readOnly={!isNew}>
+          <FormLabel>{capitalize(t(`featureFlags:properties.name`))}</FormLabel>
+          <Input {...register('name')} className="w-[36rem]" />
         </FormControl>
         <FormControl required>
-          <FormLabel>{capitalize(t(`featureFlags:properties.namespace`))}</FormLabel>
-          <Select {...register('namespace')} className="w-[36rem]" readOnly={!isNew} invalid={!namespace}>
-            {namespaces.map((namespace, index) => {
-              return (
-                <Select.Option value={namespace.namespace} key={index}>
-                  {namespace.displayName} ({namespace.namespace})
-                </Select.Option>
-              );
-            })}
-          </Select>
-        </FormControl>
-        <FormControl required readOnly={!isNew}>
-          <FormLabel>{capitalize(t(`featureFlags:properties.application`))}</FormLabel>
-          <Input {...register('application')} className="w-[36rem]" />
+          <FormLabel>{capitalize(t(`featureFlags:properties.enabled`))}</FormLabel>
+          <Switch {...register('enabled')} />
         </FormControl>
       </div>
-    </>
+      <FormControl>
+        <FormLabel>{capitalize(t(`featureFlags:properties.value`))}</FormLabel>
+        <Input {...register('value')} className="w-[36rem]" />
+      </FormControl>
+      <FormControl required>
+        <FormLabel>{capitalize(t(`featureFlags:properties.namespace`))}</FormLabel>
+        <Select {...register('namespace')} className="w-[36rem]" readOnly={!isNew} invalid={!namespace}>
+          {namespaces.map((namespace, index) => {
+            return (
+              <Select.Option value={namespace.namespace} key={index}>
+                {namespace.displayName} ({namespace.namespace})
+              </Select.Option>
+            );
+          })}
+        </Select>
+      </FormControl>
+      <FormControl required readOnly={!isNew}>
+        <FormLabel>{capitalize(t(`featureFlags:properties.application`))}</FormLabel>
+        <Input {...register('application')} className="w-[36rem]" />
+      </FormControl>
+    </div>
   );
 };

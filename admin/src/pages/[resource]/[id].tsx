@@ -24,6 +24,7 @@ import { capitalize } from 'underscore.string';
 export const EditAssistant: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
+  const { namespace } = router.query;
 
   const { resource: _resource, id: _id } = useParams();
   const resource = stringToResourceName(typeof _resource === 'object' ? _resource[0] : (_resource ?? ''));
@@ -32,9 +33,10 @@ export const EditAssistant: React.FC = () => {
   }
 
   const { municipalityId } = useLocalStorage();
+  const filter = typeof namespace === 'string' ? { namespace } : undefined;
 
   const { create, update, getOne, defaultValues } = resources[resource as ResourceName];
-  const { refresh } = useResource(resource as ResourceName);
+  const { refresh } = useResource(resource as ResourceName, filter);
 
   const { handleGetOne, handleCreate, handleUpdate } = useCrudHelper(resource as ResourceName);
 
@@ -70,13 +72,13 @@ export const EditAssistant: React.FC = () => {
   }, [id]);
 
   useEffect(() => {
-    if (id) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      handleGetOne<any>(() => getOne(municipalityId, id)).then((res) => {
-        reset(res);
-        setIsNew(false);
-        setLoaded(true);
-      });
+    if (id && getOne) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        handleGetOne<any>(() => getOne(municipalityId, id)).then((res) => {
+          reset(res);
+          setIsNew(false);
+          setLoaded(true);
+        });
     } else {
       reset(defaultValues);
       setIsNew(true);

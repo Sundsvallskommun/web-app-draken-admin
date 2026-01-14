@@ -6,9 +6,10 @@ import { HealthController } from './controllers/health.controller';
 import { NamespaceController } from './controllers/namespace.controller';
 import { TemplateController } from './controllers/templates.controller';
 import { UserController } from './controllers/user.controller';
+import { RolesController } from './controllers/roles.controller';
 
 validateEnv();
 
-const app = new App([IndexController, UserController, HealthController, TemplateController, FeatureFlagController, NamespaceController]);
+const app = new App([IndexController, UserController, HealthController, TemplateController, FeatureFlagController, NamespaceController, RolesController]);
 
 app.listen();

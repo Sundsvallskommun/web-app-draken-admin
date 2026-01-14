@@ -130,12 +130,13 @@ export class FeatureFlagController {
     }
   }
 
-  @Delete('/featureflags/:municipalityId/:id')
+  @Delete('/featureflags/:municipalityId/:namespace/:id')
   @ResponseSchema(FeatureFlagDeleteApiResponse)
   async deleteFeatureFlag(
     @Req() req: RequestWithUser,
     @Param('municipalityId') municipalityId: number,
     @Param('id') id: number,
+    @Param('namespace') namespace: string,
     @Res() response: Response<ApiResponse<boolean>>,
   ): Promise<Response<ApiResponse<boolean>>> {
     if (!req.user) {
@@ -144,7 +145,7 @@ export class FeatureFlagController {
 
     try {
       await prisma.featureFlags.delete({
-        where: { id, municipalityId },
+        where: { id, municipalityId, namespace },
       });
 
       return response.send({ data: true, message: 'success' });

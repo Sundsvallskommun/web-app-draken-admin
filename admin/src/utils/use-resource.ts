@@ -1,7 +1,5 @@
 import resources from '@config/resources';
-import { FeatureFlag } from '@data-contracts/backend/data-contracts';
 import { ResourceName } from '@interfaces/resource-name';
-import { Template } from '@services/templating/templating-service';
 import 'dotenv';
 import { useCallback, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
@@ -25,8 +23,9 @@ export const useResource = <TFilter = undefined>(resource: ResourceName, filter?
       setLoading(resource, true);
       console.log('Fetching resource data for', resource, 'with filter', filter);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      handleGetMany<Template | FeatureFlag>(() => getMany(municipalityId, filter as any))
+      handleGetMany<any>(() => getMany(municipalityId, filter as any))
         .then((res) => {
+          console.log('Fetched resource data for', resource, res);
           if (res) {
             setData(resource, res);
             setLoaded(resource, true);
