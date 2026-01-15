@@ -11,7 +11,8 @@ export type GetMany<TResponse, TFilter = undefined> = (municipalityId: number, f
 export type Create<TData, TResponse> = (municipalityId: number, data: TData, params?: RequestParams) => TResponse;
 export type Update<TData, TResponse> = (
   municipalityId: number,
-  id: number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  id: any,
   data: TData,
   params?: RequestParams
 ) => TResponse;

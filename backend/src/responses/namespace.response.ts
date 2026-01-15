@@ -1,7 +1,7 @@
 import { NamespaceConfig } from '@/data-contracts/supportmanagement/data-contracts';
 import ApiResponse from '@/interfaces/api-service.interface';
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class Namespace implements Partial<NamespaceConfig> {
   @IsString()
@@ -11,6 +11,15 @@ export class Namespace implements Partial<NamespaceConfig> {
   @IsString()
   @IsOptional()
   shortCode?: string;
+  @IsNumber()
+  @IsOptional()
+  notificationTTLInDays?: number;
+  @IsBoolean()
+  @IsOptional()
+  accessControl?: boolean;
+  @IsBoolean()
+  @IsOptional()
+  notifyReporter?: boolean;
   @IsString()
   @IsOptional()
   createdAt?: string;
@@ -20,7 +29,7 @@ export class Namespace implements Partial<NamespaceConfig> {
 }
 
 export class NamespaceApiResponse implements ApiResponse<Namespace> {
-  @ValidateNested({ each: true })
+  @ValidateNested()
   @Type(() => Namespace)
   data: Namespace;
   @IsString()

@@ -1,0 +1,16 @@
+{
+  "name_zero": "namespaces",
+  "name_one": "namespace",
+  "name_many": "namespaces",
+  "name_other": "namespaces",
+  "properties": {
+    "namespace": "namespace",
+    "displayName": "visningsnamn",
+    "shortCode": "kortkod",
+    "notificationTTLInDays": "aviseringens livslängd i dagar",
+    "accessControl": "åtkomstkontroll",
+    "notifyReporter": "meddela rapportör",
+    "createdAt": "skapad",
+    "updatedAt": "uppdaterad"
+  }
+}

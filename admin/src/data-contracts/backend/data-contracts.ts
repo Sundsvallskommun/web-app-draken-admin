@@ -51,16 +51,28 @@ export interface FeatureFlagApiResponse {
   message: string;
 }
 
+export interface NamespaceRequestDto {
+  namespace?: string;
+  displayName?: string;
+  shortCode?: string;
+  accessControl?: boolean;
+  notifyReporter?: boolean;
+  notificationTTLInDays?: number;
+}
+
 export interface Namespace {
   namespace: string;
   displayName: string;
   shortCode?: string;
+  notificationTTLInDays?: number;
+  accessControl?: boolean;
+  notifyReporter?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface NamespaceApiResponse {
-  data: Namespace[];
+  data: Namespace;
   message: string;
 }
 

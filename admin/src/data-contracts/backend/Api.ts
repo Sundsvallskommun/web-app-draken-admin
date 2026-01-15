@@ -17,6 +17,7 @@ import {
   FeatureFlagRequestDto,
   FeatureFlagsApiResponse,
   NamespaceApiResponse,
+  NamespaceRequestDto,
   NamespacesApiResponse,
   RoleApiResponse,
   RoleDeleteApiResponse,
@@ -165,11 +166,31 @@ export class Api<
    * No description
    *
    * @tags Namespace
-   * @name NamespaceControllerGetNamespaces
+   * @name NamespaceControllerCreateNamespace
+   * @summary Create a namespace
+   * @request POST:/api/namespaces/{municipalityId}
+   */
+  namespaceControllerCreateNamespace = (
+    municipalityId: number,
+    data?: NamespaceRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespaceApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Namespace
+   * @name NamespaceControllerGetSupportManagementNamespaces
    * @summary Get all namespaces
    * @request GET:/api/namespaces/{municipalityId}
    */
-  namespaceControllerGetNamespaces = (
+  namespaceControllerGetSupportManagementNamespaces = (
     municipalityId: number,
     params: RequestParams = {},
   ) =>
@@ -182,17 +203,55 @@ export class Api<
    * No description
    *
    * @tags Namespace
-   * @name NamespaceControllerGetNamespace
-   * @summary Get a namespace using a namespace name
-   * @request GET:/api/namespaces/{municipalityId}/{name}
+   * @name NamespaceControllerUpdateNamespace
+   * @summary Update a namespace
+   * @request PUT:/api/namespaces/{municipalityId}/{namespace}
    */
-  namespaceControllerGetNamespace = (
+  namespaceControllerUpdateNamespace = (
     municipalityId: number,
-    name: string,
+    namespace: string,
+    data?: NamespaceRequestDto,
     params: RequestParams = {},
   ) =>
     this.request<NamespaceApiResponse, any>({
-      path: `/api/namespaces/${municipalityId}/${name}`,
+      path: `/api/namespaces/${municipalityId}/${namespace}`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Namespace
+   * @name NamespaceControllerGetNamespace
+   * @summary Get a namespace using a namespace name
+   * @request GET:/api/namespaces/{municipalityId}/{namespace}
+   */
+  namespaceControllerGetNamespace = (
+    municipalityId: number,
+    namespace: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespaceApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}/${namespace}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Namespace
+   * @name NamespaceControllerGetNamespaces
+   * @summary Get all namespaces, including casedata
+   * @request GET:/api/namespaces/{municipalityId}/all
+   */
+  namespaceControllerGetNamespaces = (
+    municipalityId: number,
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespacesApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}/all`,
       method: "GET",
       ...params,
     });

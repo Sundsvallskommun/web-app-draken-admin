@@ -21,7 +21,7 @@ import { useEffect, useState } from 'react';
 import { FieldValues, FormProvider, useForm } from 'react-hook-form';
 import { capitalize } from 'underscore.string';
 
-export const EditAssistant: React.FC = () => {
+export const EditResourceDefault: React.FC = () => {
   const { t } = useTranslation();
   const router = useRouter();
   const { namespace } = router.query;
@@ -54,7 +54,7 @@ export const EditAssistant: React.FC = () => {
     formState: { isDirty },
   } = form;
 
-  const id = _id === 'new' ? undefined : parseInt(_id as string, 10);
+  const id = _id === 'new' ? undefined : _id;
 
   const [loaded, setLoaded] = useState<boolean>(false);
   const [isNew, setIsNew] = useState<boolean>(!id);
@@ -167,4 +167,4 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
   },
 });
 
-export default EditAssistant;
+export default EditResourceDefault;
