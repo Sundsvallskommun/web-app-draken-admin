@@ -28,4 +28,6 @@ export interface LocalStorage {
   setData: (resource: ResourceName, data: Record<string, any>[]) => void;
   setLoaded: (resource: ResourceName, loaded: boolean) => void;
   setLoading: (resource: ResourceName, loading: boolean) => void;
+  selectedNamespace: string;
+  setSelectedNamespace: (namespace: string) => void;
 }

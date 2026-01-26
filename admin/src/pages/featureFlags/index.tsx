@@ -10,11 +10,12 @@ import { useEffect } from 'react';
 
 export const FeatureFlags: React.FC = () => {
   const router = useRouter();
-  const { namespace } = router.query;
+  const { namespace: urlNamespace } = router.query;
 
-  const { municipalityId } = useLocalStorage();
+  const { municipalityId, selectedNamespace } = useLocalStorage();
 
-  const filter = typeof namespace === 'string' ? { namespace } : undefined;
+  const activeNamespace = typeof urlNamespace === 'string' ? urlNamespace : selectedNamespace || undefined;
+  const filter = activeNamespace ? { namespace: activeNamespace } : undefined;
   const resource = 'featureFlags';
 
   const properties = ['id', 'name', 'value', 'enabled', 'application', 'namespace', 'createdAt', 'updatedAt'];
@@ -32,7 +33,7 @@ export const FeatureFlags: React.FC = () => {
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [namespace, municipalityId]);
+  }, [activeNamespace, municipalityId]);
 
   return (
     resource && (
