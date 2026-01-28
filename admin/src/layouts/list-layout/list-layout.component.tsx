@@ -8,6 +8,7 @@ import Main from '@layouts/main/main.component';
 import { FormControl, FormLabel, Link, Select, Spinner } from '@sk-web-gui/react';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useResource } from '@utils/use-resource';
+import { TemplateExport } from '@utils/template-export-import';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
@@ -18,9 +19,10 @@ interface ListLayoutProp {
   properties?: string[];
   children?: React.ReactNode;
   showFilter?: boolean;
+  onImportTemplate?: (data: TemplateExport) => void;
 }
 
-export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, children, showFilter }) => {
+export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, children, showFilter, onImportTemplate }) => {
   const apiService = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCredentials: true });
   const { t } = useTranslation();
   const router = useRouter();
@@ -123,7 +125,7 @@ export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, chi
                 {loading && <Spinner size={2.5} />}
               </span>
             </div>
-            <ListToolbar resource={resource} onRefresh={refresh} properties={properties} />
+            <ListToolbar resource={resource} onRefresh={refresh} properties={properties} onImportTemplate={onImportTemplate} />
           </Header>
           {children}
         </Main>

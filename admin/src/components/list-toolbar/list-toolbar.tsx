@@ -1,11 +1,12 @@
 import { defaultInformationFields } from '@config/defaults';
 import resources from '@config/resources';
 import { ResourceName } from '@interfaces/resource-name';
-import { Button, Checkbox, Icon, PopupMenu } from '@sk-web-gui/react';
+import { Button, Checkbox, Icon, PopupMenu, useSnackbar } from '@sk-web-gui/react';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { FilePlus2, RefreshCcw, Settings } from 'lucide-react';
+import { readTemplateFile, TemplateExport } from '@utils/template-export-import';
+import { FilePlus2, RefreshCcw, Settings, Upload } from 'lucide-react';
 import Link from 'next/link';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { capitalize } from 'underscore.string';
@@ -15,15 +16,34 @@ interface ListToolbarProps {
   resource: ResourceName;
   onRefresh?: () => void;
   properties?: string[];
+  onImportTemplate?: (data: TemplateExport) => void;
 }
 
-export const ListToolbar: React.FC<ListToolbarProps> = ({ onRefresh, resource, properties }) => {
+export const ListToolbar: React.FC<ListToolbarProps> = ({ onRefresh, resource, properties, onImportTemplate }) => {
   const { t } = useTranslation();
+  const snackbar = useSnackbar();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [{ [resource]: headers }, setHeaders] = useLocalStorage(
     useShallow((state) => [state.headers, state.setHeaders])
   );
   const { watch, register, reset } = useForm<{ headers: string[] }>({ defaultValues: { headers } });
   const { create } = resources[resource];
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && onImportTemplate) {
+      const data = await readTemplateFile(file);
+      if (data) {
+        onImportTemplate(data);
+      } else {
+        snackbar({
+          message: capitalize(t('templates:import_invalid_file')),
+          status: 'error',
+        });
+      }
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const selectedHeaders = watch('headers');
 
@@ -60,6 +80,25 @@ export const ListToolbar: React.FC<ListToolbarProps> = ({ onRefresh, resource, p
         >
           <Icon icon={<FilePlus2 />} />
         </Link>
+      )}
+      {resource === 'templates' && onImportTemplate && (
+        <>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".json"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+          <Button
+            iconButton
+            variant="tertiary"
+            aria-label={capitalize(t('templates:import_template'))}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Icon icon={<Upload />} />
+          </Button>
+        </>
       )}
       {!!onRefresh && (
         <Button iconButton variant="tertiary" aria-label={capitalize(t('common:refresh'))} onClick={() => onRefresh()}>
