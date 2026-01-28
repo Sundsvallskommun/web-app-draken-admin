@@ -1,11 +1,12 @@
 import resources from '@config/resources';
 import { ResourceName } from '@interfaces/resource-name';
-import { PreviewTemplate } from '@services/templating/templating-service';
+import { PreviewTemplate, Template } from '@services/templating/templating-service';
 import { Button, Icon, useConfirm } from '@sk-web-gui/react';
 import { useCrudHelper } from '@utils/use-crud-helpers';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useResource } from '@utils/use-resource';
-import { Save, Trash } from 'lucide-react';
+import { exportTemplateToJson } from '@utils/template-export-import';
+import { Download, Save, Trash } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +41,11 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
       document.body.appendChild(link);
       link.click();
     });
+  };
+
+  const exportTemplate = () => {
+    const formData = watch();
+    exportTemplateToJson(formData as Template);
   };
 
   const onRemove = () => {
@@ -101,6 +107,17 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
       )}
       {resource === 'templates' && (
         <>
+          <Button
+            variant="tertiary"
+            showBackground={false}
+            data-cy="edit-toolbar-export"
+            aria-label={t(`templates:export_template`)}
+            size="sm"
+            onClick={() => exportTemplate()}
+            leftIcon={<Download />}
+          >
+            {t(`templates:export_template`)}
+          </Button>
           <Button
             variant="tertiary"
             showBackground={false}

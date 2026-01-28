@@ -4,6 +4,11 @@
   "name_many": "mallar",
   "name_other": "mallar",
   "preview_template": "Förhandsgranska mall",
+  "export_template": "Exportera mall",
+  "import_template": "Importera mall",
+  "import_confirm_message": "Importera denna mall? Om mallen redan finns kommer en ny version att skapas.",
+  "import_changelog_placeholder": "Beskriv ändringarna i denna version...",
+  "import_invalid_file": "Ogiltig mallfil",
   "properties": {
     "id": "id",
     "identifier": "identifierare",
@@ -14,8 +19,6 @@
     "content": "innehåll",
     "versionIncrement": "versionsökning",
     "changeLog": "ändringslogg",
-    "enabled": "aktiverad",
-    "application": "applikation",
     "createdAt": "skapad",
     "updatedAt": "uppdaterad",
     "version": "version"
