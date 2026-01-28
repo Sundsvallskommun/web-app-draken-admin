@@ -43,6 +43,8 @@ export const useLocalStorage = create(
             resourceData: { ...state.resourceData, [resource]: { ...oldData, loading } },
           };
         }),
+      selectedNamespace: '',
+      setSelectedNamespace: (selectedNamespace) => set(() => ({ selectedNamespace })),
     }),
     {
       name: `${process.env.NEXT_PUBLIC_APP_NAME}-admin-store`,

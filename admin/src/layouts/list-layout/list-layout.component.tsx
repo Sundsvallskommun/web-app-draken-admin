@@ -26,11 +26,14 @@ export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, chi
   const apiService = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCredentials: true });
   const { t } = useTranslation();
   const router = useRouter();
-  const { namespace } = router.query;
-  const filter = typeof namespace === 'string' ? { namespace } : undefined;
-  const { loading, refresh } = useResource(resource, filter);
+  const { namespace: urlNamespace } = router.query;
 
-  const { municipalityId } = useLocalStorage();
+  const { municipalityId, selectedNamespace, setSelectedNamespace } = useLocalStorage();
+
+  // Use URL param if present, otherwise use saved namespace from store
+  const activeNamespace = typeof urlNamespace === 'string' ? urlNamespace : selectedNamespace || undefined;
+  const filter = activeNamespace ? { namespace: activeNamespace } : undefined;
+  const { loading, refresh } = useResource(resource, filter);
 
   const [namespaces, setNamespaces] = useState<Namespace[]>([]);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
@@ -42,6 +45,26 @@ export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, chi
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [municipalityId]);
+
+  useEffect(() => {
+    if (showFilter && isLoaded) {
+      if (activeNamespace && urlNamespace !== activeNamespace) {
+        router.replace(
+          {
+            pathname: router.pathname,
+            query: {
+              ...router.query,
+              namespace: activeNamespace,
+            },
+          },
+          undefined,
+          { shallow: true }
+        );
+      }
+      refresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, showFilter, activeNamespace]);
 
   useEffect(() => {
     if (!resource) {
@@ -72,9 +95,10 @@ export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, chi
                   <FormControl>
                     <FormLabel>{capitalize(t(`featureFlags:properties.namespace`))}</FormLabel>
                     <Select
-                      value={(namespace as string) ?? ''}
+                      value={activeNamespace ?? ''}
                       onChange={(e) => {
                         const value = e.target.value;
+                        setSelectedNamespace(value);
 
                         router.push(
                           {

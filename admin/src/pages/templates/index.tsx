@@ -16,8 +16,11 @@ export const Templates: React.FC = () => {
   const properties = ['identifier', 'name', 'description', 'version'];
 
   const router = useRouter();
-  const { namespace } = router.query;
-  const filter = typeof namespace === 'string' ? { namespace } : undefined;
+  const { namespace: urlNamespace } = router.query;
+  const { selectedNamespace } = useLocalStorage();
+
+  const activeNamespace = typeof urlNamespace === 'string' ? urlNamespace : selectedNamespace || undefined;
+  const filter = activeNamespace ? { namespace: activeNamespace } : undefined;
 
   const { data, loaded, refresh } = useResource(resource, filter);
   const { handleCreate } = useCrudHelper(resource);
@@ -30,7 +33,7 @@ export const Templates: React.FC = () => {
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [namespace]);
+  }, [activeNamespace]);
 
   const handleImportTemplate = (data: TemplateExport) => {
     setImportData(data);
@@ -52,7 +55,9 @@ export const Templates: React.FC = () => {
     resource && (
       <>
         <ListLayout resource={resource} properties={properties} showFilter onImportTemplate={handleImportTemplate}>
-          {loaded && <ListResources resource={resource} data={data} properties={properties} editProperty="identifier" />}
+          {loaded && (
+            <ListResources resource={resource} data={data} properties={properties} editProperty="identifier" />
+          )}
         </ListLayout>
 
         <TemplateImportDialog

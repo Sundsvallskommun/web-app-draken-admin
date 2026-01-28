@@ -10,11 +10,12 @@ import { useEffect } from 'react';
 
 export const Statuses: React.FC = () => {
   const router = useRouter();
-  const { namespace } = router.query;
+  const { namespace: urlNamespace } = router.query;
 
-  const { municipalityId } = useLocalStorage();
+  const { municipalityId, selectedNamespace } = useLocalStorage();
 
-  const filter = typeof namespace === 'string' ? { namespace } : undefined;
+  const activeNamespace = typeof urlNamespace === 'string' ? urlNamespace : selectedNamespace || undefined;
+  const filter = activeNamespace ? { namespace: activeNamespace } : undefined;
   const resource = 'statuses';
 
   const properties = ['name', 'createdAt', 'updatedAt'];
@@ -25,12 +26,12 @@ export const Statuses: React.FC = () => {
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [namespace, municipalityId]);
+  }, [activeNamespace, municipalityId]);
 
   return (
     resource && (
       <ListLayout resource={resource} properties={properties} showFilter>
-        {loaded && <ListResources resource={resource} data={data} properties={properties} filter={filter?.namespace} editProperty='name'/>}
+        {loaded && <ListResources resource={resource} data={data} properties={properties} filter={activeNamespace} editProperty='name'/>}
       </ListLayout>
     )
   );
