@@ -2,6 +2,7 @@
   "add": "lägg till",
   "admin_for": "Administration för",
   "can_not_be_undone": "handlingen kan ej ångras",
+  "cancel": "avbryt",
   "close": "stäng",
   "create_new": "skapa ny {{resource}}",
   "createdAt": "Skapad",
