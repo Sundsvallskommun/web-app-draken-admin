@@ -89,11 +89,14 @@ const templates: Resource<Template> = {
     municipalityId: number,
     query?: {
       namespace?: string;
+      metadataKey?: string;
+      metadataValue?: string;
     }
   ) => {
     return httpClient.request<ServiceResponse<Template[]>, unknown>({
-      path: `${process.env.NEXT_PUBLIC_API_PATH}/templates/${municipalityId}?namespace=${query?.namespace}`,
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/templates/${municipalityId}`,
       method: 'GET',
+      query,
     });
   },
 

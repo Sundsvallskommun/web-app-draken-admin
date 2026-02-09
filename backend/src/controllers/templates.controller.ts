@@ -10,6 +10,70 @@ import authMiddleware from '@middlewares/auth.middleware';
 import { Body, Controller, Get, Param, Post, QueryParam, Req, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 
+const toVersionParts = (version?: string): number[] => {
+  if (!version) {
+    return [];
+  }
+
+  return version.split('.').map(segment => {
+    const parsed = Number.parseInt(segment, 10);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  });
+};
+
+const compareVersions = (first?: string, second?: string): number => {
+  const firstParts = toVersionParts(first);
+  const secondParts = toVersionParts(second);
+  const length = Math.max(firstParts.length, secondParts.length);
+
+  for (let idx = 0; idx < length; idx++) {
+    const diff = (firstParts[idx] ?? 0) - (secondParts[idx] ?? 0);
+    if (diff !== 0) {
+      return diff;
+    }
+  }
+
+  return 0;
+};
+
+const isTemplateNewer = (candidate: TemplateResponse, existing: TemplateResponse): boolean => {
+  const versionDiff = compareVersions(candidate.version, existing.version);
+  return versionDiff > 0;
+};
+
+const getLatestTemplates = (templates: TemplateResponse[]): TemplateResponse[] => {
+  return Object.values(
+    templates.reduce(
+      (acc, template) => {
+        const key = template.identifier ?? template.name;
+        if (!key) {
+          return acc;
+        }
+
+        const existing = acc[key];
+        if (!existing || isTemplateNewer(template, existing)) {
+          acc[key] = template;
+        }
+
+        return acc;
+      },
+      {} as Record<string, TemplateResponse>,
+    ),
+  );
+};
+
+const matchesMetadata = (template: TemplateResponse, metadataKey?: string, metadataValue?: string): boolean => {
+  if (!metadataKey && !metadataValue) {
+    return true;
+  }
+
+  return (template.metadata ?? []).some(entry => {
+    const keyMatches = metadataKey ? entry.key === metadataKey : true;
+    const valueMatches = metadataValue ? entry.value === metadataValue : true;
+    return keyMatches && valueMatches;
+  });
+};
+
 @Controller()
 export class TemplateController {
   private apiService = new ApiService();
@@ -22,6 +86,8 @@ export class TemplateController {
     @Req() req: RequestWithUser,
     @Param('municipalityId') municipalityId: number,
     @QueryParam('namespace') namespace?: string,
+    @QueryParam('metadataKey') metadataKey?: string,
+    @QueryParam('metadataValue') metadataValue?: string,
   ): Promise<ApiResponse<TemplateResponse[]>> {
     const url = `${this.SERVICE}/${municipalityId}/templates/search`;
 
@@ -44,33 +110,10 @@ export class TemplateController {
     );
 
     const templates = res.data;
-    const latestTemplates = Object.values(
-      templates.reduce(
-        (acc, template) => {
-          const key = template.identifier ?? template.name;
-          const existing = acc[key];
+    const latestTemplates = getLatestTemplates(templates);
+    const filteredTemplates = latestTemplates.filter(template => matchesMetadata(template, metadataKey, metadataValue));
 
-          if (!existing) {
-            acc[key] = template;
-            return acc;
-          }
-
-          const [majorNew, minorNew] = template.version.split('.').map(Number);
-          const [majorOld, minorOld] = existing.version.split('.').map(Number);
-
-          const isNewer = majorNew > majorOld || (majorNew === majorOld && minorNew > minorOld);
-
-          if (isNewer) {
-            acc[key] = template;
-          }
-
-          return acc;
-        },
-        {} as Record<string, TemplateResponse>,
-      ),
-    );
-
-    const data = latestTemplates.map((template, idx) => ({
+    const data = filteredTemplates.map((template, idx) => ({
       ...template,
       id: idx + 1,
     }));
