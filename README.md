@@ -7,7 +7,7 @@ Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumer
 | API               | Version |
 | ------------------| ------: |
 | SimulatorServer   |     2.0 |
-| SupportManagement |    12.2 |
+| SupportManagement |    12.4 |
 | Templating        |     2.0 |
 
 ## Utveckling

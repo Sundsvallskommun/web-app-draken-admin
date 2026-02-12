@@ -10,7 +10,7 @@ export const APIS = [
   },
   {
     name: 'supportmanagement',
-    version: '12.2',
+    version: '12.4',
   },
 ] as const;
 

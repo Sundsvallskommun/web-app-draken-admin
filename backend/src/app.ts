@@ -1,4 +1,5 @@
 import {
+  ADMIN_PANEL_GROUP,
   APP_NAME,
   BASE_URL_PREFIX,
   CREDENTIALS,
@@ -111,15 +112,21 @@ const samlStrategy = new Strategy(
       });
     }
 
-    const groupList: ADRole[] =
+    const groupList: string[] =
       groups !== undefined
-        ? (groups
-            .split(',')
-            .map(x => x.toLowerCase())
-            .filter(x => x.includes('sg_appl_draken_')) as ADRole[])
+        ? groups.split(',').map(x => x.toLowerCase())
         : [];
 
-    const appGroups: ADRole[] = groupList.length > 0 ? groupList : groupList.concat('sg_appl_app_read');
+    const requiredGroup = ADMIN_PANEL_GROUP?.toLowerCase();
+    if (!requiredGroup || !groupList.includes(requiredGroup)) {
+      logger.error(`User ${username} does not have required group: ${ADMIN_PANEL_GROUP}. User groups: ${groupList.join(', ')}`);
+      return done(null, null, {
+        name: 'SAML_UNAUTHORIZED',
+        message: 'User does not have permission to access this application',
+      });
+    }
+
+    const appGroups: ADRole[] = [requiredGroup as ADRole];
 
     try {
       // const personNumber = profile.citizenIdentifier;

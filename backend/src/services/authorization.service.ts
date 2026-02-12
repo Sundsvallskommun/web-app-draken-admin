@@ -1,4 +1,4 @@
-// import { AUTHORIZED_GROUPS } from '@/config';
+import { ADMIN_PANEL_GROUP } from '@/config';
 import { Permissions, InternalRole, ADRole } from '@interfaces/auth.interface';
 
 // export function authorizeGroups(groups) {
@@ -27,11 +27,16 @@ const roles = new Map<InternalRole, Partial<Permissions>>([
 ]);
 
 type RoleADMapping = {
-  [key in ADRole]: InternalRole;
+  [key: string]: InternalRole;
 };
-const roleADMapping: RoleADMapping = {
-  sg_appl_app_read: 'app_read',
-  sg_appl_draken_admin: 'app_admin',
+const getRoleADMapping = (): RoleADMapping => {
+  const mapping: RoleADMapping = {
+    sg_appl_app_read: 'app_read',
+  };
+  if (ADMIN_PANEL_GROUP) {
+    mapping[ADMIN_PANEL_GROUP.toLowerCase()] = 'app_admin';
+  }
+  return mapping;
 };
 
 /**
@@ -40,8 +45,9 @@ const roleADMapping: RoleADMapping = {
  * @param internalGroups Whether to use internal groups or external group-mappings
  * @returns collected permissions for all matching role groups
  */
-export const getPermissions = (groups: InternalRole[] | ADRole[], internalGroups = false): Permissions => {
+export const getPermissions = (groups: InternalRole[] | string[], internalGroups = false): Permissions => {
   const permissions: Permissions = defaultPermissions();
+  const roleADMapping = getRoleADMapping();
   groups.forEach(group => {
     const groupLower = group.toLowerCase();
     const role = internalGroups ? (groupLower as InternalRole) : (roleADMapping[groupLower] as InternalRole);
@@ -62,17 +68,18 @@ export const getPermissions = (groups: InternalRole[] | ADRole[], internalGroups
  * @param groups List of AD roles
  * @returns role with most permissions
  */
-export const getRole = (groups: ADRole[]) => {
-  if (groups.length == 1) return roleADMapping[groups[0]]; // app_read
+export const getRole = (groups: string[]) => {
+  const roleADMapping = getRoleADMapping();
+  if (groups.length == 1) return roleADMapping[groups[0].toLowerCase()];
 
-  const roles: InternalRole[] = [];
+  const mappedRoles: InternalRole[] = [];
   groups.forEach(group => {
     const groupLower = group.toLowerCase();
     const role = roleADMapping[groupLower];
     if (role) {
-      roles.push(role);
+      mappedRoles.push(role);
     }
   });
 
-  return roles.sort((a, b) => (RoleOrderEnum[a] > RoleOrderEnum[b] ? 1 : 0))[0];
+  return mappedRoles.sort((a, b) => (RoleOrderEnum[a] > RoleOrderEnum[b] ? 1 : 0))[0];
 };

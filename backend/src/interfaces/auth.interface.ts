@@ -25,8 +25,8 @@ export interface Permissions {
   canUseAdminPanel: boolean;
 }
 
-/** AD roles */
-export type ADRole = 'sg_appl_draken_admin' | 'sg_appl_app_read';
+/** AD roles - dynamically configured via ADMIN_PANEL_GROUP env variable */
+export type ADRole = string;
 
 /** Internal roles */
 export type InternalRole = 'app_admin' | 'app_read';
