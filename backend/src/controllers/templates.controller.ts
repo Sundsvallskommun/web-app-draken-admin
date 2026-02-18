@@ -23,7 +23,7 @@ export class TemplateController {
     @Param('municipalityId') municipalityId: number,
     @QueryParam('namespace') namespace?: string,
   ): Promise<ApiResponse<TemplateResponse[]>> {
-    const url = `${this.SERVICE}/${municipalityId}/templates/search`;
+    const url = `${this.SERVICE}/${municipalityId}/templates/search?showOnlyLatest=true`;
 
     const filters: any[] = [{ eq: { application: 'draken' } }];
 
@@ -44,33 +44,8 @@ export class TemplateController {
     );
 
     const templates = res.data;
-    const latestTemplates = Object.values(
-      templates.reduce(
-        (acc, template) => {
-          const key = template.identifier ?? template.name;
-          const existing = acc[key];
 
-          if (!existing) {
-            acc[key] = template;
-            return acc;
-          }
-
-          const [majorNew, minorNew] = template.version.split('.').map(Number);
-          const [majorOld, minorOld] = existing.version.split('.').map(Number);
-
-          const isNewer = majorNew > majorOld || (majorNew === majorOld && minorNew > minorOld);
-
-          if (isNewer) {
-            acc[key] = template;
-          }
-
-          return acc;
-        },
-        {} as Record<string, TemplateResponse>,
-      ),
-    );
-
-    const data = latestTemplates.map((template, idx) => ({
+    const data = templates.map((template, idx) => ({
       ...template,
       id: idx + 1,
     }));
