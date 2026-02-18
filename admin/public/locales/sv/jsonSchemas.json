@@ -1,0 +1,96 @@
+{
+  "name_zero": "JSON-scheman",
+  "name_one": "JSON-schema",
+  "name_many": "JSON-scheman",
+  "name_other": "JSON-scheman",
+  "properties": {
+    "id": "ID",
+    "name": "Namn",
+    "version": "Version",
+    "value": "Schema",
+    "description": "Beskrivning",
+    "created": "Skapad",
+    "validationUsageCount": "Antal valideringar",
+    "lastUsedForValidation": "Senast validerad"
+  },
+  "tabs": {
+    "builder": "Byggare",
+    "json_schema": "JSON Schema",
+    "ui_schema": "UI Schema",
+    "preview": "Förhandsgranskning"
+  },
+  "version_increment": {
+    "label": "Versionsökning",
+    "current": "Nuvarande version",
+    "new": "Ny version",
+    "minor": "Minor",
+    "major": "Major",
+    "info": "När du sparar ändringar skapas en ny version av schemat"
+  },
+  "editor": {
+    "json_mode": "JSON-läge",
+    "visual_mode": "Visuellt läge"
+  },
+  "preview": {
+    "title": "Formulärförhandsgranskning",
+    "no_schema": "Inget schema att förhandsgranska",
+    "form_data": "Formulärdata"
+  },
+  "ui_schema": {
+    "title": "UI Schema",
+    "no_ui_schema": "Inget UI-schema definierat",
+    "save": "Spara UI Schema",
+    "delete": "Ta bort UI Schema",
+    "description": "UI-schemat kontrollerar hur formuläret visas"
+  },
+  "builder": {
+    "palette_title": "Komponenter",
+    "canvas_empty": "Dra komponenter hit för att bygga formuläret",
+    "inspector_title": "Egenskaper",
+    "inspector_empty": "Välj ett fält för att redigera",
+    "field_types": {
+      "text": "Textfält",
+      "textarea": "Textområde",
+      "number": "Nummer",
+      "checkbox": "Kryssruta",
+      "select": "Dropdown",
+      "combobox": "Sökbar dropdown",
+      "radiobutton": "Radioknappar",
+      "date": "Datum",
+      "richtext": "Rich text"
+    },
+    "properties": {
+      "name": "Fältnamn",
+      "label": "Label",
+      "description": "Beskrivning",
+      "ui_title": "UI Titel (override)",
+      "ui_description": "UI Beskrivning (override)",
+      "description_below": "Beskrivning under fältet",
+      "required": "Obligatorisk",
+      "placeholder": "Placeholder",
+      "widget": "Widget-typ",
+      "layout": "Layout",
+      "paired": "Parad (2-kolumn)",
+      "has_condition": "Villkorlig visning",
+      "depends_on_field": "Visa om fält",
+      "depends_on_value": "har värde",
+      "required_when_visible": "Obligatorisk om synlig"
+    },
+    "select_field": "Välj fält...",
+    "select_value": "Välj värde..."
+  },
+  "actions": {
+    "create": "Skapa schema",
+    "save": "Spara",
+    "delete": "Ta bort",
+    "back": "Tillbaka"
+  },
+  "messages": {
+    "created": "Schema skapat",
+    "updated": "Ny version av schemat har skapats",
+    "deleted": "Schema borttaget",
+    "ui_schema_saved": "UI-schema sparat",
+    "ui_schema_deleted": "UI-schema borttaget",
+    "error": "Ett fel uppstod"
+  }
+}

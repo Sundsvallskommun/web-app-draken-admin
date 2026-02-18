@@ -1,8 +1,9 @@
+import { JsonEditor } from '@components/json-editor/json-editor';
 import { Resource } from '@interfaces/resource';
 import { FormControl, FormLabel, Input, RadioButton, Textarea } from '@sk-web-gui/react';
 import { useTranslation } from 'next-i18next';
 import dynamic from 'next/dynamic';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { FieldValues, useFormContext } from 'react-hook-form';
 import { capitalize } from 'underscore.string';
 const TextEditor = dynamic(() => import('@sk-web-gui/text-editor'), { ssr: false });
@@ -22,23 +23,61 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew }) => 
 
   const { register, watch, setValue } = useFormContext<DataType>();
 
-  const { content, metadata } = watch();
+  const { content, metadata, defaultValues } = watch();
+
+  // Parse metadata for JsonEditor
+  const parsedMetadata = useMemo(() => {
+    if (typeof metadata === 'string') {
+      try {
+        return JSON.parse(metadata || '[]');
+      } catch {
+        return [];
+      }
+    }
+    return metadata || [];
+  }, [metadata]);
+
+  // Parse defaultValues for JsonEditor
+  const parsedDefaultValues = useMemo(() => {
+    if (typeof defaultValues === 'string') {
+      try {
+        return JSON.parse(defaultValues || '{}');
+      } catch {
+        return {};
+      }
+    }
+    return defaultValues || {};
+  }, [defaultValues]);
+
+  const handleMetadataChange = useCallback(
+    (value: Record<string, unknown>) => {
+      setValue('metadata', JSON.stringify(value, null, 2), { shouldDirty: true });
+    },
+    [setValue]
+  );
+
+  const handleDefaultValuesChange = useCallback(
+    (value: Record<string, unknown>) => {
+      setValue('defaultValues', JSON.stringify(value, null, 2), { shouldDirty: true });
+    },
+    [setValue]
+  );
 
   const hasRichTextEditor = useMemo(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let parsedMetadata: any[] = [];
+    let metadataArray: any[] = [];
     if (typeof metadata === 'string') {
       try {
-        parsedMetadata = JSON.parse(metadata);
+        metadataArray = JSON.parse(metadata);
       } catch {
         return false;
       }
     } else if (Array.isArray(metadata)) {
-      parsedMetadata = metadata;
+      metadataArray = metadata;
     } else {
       return false;
     }
-    return parsedMetadata.some((item) => item.key === 'editor' && item.value === 'richtexteditor');
+    return metadataArray.some((item) => item.key === 'editor' && item.value === 'richtexteditor');
   }, [metadata]);
 
   return (
@@ -74,13 +113,13 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew }) => 
           />
         : <Textarea {...register('content')} rows={25} className="w-[130rem]" />}
       </FormControl>
-      <FormControl>
+      <FormControl className="w-full">
         <FormLabel>{capitalize(t(`templates:properties.metadata`))}</FormLabel>
-        <Textarea {...register('metadata')} rows={25} className="w-[130rem]" />
+        <JsonEditor value={parsedMetadata} onChange={handleMetadataChange} height="400px" />
       </FormControl>
-      <FormControl>
+      <FormControl className="w-full">
         <FormLabel>{capitalize(t(`templates:properties.defaultValues`))}</FormLabel>
-        <Textarea {...register('defaultValues')} rows={25} className="w-[130rem]" />
+        <JsonEditor value={parsedDefaultValues} onChange={handleDefaultValuesChange} height="400px" />
       </FormControl>
       <FormControl>
         <FormLabel>{capitalize(t(`templates:properties.versionIncrement`))}</FormLabel>
