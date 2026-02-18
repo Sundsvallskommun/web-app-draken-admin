@@ -12,6 +12,10 @@ export const APIS = [
     name: 'supportmanagement',
     version: '12.4',
   },
+  {
+    name: 'jsonschema',
+    version: '1.0',
+  },
 ] as const;
 
 export function apiServiceName(name: string): string {

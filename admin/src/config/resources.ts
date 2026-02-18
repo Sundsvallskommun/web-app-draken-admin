@@ -13,6 +13,7 @@ import {
 import { Resource } from '@interfaces/resource';
 import { ID } from '@interfaces/resource-services';
 import { ServiceResponse } from '@interfaces/services';
+import { JsonSchema, JsonSchemaCreateRequest } from '@interfaces/jsonschema';
 import { Template } from '@services/templating/templating-service';
 import { HttpClient } from './http-client';
 
@@ -145,5 +146,86 @@ const templates: Resource<Template> = {
   requiredFields: ['identifier'],
 };
 
-const resources = { featureFlags, templates, roles, statuses, namespaces };
+// Helper to calculate next version
+const getNextSchemaVersion = (currentVersion: string, increment: 'MINOR' | 'MAJOR'): string => {
+  const [major, minor] = currentVersion.split('.').map(Number);
+  if (increment === 'MAJOR') {
+    return `${major + 1}.0`;
+  }
+  return `${major}.${minor + 1}`;
+};
+
+const jsonSchemas: Resource<JsonSchema, Partial<JsonSchemaCreateRequest>, Partial<JsonSchemaCreateRequest>> = {
+  name: 'jsonSchemas',
+
+  getMany: async (municipalityId: number) => {
+    return httpClient.request<ServiceResponse<JsonSchema[]>, unknown>({
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/jsonschemas/${municipalityId}`,
+      method: 'GET',
+    });
+  },
+
+  getOne: async (municipalityId: number, id: ID) => {
+    return httpClient.request<ServiceResponse<JsonSchema>, unknown>({
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/jsonschemas/${municipalityId}/${id}`,
+      method: 'GET',
+    });
+  },
+
+  create: async (municipalityId: number, data: Partial<JsonSchema>) => {
+    const response = await httpClient.request<ServiceResponse<JsonSchema>, unknown>({
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/jsonschemas/${municipalityId}`,
+      method: 'POST',
+      body: data,
+    });
+    return response;
+  },
+
+  // Update creates a new version of the schema (API doesn't support PUT)
+  update: async (municipalityId: number, _id: ID, data: Partial<JsonSchema> & { versionIncrement?: 'MINOR' | 'MAJOR' }) => {
+    const versionIncrement = data.versionIncrement || 'MINOR';
+    const currentVersion = data.version || '1.0';
+    const newVersion = getNextSchemaVersion(currentVersion, versionIncrement);
+
+    // Create new schema with incremented version
+    const createData = {
+      name: data.name,
+      version: newVersion,
+      value: data.value,
+      description: data.description,
+    };
+
+    const response = await httpClient.request<ServiceResponse<JsonSchema>, unknown>({
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/jsonschemas/${municipalityId}`,
+      method: 'POST',
+      body: createData,
+    });
+
+    return {
+      ...response,
+      data: { data: response.data?.data },
+    };
+  },
+
+  remove: async (municipalityId: number, _filter: unknown, id: ID) => {
+    return httpClient.request<ServiceResponse<boolean>, unknown>({
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/jsonschemas/${municipalityId}/${id}`,
+      method: 'DELETE',
+    });
+  },
+
+  defaultValues: {
+    name: '',
+    version: '1.0',
+    value: {
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      type: 'object',
+      properties: {},
+    },
+    description: '',
+  },
+  requiredFields: ['name', 'version', 'value'],
+};
+
+const resources = { featureFlags, templates, jsonSchemas, roles, statuses, namespaces };
 export default resources;
