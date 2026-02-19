@@ -1,0 +1,16 @@
+{
+  "name_zero": "instanser",
+  "name_one": "instans",
+  "name_many": "instanser",
+  "name_other": "instanser",
+  "description": "Hantera Draken-instanser som visas pa landningssidan",
+  "properties": {
+    "id": "ID",
+    "name": "Namn",
+    "url": "URL",
+    "authorizedGroups": "Tillagna grupper",
+    "enabled": "Aktiverad",
+    "createdAt": "Skapad",
+    "updatedAt": "Uppdaterad"
+  }
+}

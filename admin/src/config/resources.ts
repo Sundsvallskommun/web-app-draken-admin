@@ -2,6 +2,8 @@ import { Api } from '@data-contracts/backend/Api';
 import {
   FeatureFlag,
   FeatureFlagRequestDto,
+  Instance,
+  InstanceRequestDto,
   Namespace,
   NamespaceRequestDto,
   Role,
@@ -9,6 +11,7 @@ import {
   Status,
   StatusRequestDto,
   UpdateFeatureFlagDto,
+  UpdateInstanceDto,
 } from '@data-contracts/backend/data-contracts';
 import { Resource } from '@interfaces/resource';
 import { ID } from '@interfaces/resource-services';
@@ -227,5 +230,16 @@ const jsonSchemas: Resource<JsonSchema, Partial<JsonSchemaCreateRequest>, Partia
   requiredFields: ['name', 'version', 'value'],
 };
 
-const resources = { featureFlags, templates, jsonSchemas, roles, statuses, namespaces };
+const instances: Resource<Instance, InstanceRequestDto, UpdateInstanceDto> = {
+  name: 'instances',
+  getOne: apiService.instanceControllerGetInstance,
+  getMany: apiService.instanceControllerGetInstances,
+  create: apiService.instanceControllerCreateInstance,
+  update: apiService.instanceControllerUpdateInstance,
+  remove: apiService.instanceControllerDeleteInstance,
+  defaultValues: { name: '', url: '', authorizedGroups: '', enabled: true },
+  requiredFields: ['name', 'url', 'authorizedGroups'],
+};
+
+const resources = { featureFlags, templates, jsonSchemas, roles, statuses, namespaces, instances };
 export default resources;

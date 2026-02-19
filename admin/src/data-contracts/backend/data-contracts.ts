@@ -137,6 +137,45 @@ export interface StatusApiResponse {
   message: string;
 }
 
+export interface InstanceRequestDto {
+  name: string;
+  url: string;
+  authorizedGroups: string;
+  enabled?: boolean;
+}
+
+export interface UpdateInstanceDto {
+  id: number;
+  name?: string;
+  url?: string;
+  authorizedGroups?: string;
+  enabled?: boolean;
+}
+
+export interface Instance {
+  id: number;
+  name: string;
+  url: string;
+  authorizedGroups: string;
+  enabled: boolean;
+  municipalityId: number;
+}
+
+export interface InstanceDeleteApiResponse {
+  data: boolean;
+  message: string;
+}
+
+export interface InstancesApiResponse {
+  data: Instance[];
+  message: string;
+}
+
+export interface InstanceApiResponse {
+  data: Instance;
+  message: string;
+}
+
 export interface DetailedTemplateResponseDTO {
   identifier?: string;
   version?: string;

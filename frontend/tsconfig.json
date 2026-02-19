@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      },
+    ],
+    "types": [
+      "node",
+      "@simonsmith/cypress-image-snapshot/types"
+     ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "node_modules/dayjs/plugin/utc.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "./*.js",
+    ".next/types/**/*.ts",
+  ],
+  "exclude": ["node_modules"]
+}
