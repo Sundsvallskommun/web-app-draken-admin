@@ -53,7 +53,6 @@ export default function DefaultLayout({
         subtitle={headerSubtitle ? headerSubtitle : ''}
         aria-label={`${headerTitle ? headerTitle : process.env.NEXT_PUBLIC_APP_NAME} ${headerSubtitle}`}
         logoLinkOnClick={handleLogoClick}
-        LogoLinkWrapperComponent={<NextLink legacyBehavior href={logoLinkHref} passHref />}
       />
 
       {preContent && preContent}
