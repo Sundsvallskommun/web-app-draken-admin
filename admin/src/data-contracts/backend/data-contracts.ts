@@ -145,7 +145,7 @@ export interface InstanceRequestDto {
 }
 
 export interface UpdateInstanceDto {
-  id: number;
+  id?: number;
   name?: string;
   url?: string;
   authorizedGroups?: string;
