@@ -80,7 +80,7 @@ export default function Start() {
           <div className="max-w-5xl w-full flex flex-col text-light-primary bg-inverted-background-content p-20 shadow-lg text-left">
             <div className="mb-14">
               <p className="my-0">{capitalize(t('common:admin_for'))}</p>
-              <h1 className="mb-10 text-xl">{process.env.NEXT_PUBLIC_APP_NAME}</h1>
+              <h1 className="mb-10 text-xl">Draken</h1>
               <p className="my-0">{t('login:description')}</p>
             </div>
 

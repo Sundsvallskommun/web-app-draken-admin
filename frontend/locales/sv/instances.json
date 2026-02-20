@@ -1,0 +1,5 @@
+{
+  "title": "Välj applikation",
+  "no_access": "Du har inte tillgång till några applikationer. Kontakta din administratör om du behöver åtkomst.",
+  "error": "Något gick fel vid hämtning av applikationer. Försök igen senare."
+}

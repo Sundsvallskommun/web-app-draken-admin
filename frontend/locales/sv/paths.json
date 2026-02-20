@@ -1,0 +1,10 @@
+{
+  "/login": {
+    "title": "Inloggningssida",
+    "description": "Logga in för att komma åt dina applikationer"
+  },
+  "/instances": {
+    "title": "Välj applikation",
+    "description": "Välj vilken applikation du vill använda"
+  }
+}
