@@ -4,11 +4,12 @@
   "name_many": "instanser",
   "name_other": "instanser",
   "description": "Hantera Draken-instanser som visas pa landningssidan",
+  "municipalityId": "Kommunkod",
   "properties": {
     "id": "ID",
     "name": "Namn",
     "url": "URL",
-    "authorizedGroups": "Tillagna grupper",
+    "authorizedGroups": "Auktoriserade grupper",
     "enabled": "Aktiverad",
     "createdAt": "Skapad",
     "updatedAt": "Uppdaterad"
