@@ -19,10 +19,11 @@ interface ListLayoutProp {
   properties?: string[];
   children?: React.ReactNode;
   showFilter?: boolean;
+  extraFilters?: React.ReactNode;
   onImportTemplate?: (data: TemplateExport) => void;
 }
 
-export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, children, showFilter, onImportTemplate }) => {
+export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, children, showFilter, extraFilters, onImportTemplate }) => {
   const apiService = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCredentials: true });
   const { t } = useTranslation();
   const router = useRouter();
@@ -122,6 +123,7 @@ export const ListLayout: React.FC<ListLayoutProp> = ({ resource, properties, chi
                     </Select>
                   </FormControl>
                 )}
+                {extraFilters}
                 {loading && <Spinner size={2.5} />}
               </span>
             </div>
