@@ -1,4 +1,5 @@
 import { HttpException } from '@/exceptions/HttpException';
+import { API_BASE_URL, CLIENT_KEY, CLIENT_SECRET } from '@config';
 import { apiURL } from '@/utils/util';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import ApiTokenService from './api-token.service';
@@ -10,8 +11,27 @@ class ApiResponse<T> {
 }
 
 class ApiService {
-  private apiTokenService = new ApiTokenService();
-  private async request<T>(config: AxiosRequestConfig, user): Promise<ApiResponse<T>> {
+  private apiTokenService: ApiTokenService;
+  private customBaseUrl?: string;
+
+  constructor(baseUrl?: string, clientKey?: string, clientSecret?: string) {
+    this.customBaseUrl = baseUrl;
+    this.apiTokenService = ApiTokenService.getInstance(
+      baseUrl || API_BASE_URL,
+      clientKey || CLIENT_KEY,
+      clientSecret || CLIENT_SECRET,
+    );
+  }
+
+  private buildUrl(path: string): string {
+    if (this.customBaseUrl) {
+      const parts = [this.customBaseUrl, path];
+      return parts.map(p => p.replace(/(^\/|\/$)/g, '')).join('/');
+    }
+    return apiURL(path);
+  }
+
+  private async request<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
     const token = await this.apiTokenService.getToken();
 
     const defaultHeaders = {
@@ -25,7 +45,7 @@ class ApiService {
       ...config,
       headers: { ...defaultHeaders, ...config.headers },
       params: { ...defaultParams, ...config.params },
-      url: apiURL(config.url),
+      url: this.buildUrl(config.url),
     };
 
     try {
@@ -52,7 +72,7 @@ class ApiService {
     return this.request<T>({ ...config, method: 'PATCH' }, user);
   }
 
-    public async put<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
+  public async put<T>(config: AxiosRequestConfig, user: User): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'PUT' }, user);
   }
 
