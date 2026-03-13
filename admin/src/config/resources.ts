@@ -10,6 +10,7 @@ import {
   StatusRequestDto,
   UpdateFeatureFlagDto,
 } from '@data-contracts/backend/data-contracts';
+import { LabelNode } from '@interfaces/label';
 import { Resource } from '@interfaces/resource';
 import { ID } from '@interfaces/resource-services';
 import { ServiceResponse } from '@interfaces/services';
@@ -227,5 +228,32 @@ const jsonSchemas: Resource<JsonSchema, Partial<JsonSchemaCreateRequest>, Partia
   requiredFields: ['name', 'version', 'value'],
 };
 
-const resources = { featureFlags, templates, jsonSchemas, roles, statuses, namespaces };
+const labels: Resource<LabelNode> = {
+  name: 'labels',
+
+  getMany: async (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    }
+  ) => {
+    if (!query?.namespace) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { data: { data: [], message: 'no namespace' } } as any;
+    }
+    return httpClient.request<ServiceResponse<LabelNode[]>, unknown>({
+      path: `${process.env.NEXT_PUBLIC_API_PATH}/labels/${municipalityId}/${query.namespace}`,
+      method: 'GET',
+    });
+  },
+
+  defaultValues: {
+    classification: '',
+    displayName: '',
+    resourceName: '',
+  },
+  requiredFields: ['classification', 'resourceName'],
+};
+
+const resources = { featureFlags, templates, jsonSchemas, roles, statuses, namespaces, labels };
 export default resources;
