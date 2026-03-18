@@ -1,0 +1,14 @@
+{
+  "description": "Logga in för att komma åt dina Draken-applikationer",
+  "errors": {
+    "NOT_AUTHORIZED": "Inte inloggad",
+    "SAML_MISSING_GROUP": "Användaren saknar rätt grupper",
+    "SAML_MISSING_ATTRIBUTES": "Användaren saknar rätt attribut",
+    "MISSING_PERMISSIONS": "Användaren saknar rättigheter",
+    "NO_USER": "Misslyckades att konfigurera användare"
+  },
+  "login_problem": "Har du problem med inloggningen, kontakta din administratör",
+  "choose_login_method": "Välj hur du vill logga in",
+  "logged_out_title": "Du är nu utloggad",
+  "login_again_button": "Logga in igen"
+}

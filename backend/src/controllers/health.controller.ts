@@ -20,6 +20,7 @@ export class HealthController {
     const dummyUser: User = {
       name: '',
       username: '',
+      groups: [],
       permissions: { canUseAdminPanel: false },
       givenName: '',
       surname: '',

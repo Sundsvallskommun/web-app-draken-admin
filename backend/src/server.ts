@@ -8,6 +8,7 @@ import { LabelsController } from './controllers/labels.controller';
 import { NamespaceController } from './controllers/namespace.controller';
 import { RolesController } from './controllers/roles.controller';
 import { StatusesController } from './controllers/statuses.controller';
+import { InstanceController } from './controllers/instance.controller';
 import { TemplateController } from './controllers/templates.controller';
 import { UserController } from './controllers/user.controller';
 
@@ -19,6 +20,7 @@ const app = new App([
   HealthController,
   TemplateController,
   FeatureFlagController,
+  InstanceController,
   NamespaceController,
   RolesController,
   StatusesController,

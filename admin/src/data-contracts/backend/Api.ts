@@ -16,6 +16,10 @@ import {
   FeatureFlagDeleteApiResponse,
   FeatureFlagRequestDto,
   FeatureFlagsApiResponse,
+  InstanceApiResponse,
+  InstanceDeleteApiResponse,
+  InstanceRequestDto,
+  InstancesApiResponse,
   NamespaceApiResponse,
   NamespaceRequestDto,
   NamespacesApiResponse,
@@ -28,6 +32,7 @@ import {
   StatusesApiResponse,
   StatusRequestDto,
   UpdateFeatureFlagDto,
+  UpdateInstanceDto,
   UserApiResponse,
 } from "./data-contracts";
 import { ContentType, HttpClient, RequestParams } from "./http-client";
@@ -145,6 +150,103 @@ export class Api<
   ) =>
     this.request<FeatureFlagDeleteApiResponse, any>({
       path: `/api/featureflags/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Instance
+   * @name InstanceControllerCreateInstance
+   * @summary Create a new instance
+   * @request POST:/api/instances/{municipalityId}
+   */
+  instanceControllerCreateInstance = (
+    municipalityId: number,
+    data?: InstanceRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<InstanceApiResponse, any>({
+      path: `/api/instances/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Instance
+   * @name InstanceControllerGetInstances
+   * @summary Get all instances
+   * @request GET:/api/instances/{municipalityId}
+   */
+  instanceControllerGetInstances = (
+    municipalityId: number,
+    query?: Record<string, unknown>,
+    params: RequestParams = {},
+  ) =>
+    this.request<InstancesApiResponse, any>({
+      path: `/api/instances/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Instance
+   * @name InstanceControllerGetInstance
+   * @summary Get an instance using id
+   * @request GET:/api/instances/{municipalityId}/{id}
+   */
+  instanceControllerGetInstance = (
+    municipalityId: number,
+    id: number,
+    params: RequestParams = {},
+  ) =>
+    this.request<InstanceApiResponse, any>({
+      path: `/api/instances/${municipalityId}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Instance
+   * @name InstanceControllerUpdateInstance
+   * @summary Update an instance
+   * @request PUT:/api/instances/{municipalityId}/{id}
+   */
+  instanceControllerUpdateInstance = (
+    municipalityId: number,
+    id: number,
+    data?: UpdateInstanceDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<InstanceApiResponse, any>({
+      path: `/api/instances/${municipalityId}/${id}`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Instance
+   * @name InstanceControllerDeleteInstance
+   * @summary Delete an instance
+   * @request DELETE:/api/instances/{municipalityId}/{id}
+   */
+  instanceControllerDeleteInstance = (
+    municipalityId: number,
+    _filter: string,
+    id: number,
+    params: RequestParams = {},
+  ) =>
+    this.request<InstanceDeleteApiResponse, any>({
+      path: `/api/instances/${municipalityId}/${id}`,
       method: "DELETE",
       ...params,
     });

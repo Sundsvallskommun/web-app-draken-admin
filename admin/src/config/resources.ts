@@ -2,6 +2,8 @@ import { Api } from '@data-contracts/backend/Api';
 import {
   FeatureFlag,
   FeatureFlagRequestDto,
+  Instance,
+  InstanceRequestDto,
   Namespace,
   NamespaceRequestDto,
   Role,
@@ -9,6 +11,7 @@ import {
   Status,
   StatusRequestDto,
   UpdateFeatureFlagDto,
+  UpdateInstanceDto,
 } from '@data-contracts/backend/data-contracts';
 import { LabelNode } from '@interfaces/label';
 import { Resource } from '@interfaces/resource';
@@ -228,6 +231,17 @@ const jsonSchemas: Resource<JsonSchema, Partial<JsonSchemaCreateRequest>, Partia
   requiredFields: ['name', 'version', 'value'],
 };
 
+const instances: Resource<Instance, InstanceRequestDto, UpdateInstanceDto> = {
+  name: 'instances',
+  getOne: apiService.instanceControllerGetInstance,
+  getMany: apiService.instanceControllerGetInstances,
+  create: apiService.instanceControllerCreateInstance,
+  update: apiService.instanceControllerUpdateInstance,
+  remove: apiService.instanceControllerDeleteInstance,
+  defaultValues: { name: '', url: '', authorizedGroups: '', enabled: true },
+  requiredFields: ['name', 'url', 'authorizedGroups'],
+};
+
 const labels: Resource<LabelNode> = {
   name: 'labels',
 
@@ -255,5 +269,5 @@ const labels: Resource<LabelNode> = {
   requiredFields: ['classification', 'resourceName'],
 };
 
-const resources = { featureFlags, templates, jsonSchemas, roles, statuses, namespaces, labels };
+const resources = { featureFlags, templates, jsonSchemas, roles, statuses, labels, namespaces, instances };
 export default resources;

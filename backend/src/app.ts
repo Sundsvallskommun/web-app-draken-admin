@@ -1,5 +1,4 @@
 import {
-  ADMIN_PANEL_GROUP,
   APP_NAME,
   BASE_URL_PREFIX,
   CREDENTIALS,
@@ -117,16 +116,7 @@ const samlStrategy = new Strategy(
         ? groups.split(',').map(x => x.toLowerCase())
         : [];
 
-    const requiredGroup = ADMIN_PANEL_GROUP?.toLowerCase();
-    if (!requiredGroup || !groupList.includes(requiredGroup)) {
-      logger.error(`User ${username} does not have required group: ${ADMIN_PANEL_GROUP}. User groups: ${groupList.join(', ')}`);
-      return done(null, null, {
-        name: 'SAML_UNAUTHORIZED',
-        message: 'User does not have permission to access this application',
-      });
-    }
-
-    const appGroups: ADRole[] = [requiredGroup as ADRole];
+    const appGroups: ADRole[] = groupList;
 
     try {
       // const personNumber = profile.citizenIdentifier;
@@ -146,7 +136,7 @@ const samlStrategy = new Strategy(
         lastName: sn,
         username: username,
         email: email,
-        groups: appGroups,
+        groups: groupList,
         role: getRole(appGroups),
         permissions: getPermissions(appGroups),
       };
