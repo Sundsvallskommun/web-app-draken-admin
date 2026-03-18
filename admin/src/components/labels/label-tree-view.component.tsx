@@ -1,4 +1,5 @@
 import { LabelNode } from '@interfaces/label';
+import { LabelCopyFields } from '@components/labels/label-copy-fields.component';
 import { ChevronDown, ChevronRight, FolderOpen, Tag } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
 import { useState } from 'react';
@@ -63,7 +64,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth, isLast, parentLines, s
   return (
     <div>
       {/* Node row */}
-      <div className="flex items-center" style={{ minHeight: '36px' }}>
+      <div className="flex items-center flex-wrap gap-y-4" style={{ minHeight: '36px' }}>
         {/* Tree lines */}
         {parentLines.map((showLine, i) => (
           <span
@@ -113,7 +114,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth, isLast, parentLines, s
 
         {/* Label name */}
         <button
-          className={`text-sm truncate hover:underline cursor-pointer text-left ${isMatch ? 'font-bold' : ''}`}
+          className={`truncate hover:underline cursor-pointer text-left ${isMatch ? 'font-bold' : ''}`}
           onClick={() => onNavigate?.(nodePath)}
         >
           {highlightMatch(name, searchQuery)}
@@ -126,10 +127,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth, isLast, parentLines, s
           </span>
         )}
 
-        {/* Classification tag */}
-        <span className="text-xs text-dark-disabled ml-8 shrink-0">
-          {node.classification}
-        </span>
+        <span className="text-xs text-dark-disabled ml-8 shrink-0">{node.classification}</span>
+        <LabelCopyFields label={node} className="ml-8 shrink-0" />
       </div>
 
       {/* Children */}
