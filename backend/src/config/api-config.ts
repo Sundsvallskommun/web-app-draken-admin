@@ -6,11 +6,11 @@ export const APIS = [
   },
   {
     name: 'templating',
-    version: '2.0',
+    version: '2.1',
   },
   {
     name: 'supportmanagement',
-    version: '12.4',
+    version: '12.6',
   },
   {
     name: 'jsonschema',
