@@ -2,6 +2,7 @@ import { LabelNode } from '@interfaces/label';
 import { getLabels, saveLabels } from '@services/label-service';
 import { Button, FormControl, FormLabel, Input, Spinner, useSnackbar } from '@sk-web-gui/react';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
+import { LabelCopyFields } from '@components/labels/label-copy-fields.component';
 import { LabelTreeView } from '@components/labels/label-tree-view.component';
 import { ChevronRight, FolderOpen, List, Network, Pencil, Plus, Tag, Trash, X } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
@@ -36,6 +37,32 @@ const getNodeAtPath = (tree: LabelNode[], path: number[]): LabelNode[] => {
     current = current[index]?.labels ?? [];
   }
   return current;
+};
+
+/** Reconcile an index-based path after the tree has been replaced (e.g. by an API response).
+ *  Walks both trees level by level, matching nodes by id or resourceName,
+ *  so the path keeps pointing at the same logical node even if ordering changed. */
+const reconcilePath = (oldTree: LabelNode[], newTree: LabelNode[], oldPath: number[]): number[] => {
+  const newPath: number[] = [];
+  let oldLevel = oldTree;
+  let newLevel = newTree;
+
+  for (const idx of oldPath) {
+    const target = oldLevel[idx];
+    if (!target) break;
+
+    const newIdx = newLevel.findIndex(
+      (n) => (target.id && n.id === target.id) || n.resourceName === target.resourceName
+    );
+
+    if (newIdx === -1) break;
+
+    newPath.push(newIdx);
+    oldLevel = target.labels ?? [];
+    newLevel = newLevel[newIdx]?.labels ?? [];
+  }
+
+  return newPath;
 };
 
 /** Clone tree and apply a mutation at the given path */
@@ -114,7 +141,6 @@ const searchTree = (
 
   return results;
 };
-
 export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
   const { t } = useTranslation(['labels', 'common']);
   const message = useSnackbar();
@@ -201,6 +227,7 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
     try {
       const res = await saveLabels(municipalityId, namespace, stripForApi(newTree), isNew);
       const labels = res.data.data ?? [];
+      setPath((prev) => reconcilePath(newTree, labels, prev));
       setData(labels);
       setIsNew(false);
       message({ message: t('labels:save_success'), status: 'success' });
@@ -367,33 +394,41 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
               {searchResults.map((result, i) => {
                 const childCount = result.label.labels?.length ?? 0;
                 return (
-                  <button
+                  <div
                     key={result.label.id ?? `search-${i}`}
-                    className="flex items-center gap-12 p-12 rounded-button border border-divider bg-background-content hover:bg-background-200 text-left cursor-pointer"
-                    onClick={() => handleSearchNavigate(result)}
+                    className="flex items-start gap-12 p-12 rounded-button border border-divider bg-background-content hover:bg-background-200"
                   >
                     <span className="text-dark-secondary">
                       {childCount > 0 ? <FolderOpen size={18} /> : <Tag size={18} />}
                     </span>
-                    <div className="flex flex-col gap-2">
-                      <span className="font-medium">
-                        {result.label.displayName || result.label.classification}
-                      </span>
-                      <span className="text-sm text-dark-secondary flex items-center gap-4">
-                        {result.breadcrumb.map((part, j) => (
-                          <span key={j} className="flex items-center gap-4">
-                            {j > 0 && <ChevronRight size={12} />}
-                            {part}
+                    <div className="flex flex-col gap-6 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        className="flex flex-col gap-2 min-w-0 text-left cursor-pointer"
+                        onClick={() => handleSearchNavigate(result)}
+                      >
+                        <span className="font-medium">
+                          {result.label.displayName || result.label.classification}
+                        </span>
+                        {result.breadcrumb.length > 0 && (
+                          <span className="text-sm text-dark-secondary flex items-center gap-4 flex-wrap">
+                            {result.breadcrumb.map((part, j) => (
+                              <span key={j} className="flex items-center gap-4">
+                                {j > 0 && <ChevronRight size={12} />}
+                                {part}
+                              </span>
+                            ))}
                           </span>
-                        ))}
-                      </span>
+                        )}
+                      </button>
+                      <LabelCopyFields label={result.label} />
                     </div>
                     {childCount > 0 && (
                       <span className="bg-vattjom-surface-primary text-vattjom-text-secondary text-xs px-8 py-2 rounded-button ml-auto">
                         {childCount}
                       </span>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </>
@@ -439,6 +474,7 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
 
             {currentChildren.map((label, index) => {
               const childCount = label.labels?.length ?? 0;
+              const descendantCount = countDescendants(label);
               const isEditing = editingIndex === index;
               const isDeleting = deleteConfirmIndex === index;
 
@@ -524,7 +560,7 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
                     <div className="flex items-center gap-8 flex-grow">
                       <span className="flex-grow">
                         {t('labels:delete_confirm')} <strong>{label.displayName || label.classification}</strong>
-                        {childCount > 0 && ` ${t('labels:delete_with_children', { count: countDescendants(label) })}`}?
+                        {descendantCount > 0 && ` ${t('labels:delete_with_children', { count: descendantCount })}`}?
                       </span>
                       <Button size="sm" color="error" onClick={() => handleDelete(index)} disabled={saving}>
                         {t('labels:delete_confirm')}
@@ -536,11 +572,12 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
                   ) : (
                     /* Normal display */
                     <>
-                      <button
-                        className="flex items-center gap-8 flex-grow text-left cursor-pointer"
-                        onClick={() => handleDrillDown(index)}
-                      >
-                        <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-6 flex-grow">
+                        <button
+                          type="button"
+                          className="flex items-center gap-8 text-left cursor-pointer"
+                          onClick={() => handleDrillDown(index)}
+                        >
                           <div className="flex items-center gap-8">
                             <span className="font-medium">{label.displayName || label.classification}</span>
                             {childCount > 0 && (
@@ -549,16 +586,20 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
                               </span>
                             )}
                           </div>
-                          {path.length === 0 && childCount > 0 && (
-                            <span className="text-xs text-dark-secondary">
-                              {t('labels:depth_summary', {
-                                levels: maxDepth(label) - 1,
-                                total: countDescendants(label),
-                              })}
-                            </span>
-                          )}
+                        </button>
+                        <div className="flex items-center gap-8">
+                          <span className="text-xs text-dark-disabled">{label.classification}</span>
+                          <LabelCopyFields label={label} />
                         </div>
-                      </button>
+                        {path.length === 0 && descendantCount > 0 && (
+                          <span className="text-xs text-dark-secondary">
+                            {t('labels:depth_summary', {
+                              levels: maxDepth(label) - 1,
+                              total: descendantCount,
+                            })}
+                          </span>
+                        )}
+                      </div>
                       <span className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           size="sm"

@@ -28,5 +28,8 @@
   "root": "Labels",
   "view_list": "Listvy",
   "view_tree": "Trädvy",
-  "depth_summary": "{{levels}} nivåer, {{total}} labels totalt"
+  "depth_summary": "{{levels}} nivåer, {{total}} labels totalt",
+  "copy_field": "Kopiera {{field}}",
+  "copy_success": "{{field}} kopierades",
+  "copy_error": "Kunde inte kopiera {{field}}"
 }
