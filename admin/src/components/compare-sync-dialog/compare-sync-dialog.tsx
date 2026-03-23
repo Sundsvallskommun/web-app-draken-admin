@@ -1,4 +1,5 @@
 import { CompareItem } from '@services/compare-service';
+import { stripTestApprovalMetadata } from '@utils/template-metadata';
 import { Button, FormControl, FormLabel, Icon, Modal, Select, Spinner, Textarea } from '@sk-web-gui/react';
 import { AlertTriangle } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -60,7 +61,7 @@ export const CompareSyncDialog: React.FC<CompareSyncDialogProps> = ({
       identifier: item.identifier,
       name: item.name ?? item.identifier,
       content: detail.compareContent ?? '',
-      metadata: detail.compareMetadata ?? '[]',
+      metadata: stripTestApprovalMetadata(detail.compareMetadata ?? '[]'),
       defaultValues: detail.compareDefaultValues ?? '[]',
       versionIncrement,
       changeLog,

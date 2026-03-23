@@ -6,6 +6,7 @@ import DefaultLayout from '@layouts/default-layout/default-layout.component';
 import { Header } from '@layouts/header/header.component';
 import Main from '@layouts/main/main.component';
 import { CompareItem, CompareResult, checkCompareAvailable, fetchCompare } from '@services/compare-service';
+import { getMetadataValue, TEST_STATUS_KEY, TEST_STATUS_APPROVED } from '@utils/template-metadata';
 import { useCrudHelper } from '@utils/use-crud-helpers';
 import { AutoTable, AutoTableHeader, Badge, Button, Disclosure, FormControl, FormLabel, Icon, Select, Spinner } from '@sk-web-gui/react';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
@@ -71,6 +72,12 @@ export const TemplateCompare: React.FC = () => {
   const [syncType, setSyncType] = useState<SyncType>('create');
   const [syncing, setSyncing] = useState(false);
   const [syncedIdentifiers, setSyncedIdentifiers] = useState<Set<string>>(new Set());
+
+  const isItemApproved = useCallback((item: CompareItem): boolean => {
+    const meta = item.detail?.compareMetadata;
+    if (!meta) return false;
+    return getMetadataValue(meta, TEST_STATUS_KEY) === TEST_STATUS_APPROVED;
+  }, []);
 
   const { handleCreate } = useCrudHelper('templates');
 
@@ -175,6 +182,7 @@ export const TemplateCompare: React.FC = () => {
         const isSynced = syncedIdentifiers.has(value);
         return (
           <div className="text-right w-full flex items-center justify-end gap-4">
+            {item && isItemApproved(item) && <Badge color="gronsta" rounded>Godkänd</Badge>}
             {isSynced && <Badge color="juniskar" rounded>Synkad</Badge>}
             {item?.detail && !isSynced && (
               <button onClick={() => openSyncDialog(item, 'create')} aria-label="Synkronisera mall">
@@ -213,6 +221,7 @@ export const TemplateCompare: React.FC = () => {
         const isSynced = syncedIdentifiers.has(value);
         return (
           <div className="text-right w-full flex items-center justify-end gap-4">
+            {item && isItemApproved(item) && <Badge color="gronsta" rounded>Godkänd</Badge>}
             {isSynced && <Badge color="juniskar" rounded>Synkad</Badge>}
             {item?.detail && !isSynced && (
               <button onClick={() => openSyncDialog(item, 'update')} aria-label="Synkronisera mall">
