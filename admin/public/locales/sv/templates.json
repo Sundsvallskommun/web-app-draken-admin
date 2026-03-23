@@ -21,6 +21,7 @@
     "changeLog": "ändringslogg",
     "createdAt": "skapad",
     "updatedAt": "uppdaterad",
-    "version": "version"
+    "version": "version",
+    "templateType": "malltyp"
   }
 }

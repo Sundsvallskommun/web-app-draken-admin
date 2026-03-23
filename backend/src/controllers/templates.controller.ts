@@ -121,7 +121,11 @@ export class TemplateController {
       }
 
       const encodedTemplate = {
-        ...template,
+        identifier: template.identifier,
+        name: template.name,
+        description: template.description,
+        changeLog: template.changeLog,
+        versionIncrement: (template as any).versionIncrement || 'MINOR',
         metadata: parsedMetadata,
         defaultValues: parsedDefaultValues,
         content: typeof template.content === 'string' ? Buffer.from(template.content, 'utf-8').toString('base64') : template.content,
