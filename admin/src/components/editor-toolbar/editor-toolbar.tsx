@@ -6,7 +6,7 @@ import { useCrudHelper } from '@utils/use-crud-helpers';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useResource } from '@utils/use-resource';
 import { exportTemplateToJson } from '@utils/template-export-import';
-import { Download, Save, Trash } from 'lucide-react';
+import { Download, LockOpen, Save, ShieldCheck, Trash } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -17,9 +17,12 @@ interface ToolbarProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   id?: any;
   isDirty?: boolean;
+  isApproved?: boolean;
+  onApprove?: () => void;
+  onUnapprove?: () => void;
 }
 
-export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id }) => {
+export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id, isApproved, onApprove, onUnapprove }) => {
   const router = useRouter();
   const parentPath = resource ? `/${resource}` : router.pathname.split('/[')[0].replace('/new', '');
   const { remove } = resources[resource];
@@ -77,17 +80,19 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
   const { t } = useTranslation();
   return (
     <Button.Group className="absolute top-40 right-48 w-fit">
-      <Button
-        type="submit"
-        color="vattjom"
-        size="sm"
-        data-cy="edit-toolbar-save"
-        showBackground={false}
-        leftIcon={<Save />}
-        disabled={!isDirty}
-        iconButton
-        aria-label={capitalize(t('common:save'))}
-      ></Button>
+      {!isApproved && (
+        <Button
+          type="submit"
+          color="vattjom"
+          size="sm"
+          data-cy="edit-toolbar-save"
+          showBackground={false}
+          leftIcon={<Save />}
+          disabled={!isDirty}
+          iconButton
+          aria-label={capitalize(t('common:save'))}
+        ></Button>
+      )}
 
       {((!!remove && id) || !id) && resource !== 'templates' && (
         <>
@@ -107,6 +112,47 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id })
       )}
       {resource === 'templates' && (
         <>
+          {!isApproved && id && (
+            <Button
+              variant="tertiary"
+              color="gronsta"
+              showBackground={false}
+              data-cy="edit-toolbar-approve"
+              aria-label="Godkänn för produktion"
+              size="sm"
+              onClick={() => onApprove?.()}
+              disabled={isDirty}
+              leftIcon={<ShieldCheck />}
+            >
+              Godkänn för produktion
+            </Button>
+          )}
+          {isApproved && (
+            <Button
+              variant="tertiary"
+              color="warning"
+              showBackground={false}
+              data-cy="edit-toolbar-unlock"
+              aria-label="Lås upp"
+              size="sm"
+              leftIcon={<LockOpen />}
+              onClick={() => {
+                confirm
+                  .showConfirmation(
+                    'Lås upp mall',
+                    'Godkännandet tas bort och mallen sparas utan teststatus. Vill du fortsätta?',
+                    'Lås upp',
+                    'Avbryt',
+                    'warning'
+                  )
+                  .then((confirmed) => {
+                    if (confirmed) onUnapprove?.();
+                  });
+              }}
+            >
+              Lås upp
+            </Button>
+          )}
           <Button
             variant="tertiary"
             showBackground={false}

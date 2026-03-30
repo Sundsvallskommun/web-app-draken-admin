@@ -15,7 +15,7 @@ export const Menu = () => {
       return path.startsWith(`${process.env.NEXT_PUBLIC_BASE_PATH}/${resource}`);
     });
     if (resource) {
-      setCurrent(`${resource}${path.endsWith('/new') ? '-new' : path.endsWith('/search') ? '-search' : ''}`);
+      setCurrent(`${resource}${path.endsWith('/new') ? '-new' : path.endsWith('/search') ? '-search' : path.endsWith('/compare') ? '-compare' : path.endsWith('/test-status') ? '-test-status' : ''}`);
     } else {
       setCurrent('');
     }
@@ -57,10 +57,24 @@ export const Menu = () => {
                       </NextLink>
                     </MenuVertical.Item>
                   )}
-                  {resourcename === 'templates' &&  (
+                  {resourcename === 'templates' && (
                     <MenuVertical.Item menuIndex={`${resource.name}-search`}>
                       <NextLink href={`/${resource.name}/search`}>
                         Sök efter mall
+                      </NextLink>
+                    </MenuVertical.Item>
+                  )}
+                  {resourcename === 'templates' && (
+                    <MenuVertical.Item menuIndex={`${resource.name}-test-status`}>
+                      <NextLink href={`/${resource.name}/test-status`}>
+                        Teststatus
+                      </NextLink>
+                    </MenuVertical.Item>
+                  )}
+                  {resourcename === 'templates' && (
+                    <MenuVertical.Item menuIndex={`${resource.name}-compare`}>
+                      <NextLink href={`/${resource.name}/compare`}>
+                        Jämför miljöer
                       </NextLink>
                     </MenuVertical.Item>
                   )}

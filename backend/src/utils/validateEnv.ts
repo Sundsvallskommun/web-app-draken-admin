@@ -18,6 +18,10 @@ const validateEnv = () => {
     SAML_IDP_PUBLIC_CERT: str(),
     SAML_PRIVATE_KEY: str(),
     SAML_PUBLIC_KEY: str(),
+    // Optional: compare environment for diff features (e.g. prod reading from test)
+    API_COMPARE_URL: str({ default: '' }),
+    CLIENT_KEY_COMPARE: str({ default: '' }),
+    CLIENT_SECRET_COMPARE: str({ default: '' }),
   });
 };
 
