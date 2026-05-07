@@ -4,6 +4,9 @@
   "name_many": "statusar",
   "name_other": "statusar",
   "properties": {
-    "name": "namn"
+    "name": "namn",
+    "displayName": "visningsnamn",
+    "externalDisplayName": "externt visningsnamn",
+    "namespace": "namespace"
   }
 }

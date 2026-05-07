@@ -1,17 +1,22 @@
+import { JsonNode } from '@/data-contracts/jsonschema/data-contracts';
 import { IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class JsonSchemaResponseDTO {
   @IsString()
-  id: string;
+  @IsOptional()
+  id?: string;
 
   @IsString()
-  name: string;
+  @IsOptional()
+  name?: string;
 
   @IsString()
-  version: string;
+  @IsOptional()
+  version?: string;
 
   @IsObject()
-  value: Record<string, unknown>;
+  @IsOptional()
+  value?: JsonNode;
 
   @IsString()
   @IsOptional()
@@ -32,10 +37,12 @@ export class JsonSchemaResponseDTO {
 
 export class UiSchemaResponseDTO {
   @IsString()
-  id: string;
+  @IsOptional()
+  id?: string;
 
   @IsObject()
-  value: Record<string, unknown>;
+  @IsOptional()
+  value?: JsonNode;
 
   @IsString()
   @IsOptional()

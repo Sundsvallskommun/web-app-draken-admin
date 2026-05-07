@@ -18,7 +18,7 @@ export const Statuses: React.FC = () => {
   const filter = activeNamespace ? { namespace: activeNamespace } : undefined;
   const resource = 'statuses';
 
-  const properties = ['name', 'createdAt', 'updatedAt'];
+  const properties = ['name', 'displayName', 'externalDisplayName', 'namespace', 'createdAt', 'updatedAt'];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, refresh, loaded } = useResource(resource, filter as any);
@@ -28,10 +28,15 @@ export const Statuses: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeNamespace, municipalityId]);
 
+  const dataWithCompositeId = data?.map((status) => ({
+    ...status,
+    editId: `${status.namespace}/${status.id}`,
+  }));
+
   return (
     resource && (
       <ListLayout resource={resource} properties={properties} showFilter>
-        {loaded && <ListResources resource={resource} data={data} properties={properties} filter={activeNamespace} editProperty='name'/>}
+        {loaded && <ListResources resource={resource} data={dataWithCompositeId} properties={properties} filter={activeNamespace} editProperty='editId'/>}
       </ListLayout>
     )
   );

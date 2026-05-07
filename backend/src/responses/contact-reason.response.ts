@@ -1,19 +1,16 @@
-import { Status as supportmanagementStatus } from '@/data-contracts/supportmanagement/data-contracts';
+import { ContactReason as supportmanagementContactReason } from '@/data-contracts/supportmanagement/data-contracts';
 import ApiResponse from '@/interfaces/api-service.interface';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
 
-export class Status implements supportmanagementStatus {
+export class ContactReason implements supportmanagementContactReason {
   @IsString()
   id: string;
   @IsString()
-  name: string;
+  reason: string;
   @IsString()
   @IsOptional()
   displayName?: string;
-  @IsString()
-  @IsOptional()
-  externalDisplayName?: string;
   @IsString()
   @IsOptional()
   namespace?: string;
@@ -25,24 +22,25 @@ export class Status implements supportmanagementStatus {
   updatedAt?: string;
 }
 
-export class StatusDeleteApiResponse implements ApiResponse<boolean> {
+export class ContactReasonDeleteApiResponse implements ApiResponse<boolean> {
   @IsBoolean()
   data: boolean;
   @IsString()
   message: string;
 }
 
-export class StatusesApiResponse implements ApiResponse<Status[]> {
+export class ContactReasonsApiResponse implements ApiResponse<ContactReason[]> {
   @ValidateNested({ each: true })
-  @Type(() => Status)
-  data: Status[];
+  @Type(() => ContactReason)
+  data: ContactReason[];
   @IsString()
   message: string;
 }
-export class StatusApiResponse implements ApiResponse<Status> {
+
+export class ContactReasonApiResponse implements ApiResponse<ContactReason> {
   @ValidateNested()
-  @Type(() => Status)
-  data: Status;
+  @Type(() => ContactReason)
+  data: ContactReason;
   @IsString()
   message: string;
 }

@@ -1,0 +1,11 @@
+{
+  "name_zero": "kontaktorsaker",
+  "name_one": "kontaktorsak",
+  "name_many": "kontaktorsaker",
+  "name_other": "kontaktorsaker",
+  "properties": {
+    "reason": "orsak",
+    "displayName": "visningsnamn",
+    "namespace": "namespace"
+  }
+}

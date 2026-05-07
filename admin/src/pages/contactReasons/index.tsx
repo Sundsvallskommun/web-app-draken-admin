@@ -8,7 +8,7 @@ import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
-export const Roles: React.FC = () => {
+export const ContactReasons: React.FC = () => {
   const router = useRouter();
   const { namespace: urlNamespace } = router.query;
 
@@ -16,9 +16,9 @@ export const Roles: React.FC = () => {
 
   const activeNamespace = typeof urlNamespace === 'string' ? urlNamespace : selectedNamespace || undefined;
   const filter = activeNamespace ? { namespace: activeNamespace } : undefined;
-  const resource = 'roles';
+  const resource = 'contactReasons';
 
-  const properties = ['name', 'displayName', 'namespace', 'createdAt', 'updatedAt'];
+  const properties = ['reason', 'displayName', 'namespace', 'createdAt', 'updatedAt'];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, refresh, loaded } = useResource(resource, filter as any);
@@ -28,9 +28,9 @@ export const Roles: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeNamespace, municipalityId]);
 
-  const dataWithCompositeId = data?.map((role) => ({
-    ...role,
-    editId: `${role.namespace}/${role.id}`,
+  const dataWithCompositeId = data?.map((contactReason) => ({
+    ...contactReason,
+    editId: `${contactReason.namespace}/${contactReason.id}`,
   }));
 
   return (
@@ -48,4 +48,4 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
   },
 });
 
-export default Roles;
+export default ContactReasons;
