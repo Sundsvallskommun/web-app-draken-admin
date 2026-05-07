@@ -47,7 +47,7 @@ export const EmailIntegrationPage: React.FC = () => {
   const [namespaces, setNamespaces] = useState<Namespace[]>([]);
   const [namespacesLoaded, setNamespacesLoaded] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [hasConfig, setHasConfig] = useState(false);
+
 
   useEffect(() => {
     apiServiceInstance.namespaceControllerGetNamespaces(municipalityId).then((res) => {
@@ -64,16 +64,13 @@ export const EmailIntegrationPage: React.FC = () => {
       handleGetOne<any>(() => getOne(municipalityId, activeNamespace)).then((res) => {
         if (res) {
           reset(res);
-          setHasConfig(true);
         } else {
           reset(defaultValues);
-          setHasConfig(false);
         }
         setLoaded(true);
       });
     } else {
       reset(defaultValues);
-      setHasConfig(false);
       setLoaded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,7 +86,6 @@ export const EmailIntegrationPage: React.FC = () => {
         (res) => {
           if (res) {
             reset(res);
-            setHasConfig(true);
           }
         }
       );

@@ -1,5 +1,6 @@
 import { apiServiceName } from '@/config/api-config';
-import { JsonSchemaEntity, PageJsonSchema, UiSchemaEntity } from '@/data-contracts/jsonschema/data-contracts';
+import { JsonSchema, PageJsonSchema, UiSchema } from '@/data-contracts/jsonschema/data-contracts';
+
 import { JsonSchemaRequestDto, UiSchemaRequestDto } from '@/dtos/jsonschema.dto';
 import ApiResponse from '@/interfaces/api-service.interface';
 import { RequestWithUser } from '@/interfaces/auth.interface';
@@ -46,7 +47,7 @@ export class JsonSchemaController {
     @Param('id') id: string,
   ): Promise<ApiResponse<JsonSchemaResponseDTO>> {
     const url = `${this.SERVICE}/${municipalityId}/schemas/${id}`;
-    const res = await this.apiService.get<JsonSchemaEntity>({ url }, req.user);
+    const res = await this.apiService.get<JsonSchema>({ url }, req.user);
 
     return { data: res.data, message: 'success' };
   }
@@ -70,7 +71,7 @@ export class JsonSchemaController {
 
     // Fetch the created schema
     const getUrl = `${this.SERVICE}/${municipalityId}/schemas/${schemaId}`;
-    const res = await this.apiService.get<JsonSchemaEntity>({ url: getUrl }, req.user);
+    const res = await this.apiService.get<JsonSchema>({ url: getUrl }, req.user);
 
     return { data: res.data, message: 'success' };
   }
@@ -102,7 +103,7 @@ export class JsonSchemaController {
     const url = `${this.SERVICE}/${municipalityId}/schemas/${id}/ui-schema`;
 
     try {
-      const res = await this.apiService.get<UiSchemaEntity>({ url }, req.user);
+      const res = await this.apiService.get<UiSchema>({ url }, req.user);
       return { data: res.data, message: 'success' };
     } catch (error: any) {
       // UI Schema may not exist (404)
@@ -129,7 +130,7 @@ export class JsonSchemaController {
 
     // Fetch the UI schema to return it
     try {
-      const res = await this.apiService.get<UiSchemaEntity>({ url }, req.user);
+      const res = await this.apiService.get<UiSchema>({ url }, req.user);
       return { data: res.data, message: 'success' };
     } catch {
       // If we can't fetch it back, just return success with the submitted data
