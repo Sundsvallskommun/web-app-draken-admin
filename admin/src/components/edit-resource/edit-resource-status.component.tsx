@@ -7,7 +7,11 @@ import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { capitalize } from 'underscore.string';
 
-export const EditResourceStatus: React.FC = () => {
+interface EditResourceStatusProps {
+  isNew?: boolean;
+}
+
+export const EditResourceStatus: React.FC<EditResourceStatusProps> = ({ isNew = true }) => {
   const apiService = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCredentials: true });
   const { t } = useTranslation();
   const { register, watch } = useFormContext();
@@ -33,13 +37,21 @@ export const EditResourceStatus: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-12">
-      <FormControl required >
-        <FormLabel>{capitalize(t(`roles:properties.name`))}</FormLabel>
-        <Input {...register('name')} className="w-[36rem]" />
+      <FormControl required>
+        <FormLabel>{capitalize(t(`statuses:properties.name`))}</FormLabel>
+        <Input {...register('name')} className="w-[36rem]" disabled={!isNew} />
+      </FormControl>
+      <FormControl>
+        <FormLabel>{capitalize(t(`statuses:properties.displayName`))}</FormLabel>
+        <Input {...register('displayName')} className="w-[36rem]" />
+      </FormControl>
+      <FormControl>
+        <FormLabel>{capitalize(t(`statuses:properties.externalDisplayName`))}</FormLabel>
+        <Input {...register('externalDisplayName')} className="w-[36rem]" />
       </FormControl>
       <FormControl required>
         <FormLabel>{capitalize(t(`featureFlags:properties.namespace`))}</FormLabel>
-        <Select {...register('namespace')} className="w-[36rem]" invalid={!namespace}>
+        <Select {...register('namespace')} className="w-[36rem]" invalid={!namespace} disabled={!isNew}>
           {namespaces.map((namespace, index) => {
             return (
               <Select.Option value={namespace.namespace} key={index}>

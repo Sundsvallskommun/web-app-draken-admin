@@ -87,10 +87,16 @@ export interface RoleRequestDto {
   namespace: string;
 }
 
+export interface RoleUpdateDto {
+  displayName?: string;
+  namespace?: string;
+}
+
 export interface Role {
   id: string;
   name: string;
   displayName?: string;
+  namespace?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -113,11 +119,22 @@ export interface RoleApiResponse {
 export interface StatusRequestDto {
   name: string;
   namespace: string;
+  displayName?: string;
+  externalDisplayName?: string;
+}
+
+export interface StatusUpdateDto {
+  displayName?: string;
+  externalDisplayName?: string;
+  namespace?: string;
 }
 
 export interface Status {
   id: string;
   name: string;
+  displayName?: string;
+  externalDisplayName?: string;
+  namespace?: string;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -5,6 +5,7 @@
   "name_other": "roller",
   "properties": {
     "name": "namn",
-    "displayName": "Visningsnamn"
+    "displayName": "visningsnamn",
+    "namespace": "namespace"
   }
 }

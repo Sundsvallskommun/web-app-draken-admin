@@ -10,6 +10,15 @@ export class Status implements supportmanagementStatus {
   name: string;
   @IsString()
   @IsOptional()
+  displayName?: string;
+  @IsString()
+  @IsOptional()
+  externalDisplayName?: string;
+  @IsString()
+  @IsOptional()
+  namespace?: string;
+  @IsString()
+  @IsOptional()
   createdAt?: string;
   @IsString()
   @IsOptional()

@@ -1,16 +1,129 @@
 /* eslint-disable */
 /* tslint:disable */
+/*
+ * ---------------------------------------------------------------
+ * ## THIS FILE WAS GENERATED VIA SWAGGER-TYPESCRIPT-API        ##
+ * ##                                                           ##
+ * ## AUTHOR: acacode                                           ##
+ * ## SOURCE: https://github.com/acacode/swagger-typescript-api ##
+ * ---------------------------------------------------------------
+ */
 
-/** JSON Schema entity */
-export interface JsonSchemaEntity {
-  /** Schema ID composed by municipalityId, schema name and version */
-  id: string;
-  /** Schema name */
+export interface JsonNode {
+  empty?: boolean;
+  array?: boolean;
+  null?: boolean;
+  object?: boolean;
+  float?: boolean;
+  string?: boolean;
+  boolean?: boolean;
+  number?: boolean;
+  valueNode?: boolean;
+  container?: boolean;
+  pojo?: boolean;
+  floatingPointNumber?: boolean;
+  short?: boolean;
+  int?: boolean;
+  long?: boolean;
+  double?: boolean;
+  bigDecimal?: boolean;
+  bigInteger?: boolean;
+  /** @deprecated */
+  textual?: boolean;
+  binary?: boolean;
+  nodeType?: JsonNodeNodeTypeEnum;
+  integralNumber?: boolean;
+  missingNode?: boolean;
+  embeddedValue?: boolean;
+}
+
+/** UiSchemaRequest model */
+export interface UiSchemaRequest {
+  /**
+   * The UI schema
+   * @example {"firstName":{"ui:widget":"text","ui:placeholder":"Enter first name"},"lastName":{"ui:widget":"text","ui:placeholder":"Enter last name"},"ui:order":["firstName","lastName"]}
+   */
+  value: JsonNode;
+  /** Description of the UI schema purpose */
+  description?: string;
+}
+
+export interface Problem {
+  /** @format uri */
+  instance?: string;
+  /** @format uri */
+  type?: string;
+  title?: string;
+  detail?: string;
+  /** @format int32 */
+  status?: number;
+}
+
+export interface ConstraintViolationProblem {
+  /** @format uri */
+  type?: string;
+  /** @format int32 */
+  status?: number;
+  violations?: Violation[];
+  title?: string;
+  /** @format uri */
+  instance?: string;
+  causeAsProblem?: ThrowableProblem;
+  detail?: string;
+}
+
+export interface ThrowableProblem {
+  /** @format uri */
+  type?: string;
+  title?: string;
+  /** @format int32 */
+  status?: number;
+  detail?: string;
+  /** @format uri */
+  instance?: string;
+  causeAsProblem?: any;
+}
+
+export interface Violation {
+  field?: string;
+  message?: string;
+}
+
+/** JsonSchemaRequest model */
+export interface JsonSchemaRequest {
+  /**
+   * Schema name
+   * @minLength 1
+   */
   name: string;
-  /** Schema version on the format [major version].[minor version] */
+  /**
+   * Schema version on the format [major version].[minor version]
+   * @minLength 1
+   * @pattern ^(\d+\.)?(\d+)$
+   */
   version: string;
-  /** The JSON schema object */
-  value: Record<string, unknown>;
+  /**
+   * The JSON schema, specified by: https://json-schema.org/draft/2020-12/schema
+   * @example {"$id":"https://example.com/person.schema.json","$schema":"https://json-schema.org/draft/2020-12/schema","title":"Person","type":"object","properties":{"firstName":{"type":"string","description":"The person's first name."},"lastName":{"type":"string","description":"The person's last name."}}}
+   */
+  value: JsonNode;
+  /** Description of the schema purpose */
+  description?: string;
+}
+
+/** JsonSchema model */
+export interface JsonSchema {
+  /** Schema ID. The ID is composed by the municipalityId, schema name and version. I.e.: [municipality_id]_[schema_name]_[schema_version] */
+  id?: string;
+  /** Schema name */
+  name?: string;
+  /** Schema version on the format [major version].[minor version] */
+  version?: string;
+  /**
+   * The JSON schema, specified by: https://json-schema.org/draft/2020-12/schema
+   * @example {"$id":"https://example.com/person.schema.json","$schema":"https://json-schema.org/draft/2020-12/schema","title":"Person","type":"object","properties":{"firstName":{"type":"string","description":"The person's first name."},"lastName":{"type":"string","description":"The person's last name."}}}
+   */
+  value?: JsonNode;
   /** Description of the schema purpose */
   description?: string;
   /**
@@ -18,7 +131,10 @@ export interface JsonSchemaEntity {
    * @format date-time
    */
   created?: string;
-  /** Number of times this schema has been used to validate a JSON instance */
+  /**
+   * Number of times this schema has been used to validate a JSON instance
+   * @format int64
+   */
   validationUsageCount?: number;
   /**
    * Timestamp when this schema was last used to validate a JSON instance
@@ -27,24 +143,52 @@ export interface JsonSchemaEntity {
   lastUsedForValidation?: string;
 }
 
-/** JSON Schema create request */
-export interface JsonSchemaCreateRequest {
-  /** Schema name */
-  name: string;
-  /** Schema version on the format [major version].[minor version] */
-  version: string;
-  /** The JSON schema object */
-  value: Record<string, unknown>;
-  /** Description of the schema purpose */
-  description?: string;
+export interface PageJsonSchema {
+  /** @format int64 */
+  totalElements?: number;
+  /** @format int32 */
+  totalPages?: number;
+  /** @format int32 */
+  size?: number;
+  content?: JsonSchema[];
+  /** @format int32 */
+  number?: number;
+  first?: boolean;
+  last?: boolean;
+  pageable?: PageableObject;
+  /** @format int32 */
+  numberOfElements?: number;
+  sort?: SortObject;
+  empty?: boolean;
 }
 
-/** UI Schema entity */
-export interface UiSchemaEntity {
+export interface PageableObject {
+  /** @format int64 */
+  offset?: number;
+  paged?: boolean;
+  /** @format int32 */
+  pageNumber?: number;
+  /** @format int32 */
+  pageSize?: number;
+  sort?: SortObject;
+  unpaged?: boolean;
+}
+
+export interface SortObject {
+  empty?: boolean;
+  sorted?: boolean;
+  unsorted?: boolean;
+}
+
+/** UiSchema model */
+export interface UiSchema {
   /** UI Schema ID */
-  id: string;
-  /** The UI schema object */
-  value: Record<string, unknown>;
+  id?: string;
+  /**
+   * The UI schema
+   * @example {"firstName":{"ui:widget":"text","ui:placeholder":"Enter first name"},"lastName":{"ui:widget":"text","ui:placeholder":"Enter last name"},"ui:order":["firstName","lastName"]}
+   */
+  value?: JsonNode;
   /** Description of the UI schema purpose */
   description?: string;
   /**
@@ -54,49 +198,14 @@ export interface UiSchemaEntity {
   created?: string;
 }
 
-/** UI Schema request */
-export interface UiSchemaRequest {
-  /** The UI schema object */
-  value: Record<string, unknown>;
-  /** Description of the UI schema purpose */
-  description?: string;
-}
-
-/** Paginated JSON Schema response */
-export interface PageJsonSchema {
-  /** Total number of elements */
-  totalElements: number;
-  /** Total number of pages */
-  totalPages: number;
-  /** Page size */
-  size: number;
-  /** Page content */
-  content: JsonSchemaEntity[];
-  /** Current page number */
-  number: number;
-  /** Whether this is the first page */
-  first: boolean;
-  /** Whether this is the last page */
-  last: boolean;
-  /** Number of elements in this page */
-  numberOfElements: number;
-  /** Whether the page is empty */
-  empty: boolean;
-}
-
-export interface Problem {
-  /** @format uri */
-  instance?: string;
-  /** @format uri */
-  type?: string;
-  parameters?: Record<string, unknown>;
-  status?: StatusType;
-  title?: string;
-  detail?: string;
-}
-
-export interface StatusType {
-  /** @format int32 */
-  statusCode?: number;
-  reasonPhrase?: string;
+export enum JsonNodeNodeTypeEnum {
+  ARRAY = 'ARRAY',
+  BINARY = 'BINARY',
+  BOOLEAN = 'BOOLEAN',
+  MISSING = 'MISSING',
+  NULL = 'NULL',
+  NUMBER = 'NUMBER',
+  OBJECT = 'OBJECT',
+  POJO = 'POJO',
+  STRING = 'STRING',
 }

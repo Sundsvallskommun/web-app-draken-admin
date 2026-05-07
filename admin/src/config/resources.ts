@@ -6,8 +6,10 @@ import {
   NamespaceRequestDto,
   Role,
   RoleRequestDto,
+  RoleUpdateDto,
   Status,
   StatusRequestDto,
+  StatusUpdateDto,
   UpdateFeatureFlagDto,
 } from '@data-contracts/backend/data-contracts';
 import { LabelNode } from '@interfaces/label';
@@ -56,11 +58,22 @@ const namespaces: Resource<Namespace, NamespaceRequestDto, NamespaceRequestDto> 
   requiredFields: ['namespace', 'displayName', 'shortCode', 'notificationTTLInDays'],
 };
 
-const roles: Resource<Role, RoleRequestDto> = {
+const roles: Resource<Role, RoleRequestDto, RoleUpdateDto> = {
   name: 'roles',
   getMany: apiService.rolesControllerGetRoles,
+  getOne: (municipalityId, id) => {
+    const [namespace, role] = (id as string).split('/');
+    return apiService.rolesControllerGetRole(municipalityId, namespace, role);
+  },
   create: apiService.rolesControllerCreateRole,
-  remove: apiService.rolesControllerDeleteRole,
+  update: (municipalityId, id, data) => {
+    const [namespace, role] = (id as string).split('/');
+    return apiService.rolesControllerUpdateRole(municipalityId, namespace, role, data);
+  },
+  remove: (_municipalityId, _namespace, compositeId) => {
+    const [ns, name] = (compositeId as string).split('/');
+    return apiService.rolesControllerDeleteRole(_municipalityId, ns, name);
+  },
 
   defaultValues: {
     name: '',
@@ -70,14 +83,27 @@ const roles: Resource<Role, RoleRequestDto> = {
   requiredFields: ['name', 'displayName', 'namespace'],
 };
 
-const statuses: Resource<Status, StatusRequestDto> = {
+const statuses: Resource<Status, StatusRequestDto, StatusUpdateDto> = {
   name: 'statuses',
   getMany: apiService.statusesControllerGetStatuses,
+  getOne: (municipalityId, id) => {
+    const [namespace, status] = (id as string).split('/');
+    return apiService.statusesControllerGetStatus(municipalityId, namespace, status);
+  },
   create: apiService.statusesControllerCreateStatus,
-  remove: apiService.statusesControllerDeleteStatus,
+  update: (municipalityId, id, data) => {
+    const [namespace, status] = (id as string).split('/');
+    return apiService.statusesControllerUpdateStatus(municipalityId, namespace, status, data);
+  },
+  remove: (_municipalityId, _namespace, compositeId) => {
+    const [ns, name] = (compositeId as string).split('/');
+    return apiService.statusesControllerDeleteStatus(_municipalityId, ns, name);
+  },
 
   defaultValues: {
     name: '',
+    displayName: '',
+    externalDisplayName: '',
     namespace: '',
   },
   requiredFields: ['name', 'namespace'],

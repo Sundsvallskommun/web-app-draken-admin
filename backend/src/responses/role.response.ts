@@ -13,6 +13,9 @@ export class Role implements supportmanagementRole {
   displayName?: string;
   @IsString()
   @IsOptional()
+  namespace?: string;
+  @IsString()
+  @IsOptional()
   createdAt?: string;
   @IsString()
   @IsOptional()

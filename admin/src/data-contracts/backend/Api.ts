@@ -22,11 +22,13 @@ import {
   RoleApiResponse,
   RoleDeleteApiResponse,
   RoleRequestDto,
+  RoleUpdateDto,
   RolesApiResponse,
   StatusApiResponse,
   StatusDeleteApiResponse,
   StatusesApiResponse,
   StatusRequestDto,
+  StatusUpdateDto,
   UpdateFeatureFlagDto,
   UserApiResponse,
 } from "./data-contracts";
@@ -318,6 +320,47 @@ export class Api<
   /**
    * No description
    *
+   * @tags Roles
+   * @name RolesControllerGetRole
+   * @summary Get a role
+   * @request GET:/api/roles/{municipalityId}/{namespace}/{role}
+   */
+  rolesControllerGetRole = (
+    municipalityId: number,
+    namespace: string,
+    role: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<RoleApiResponse, any>({
+      path: `/api/roles/${municipalityId}/${namespace}/${role}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Roles
+   * @name RolesControllerUpdateRole
+   * @summary Update a role
+   * @request PATCH:/api/roles/{municipalityId}/{namespace}/{role}
+   */
+  rolesControllerUpdateRole = (
+    municipalityId: number,
+    namespace: string,
+    role: string,
+    data?: RoleUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<RoleApiResponse, any>({
+      path: `/api/roles/${municipalityId}/${namespace}/${role}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
    * @tags Statuses
    * @name StatusesControllerCreateStatus
    * @summary Create new status
@@ -373,6 +416,47 @@ export class Api<
     this.request<StatusDeleteApiResponse, any>({
       path: `/api/statuses/${municipalityId}/${namespace}/${status}`,
       method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statuses
+   * @name StatusesControllerGetStatus
+   * @summary Get a status
+   * @request GET:/api/statuses/{municipalityId}/{namespace}/{status}
+   */
+  statusesControllerGetStatus = (
+    municipalityId: number,
+    namespace: string,
+    status: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatusApiResponse, any>({
+      path: `/api/statuses/${municipalityId}/${namespace}/${status}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statuses
+   * @name StatusesControllerUpdateStatus
+   * @summary Update a status
+   * @request PATCH:/api/statuses/{municipalityId}/{namespace}/{status}
+   */
+  statusesControllerUpdateStatus = (
+    municipalityId: number,
+    namespace: string,
+    status: string,
+    data?: StatusUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatusApiResponse, any>({
+      path: `/api/statuses/${municipalityId}/${namespace}/${status}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
       ...params,
     });
   /**

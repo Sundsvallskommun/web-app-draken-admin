@@ -7,7 +7,11 @@ import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { capitalize } from 'underscore.string';
 
-export const EditResourceRole: React.FC = () => {
+interface EditResourceRoleProps {
+  isNew?: boolean;
+}
+
+export const EditResourceRole: React.FC<EditResourceRoleProps> = ({ isNew = true }) => {
   const apiService = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCredentials: true });
   const { t } = useTranslation();
   const { register, watch } = useFormContext();
@@ -33,9 +37,9 @@ export const EditResourceRole: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-12">
-      <FormControl required >
+      <FormControl required>
         <FormLabel>{capitalize(t(`roles:properties.name`))}</FormLabel>
-        <Input {...register('name')} className="w-[36rem]" />
+        <Input {...register('name')} className="w-[36rem]" disabled={!isNew} />
       </FormControl>
       <FormControl required>
         <FormLabel>{capitalize(t(`roles:properties.displayName`))}</FormLabel>
@@ -43,7 +47,7 @@ export const EditResourceRole: React.FC = () => {
       </FormControl>
       <FormControl required>
         <FormLabel>{capitalize(t(`featureFlags:properties.namespace`))}</FormLabel>
-        <Select {...register('namespace')} className="w-[36rem]" invalid={!namespace}>
+        <Select {...register('namespace')} className="w-[36rem]" invalid={!namespace} disabled={!isNew}>
           {namespaces.map((namespace, index) => {
             return (
               <Select.Option value={namespace.namespace} key={index}>
