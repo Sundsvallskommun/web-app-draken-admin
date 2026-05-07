@@ -154,6 +154,73 @@ export interface StatusApiResponse {
   message: string;
 }
 
+export interface EmailIntegrationDto {
+  enabled?: boolean;
+  errandClosedEmailSender?: string;
+  errandClosedEmailTemplate?: string;
+  errandClosedEmailHTMLTemplate?: string;
+  errandNewEmailSender?: string;
+  errandNewEmailTemplate?: string;
+  errandNewEmailHTMLTemplate?: string;
+  daysOfInactivityBeforeReject?: number;
+  statusForNew?: string;
+  triggerStatusChangeOn?: string;
+  statusChangeTo?: string;
+  inactiveStatus?: string;
+  addSenderAsStakeholder?: boolean;
+  stakeholderRole?: string;
+  errandChannel?: string;
+  ignoreAutoReply?: boolean;
+  ignoreNoReply?: boolean;
+}
+
+export interface EmailIntegration extends EmailIntegrationDto {
+  namespace?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface EmailIntegrationApiResponse {
+  data: EmailIntegration;
+  message: string;
+}
+
+export interface ContactReasonRequestDto {
+  reason: string;
+  displayName?: string;
+  namespace: string;
+}
+
+export interface ContactReasonUpdateDto {
+  reason?: string;
+  displayName?: string;
+  namespace?: string;
+}
+
+export interface ContactReason {
+  id: string;
+  reason: string;
+  displayName?: string;
+  namespace?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ContactReasonDeleteApiResponse {
+  data: boolean;
+  message: string;
+}
+
+export interface ContactReasonsApiResponse {
+  data: ContactReason[];
+  message: string;
+}
+
+export interface ContactReasonApiResponse {
+  data: ContactReason;
+  message: string;
+}
+
 export interface DetailedTemplateResponseDTO {
   identifier?: string;
   version?: string;

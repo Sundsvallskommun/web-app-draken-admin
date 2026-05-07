@@ -176,7 +176,7 @@ export const ListResources: React.FC<ListResourcesProps> = ({
   const autoHeaders = [
     ...translatedHeaders,
     ...(update ? [editHeader] : []),
-    ...(resource === 'roles' || resource === 'statuses' ? [removeHeader] : []),
+    ...(resource === 'roles' || resource === 'statuses' || resource === 'contactReasons' ? [removeHeader] : []),
   ];
 
   return (

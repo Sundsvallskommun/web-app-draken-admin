@@ -1,5 +1,10 @@
 import { Api } from '@data-contracts/backend/Api';
 import {
+  ContactReason,
+  ContactReasonRequestDto,
+  ContactReasonUpdateDto,
+  EmailIntegration,
+  EmailIntegrationDto,
   FeatureFlag,
   FeatureFlagRequestDto,
   Namespace,
@@ -281,5 +286,71 @@ const labels: Resource<LabelNode> = {
   requiredFields: ['classification', 'resourceName'],
 };
 
-const resources = { featureFlags, templates, jsonSchemas, roles, statuses, namespaces, labels };
+const emailIntegration: Resource<EmailIntegration, EmailIntegrationDto, EmailIntegrationDto> = {
+  name: 'emailIntegration',
+  getMany: async (municipalityId: number, query?: { namespace?: string }) => {
+    if (!query?.namespace) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { data: { data: [], message: 'no namespace' } } as any;
+    }
+    const res = await apiService.emailIntegrationControllerGetEmailIntegration(municipalityId, query.namespace);
+    // Wrap single result in array for getMany compatibility
+    const data = res.data?.data ? [res.data.data] : [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return { ...res, data: { data, message: res.data?.message } } as any;
+  },
+  getOne: (municipalityId, id) => {
+    return apiService.emailIntegrationControllerGetEmailIntegration(municipalityId, id as string);
+  },
+  update: (municipalityId, id, data) => {
+    return apiService.emailIntegrationControllerUpdateEmailIntegration(municipalityId, id as string, data);
+  },
+  defaultValues: {
+    enabled: false,
+    errandClosedEmailSender: '',
+    errandClosedEmailTemplate: '',
+    errandClosedEmailHTMLTemplate: '',
+    errandNewEmailSender: '',
+    errandNewEmailTemplate: '',
+    errandNewEmailHTMLTemplate: '',
+    daysOfInactivityBeforeReject: undefined,
+    statusForNew: '',
+    triggerStatusChangeOn: '',
+    statusChangeTo: '',
+    inactiveStatus: '',
+    addSenderAsStakeholder: false,
+    stakeholderRole: '',
+    errandChannel: '',
+    ignoreAutoReply: true,
+    ignoreNoReply: true,
+  },
+  requiredFields: ['enabled', 'statusForNew', 'ignoreAutoReply', 'ignoreNoReply'],
+};
+
+const contactReasons: Resource<ContactReason, ContactReasonRequestDto, ContactReasonUpdateDto> = {
+  name: 'contactReasons',
+  getMany: apiService.contactReasonsControllerGetContactReasons,
+  getOne: (municipalityId, id) => {
+    const [namespace, contactReasonId] = (id as string).split('/');
+    return apiService.contactReasonsControllerGetContactReason(municipalityId, namespace, contactReasonId);
+  },
+  create: apiService.contactReasonsControllerCreateContactReason,
+  update: (municipalityId, id, data) => {
+    const [namespace, contactReasonId] = (id as string).split('/');
+    return apiService.contactReasonsControllerUpdateContactReason(municipalityId, namespace, contactReasonId, data);
+  },
+  remove: (_municipalityId, _namespace, compositeId) => {
+    const [ns, contactReasonId] = (compositeId as string).split('/');
+    return apiService.contactReasonsControllerDeleteContactReason(_municipalityId, ns, contactReasonId);
+  },
+
+  defaultValues: {
+    reason: '',
+    displayName: '',
+    namespace: '',
+  },
+  requiredFields: ['reason', 'namespace'],
+};
+
+const resources = { featureFlags, labels, roles, statuses, contactReasons, emailIntegration, namespaces, templates, jsonSchemas };
 export default resources;

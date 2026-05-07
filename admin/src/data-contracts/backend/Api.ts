@@ -11,7 +11,14 @@
  */
 
 import {
+  ContactReasonApiResponse,
+  ContactReasonDeleteApiResponse,
+  ContactReasonRequestDto,
+  ContactReasonsApiResponse,
+  ContactReasonUpdateDto,
   DetailedTemplateResponseDTO,
+  EmailIntegrationApiResponse,
+  EmailIntegrationDto,
   FeatureFlagApiResponse,
   FeatureFlagDeleteApiResponse,
   FeatureFlagRequestDto,
@@ -255,6 +262,129 @@ export class Api<
     this.request<NamespacesApiResponse, any>({
       path: `/api/namespaces/${municipalityId}/all`,
       method: "GET",
+      ...params,
+    });
+  /**
+   * @tags ContactReasons
+   * @name ContactReasonsControllerCreateContactReason
+   * @request POST:/api/contact-reasons/{municipalityId}
+   */
+  contactReasonsControllerCreateContactReason = (
+    municipalityId: number,
+    data?: ContactReasonRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<ContactReasonApiResponse, any>({
+      path: `/api/contact-reasons/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * @tags ContactReasons
+   * @name ContactReasonsControllerGetContactReasons
+   * @request GET:/api/contact-reasons/{municipalityId}
+   */
+  contactReasonsControllerGetContactReasons = (
+    municipalityId: number,
+    query?: { namespace?: string },
+    params: RequestParams = {},
+  ) =>
+    this.request<ContactReasonsApiResponse, any>({
+      path: `/api/contact-reasons/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * @tags ContactReasons
+   * @name ContactReasonsControllerGetContactReason
+   * @request GET:/api/contact-reasons/{municipalityId}/{namespace}/{id}
+   */
+  contactReasonsControllerGetContactReason = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<ContactReasonApiResponse, any>({
+      path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * @tags ContactReasons
+   * @name ContactReasonsControllerUpdateContactReason
+   * @request PATCH:/api/contact-reasons/{municipalityId}/{namespace}/{id}
+   */
+  contactReasonsControllerUpdateContactReason = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: ContactReasonUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<ContactReasonApiResponse, any>({
+      path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * @tags ContactReasons
+   * @name ContactReasonsControllerDeleteContactReason
+   * @request DELETE:/api/contact-reasons/{municipalityId}/{namespace}/{id}
+   */
+  contactReasonsControllerDeleteContactReason = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<ContactReasonDeleteApiResponse, any>({
+      path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags EmailIntegration
+   * @name EmailIntegrationControllerGetEmailIntegration
+   * @summary Get email integration config
+   * @request GET:/api/email-integration/{municipalityId}/{namespace}
+   */
+  emailIntegrationControllerGetEmailIntegration = (
+    municipalityId: number,
+    namespace: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<EmailIntegrationApiResponse, any>({
+      path: `/api/email-integration/${municipalityId}/${namespace}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags EmailIntegration
+   * @name EmailIntegrationControllerUpdateEmailIntegration
+   * @summary Update email integration config
+   * @request PUT:/api/email-integration/{municipalityId}/{namespace}
+   */
+  emailIntegrationControllerUpdateEmailIntegration = (
+    municipalityId: number,
+    namespace: string,
+    data?: EmailIntegrationDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<EmailIntegrationApiResponse, any>({
+      path: `/api/email-integration/${municipalityId}/${namespace}`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
       ...params,
     });
   /**

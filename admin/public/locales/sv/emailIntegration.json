@@ -1,0 +1,34 @@
+{
+  "name_zero": "epostkonfigurationer",
+  "name_one": "epostkonfiguration",
+  "name_many": "epostkonfigurationer",
+  "name_other": "epostkonfigurationer",
+  "properties": {
+    "enabled": "aktiverad",
+    "errandClosedEmailSender": "avsändare vid avvisat mail",
+    "errandClosedEmailTemplate": "mall vid avvisat mail",
+    "errandClosedEmailHTMLTemplate": "HTML-mall vid avvisat mail",
+    "errandNewEmailSender": "avsändare vid nytt ärende",
+    "errandNewEmailTemplate": "mall vid nytt ärende",
+    "errandNewEmailHTMLTemplate": "HTML-mall vid nytt ärende",
+    "daysOfInactivityBeforeReject": "dagar innan avvisning",
+    "statusForNew": "status för nya ärenden",
+    "triggerStatusChangeOn": "utlös statusbyte vid",
+    "statusChangeTo": "byt status till",
+    "inactiveStatus": "inaktiv status",
+    "addSenderAsStakeholder": "lägg till avsändare som intressent",
+    "stakeholderRole": "intressentroll",
+    "errandChannel": "ärendekanal",
+    "ignoreAutoReply": "ignorera autosvar",
+    "ignoreNoReply": "ignorera no-reply"
+  },
+  "sections": {
+    "general": "Allmänt",
+    "newErrand": "Nytt ärende via e-post",
+    "closedErrand": "Avvisat/stängt ärende",
+    "statusTransitions": "Statusövergångar",
+    "inactivity": "Inaktivitet",
+    "stakeholder": "Intressent",
+    "filtering": "Filtrering"
+  }
+}

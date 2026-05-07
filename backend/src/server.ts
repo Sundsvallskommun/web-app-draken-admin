@@ -9,6 +9,8 @@ import { NamespaceController } from './controllers/namespace.controller';
 import { RolesController } from './controllers/roles.controller';
 import { StatusesController } from './controllers/statuses.controller';
 import { CompareController } from './controllers/compare.controller';
+import { ContactReasonsController } from './controllers/contact-reasons.controller';
+import { EmailIntegrationController } from './controllers/email-integration.controller';
 import { TemplateController } from './controllers/templates.controller';
 import { UserController } from './controllers/user.controller';
 
@@ -24,6 +26,8 @@ const app = new App([
   NamespaceController,
   RolesController,
   StatusesController,
+  ContactReasonsController,
+  EmailIntegrationController,
   JsonSchemaController,
   LabelsController,
 ]);
