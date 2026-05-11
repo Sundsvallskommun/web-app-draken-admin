@@ -9,7 +9,6 @@ import { useResource } from '@utils/use-resource';
 import { getMetadataValue } from '@utils/template-metadata';
 import { GetServerSideProps } from 'next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /**
@@ -54,7 +53,6 @@ interface PatchResult {
 
 export const TemplateCaseAudit: React.FC = () => {
   const resource = 'templates';
-  const router = useRouter();
   const { municipalityId } = useLocalStorage();
 
   const { data, loaded, refresh } = useResource(resource);
@@ -166,8 +164,9 @@ export const TemplateCaseAudit: React.FC = () => {
         });
 
         return { identifier, success: true };
-      } catch (error: any) {
-        return { identifier, success: false, error: error?.message || 'Unknown error' };
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return { identifier, success: false, error: message };
       }
     },
     [getOne, update, municipalityId]
@@ -283,7 +282,9 @@ export const TemplateCaseAudit: React.FC = () => {
   return (
     <DefaultLayout>
       <Main>
-        <Header title="Malltyp case-audit (TEMP)" />
+        <Header>
+          <h1 className="text-h2-md">Malltyp case-audit (TEMP)</h1>
+        </Header>
 
         <div className="my-lg">
           {!loaded ? (
