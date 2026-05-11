@@ -9,7 +9,7 @@ import { FieldValues, useFormContext } from 'react-hook-form';
 import { capitalize } from 'underscore.string';
 const TextEditor = dynamic(() => import('@sk-web-gui/text-editor'), { ssr: false });
 
-const TEMPLATE_TYPES = ['email', 'sms', 'decision', 'investigation'];
+const TEMPLATE_TYPES = ['Email', 'Sms', 'Decision', 'Investigation'];
 
 interface EditResourceProps {
   isNew?: boolean;
@@ -69,7 +69,7 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew, isApp
   }, []);
 
   const [customType, setCustomType] = useState(
-    () => currentTemplateType !== '' && !TEMPLATE_TYPES.includes(currentTemplateType.toLowerCase())
+    () => currentTemplateType !== '' && !TEMPLATE_TYPES.includes(currentTemplateType)
   );
 
   // Parse metadata for JsonEditor
@@ -146,7 +146,7 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew, isApp
         <Select
           className="w-[53rem]"
           disabled={isApproved}
-          value={customType ? '__custom__' : currentTemplateType.toLowerCase()}
+          value={customType ? '__custom__' : currentTemplateType}
           onChange={(e) => {
             const val = e.target.value;
             if (val === '__custom__') {

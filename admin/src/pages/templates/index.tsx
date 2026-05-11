@@ -43,7 +43,7 @@ export const Templates: React.FC = () => {
     () =>
       data?.map((item) => ({
         ...item,
-        templateType: (getMetadataValue(item.metadata, 'templateType') ?? '').toLowerCase(),
+        templateType: getMetadataValue(item.metadata, 'templateType') ?? '',
       })),
     [data]
   );
