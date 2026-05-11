@@ -59,7 +59,7 @@ export const TemplateTestStatus: React.FC = () => {
     () =>
       data?.map((item) => ({
         ...item,
-        templateType: (getMetadataValue(item.metadata, 'templateType') ?? '').toLowerCase(),
+        templateType: getMetadataValue(item.metadata, 'templateType') ?? '',
         testStatus: getMetadataValue(item.metadata, TEST_STATUS_KEY) === TEST_STATUS_APPROVED ? 'approved' : 'not_approved',
       })),
     [data]
