@@ -221,6 +221,61 @@ export interface ContactReasonApiResponse {
   message: string;
 }
 
+export interface CategoryTypeDto {
+  name: string;
+  displayName?: string;
+  escalationEmail?: string;
+}
+
+export interface CategoryRequestDto {
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  types?: CategoryTypeDto[];
+  namespace: string;
+}
+
+export interface CategoryUpdateDto {
+  displayName?: string;
+  sortOrder?: number;
+  types?: CategoryTypeDto[];
+  namespace?: string;
+}
+
+export interface CategoryType {
+  name: string;
+  displayName?: string;
+  escalationEmail?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  types?: CategoryType[];
+  namespace?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CategoryDeleteApiResponse {
+  data: boolean;
+  message: string;
+}
+
+export interface CategoriesApiResponse {
+  data: Category[];
+  message: string;
+}
+
+export interface CategoryApiResponse {
+  data: Category;
+  message: string;
+}
+
 export interface DetailedTemplateResponseDTO {
   identifier?: string;
   version?: string;
