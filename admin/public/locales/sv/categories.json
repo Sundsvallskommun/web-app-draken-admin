@@ -1,0 +1,16 @@
+{
+  "name_zero": "kategorier",
+  "name_one": "kategori",
+  "name_many": "kategorier",
+  "name_other": "kategorier",
+  "invalidEmail": "Ange en giltig e-postadress, t.ex. namn@domän.se (domänen måste innehålla en punkt)",
+  "properties": {
+    "name": "namn",
+    "displayName": "visningsnamn",
+    "sortOrder": "sorteringsordning",
+    "namespace": "namespace",
+    "types": "typer",
+    "type": "typ",
+    "escalationEmail": "eskaleringsmejl"
+  }
+}

@@ -11,6 +11,11 @@
  */
 
 import {
+  CategoriesApiResponse,
+  CategoryApiResponse,
+  CategoryDeleteApiResponse,
+  CategoryRequestDto,
+  CategoryUpdateDto,
   ContactReasonApiResponse,
   ContactReasonDeleteApiResponse,
   ContactReasonRequestDto,
@@ -345,6 +350,90 @@ export class Api<
   ) =>
     this.request<ContactReasonDeleteApiResponse, any>({
       path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * @tags Categories
+   * @name CategoriesControllerCreateCategory
+   * @request POST:/api/categories/{municipalityId}
+   */
+  categoriesControllerCreateCategory = (
+    municipalityId: number,
+    data?: CategoryRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<CategoryApiResponse, any>({
+      path: `/api/categories/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * @tags Categories
+   * @name CategoriesControllerGetCategories
+   * @request GET:/api/categories/{municipalityId}
+   */
+  categoriesControllerGetCategories = (
+    municipalityId: number,
+    query?: { namespace?: string },
+    params: RequestParams = {},
+  ) =>
+    this.request<CategoriesApiResponse, any>({
+      path: `/api/categories/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * @tags Categories
+   * @name CategoriesControllerGetCategory
+   * @request GET:/api/categories/{municipalityId}/{namespace}/{id}
+   */
+  categoriesControllerGetCategory = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<CategoryApiResponse, any>({
+      path: `/api/categories/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * @tags Categories
+   * @name CategoriesControllerUpdateCategory
+   * @request PATCH:/api/categories/{municipalityId}/{namespace}/{id}
+   */
+  categoriesControllerUpdateCategory = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: CategoryUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<CategoryApiResponse, any>({
+      path: `/api/categories/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * @tags Categories
+   * @name CategoriesControllerDeleteCategory
+   * @request DELETE:/api/categories/{municipalityId}/{namespace}/{id}
+   */
+  categoriesControllerDeleteCategory = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<CategoryDeleteApiResponse, any>({
+      path: `/api/categories/${municipalityId}/${namespace}/${id}`,
       method: "DELETE",
       ...params,
     });

@@ -1,5 +1,8 @@
 import { Api } from '@data-contracts/backend/Api';
 import {
+  Category,
+  CategoryRequestDto,
+  CategoryUpdateDto,
   ContactReason,
   ContactReasonRequestDto,
   ContactReasonUpdateDto,
@@ -352,5 +355,32 @@ const contactReasons: Resource<ContactReason, ContactReasonRequestDto, ContactRe
   requiredFields: ['reason', 'namespace'],
 };
 
-const resources = { featureFlags, labels, roles, statuses, contactReasons, emailIntegration, namespaces, templates, jsonSchemas };
+const categories: Resource<Category, CategoryRequestDto, CategoryUpdateDto> = {
+  name: 'categories',
+  getMany: apiService.categoriesControllerGetCategories,
+  getOne: (municipalityId, id) => {
+    const [namespace, categoryName] = (id as string).split('/');
+    return apiService.categoriesControllerGetCategory(municipalityId, namespace, categoryName);
+  },
+  create: apiService.categoriesControllerCreateCategory,
+  update: (municipalityId, id, data) => {
+    const [namespace, categoryName] = (id as string).split('/');
+    return apiService.categoriesControllerUpdateCategory(municipalityId, namespace, categoryName, data);
+  },
+  remove: (_municipalityId, _namespace, compositeId) => {
+    const [ns, categoryName] = (compositeId as string).split('/');
+    return apiService.categoriesControllerDeleteCategory(_municipalityId, ns, categoryName);
+  },
+
+  defaultValues: {
+    name: '',
+    displayName: '',
+    sortOrder: undefined,
+    types: [],
+    namespace: '',
+  },
+  requiredFields: ['name', 'namespace'],
+};
+
+const resources = { featureFlags, labels, roles, statuses, contactReasons, categories, emailIntegration, namespaces, templates, jsonSchemas };
 export default resources;
