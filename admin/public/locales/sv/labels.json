@@ -7,8 +7,10 @@
   "properties": {
     "classification": "klassificering",
     "displayName": "visningsnamn",
-    "resourceName": "resursnamn"
+    "resourceName": "resursnamn",
+    "escalationEmail": "eskaleringsmejl"
   },
+  "invalid_email": "Ange en giltig e-postadress, t.ex. namn@domän.se (domänen måste innehålla en punkt)",
   "add_label": "Ny label",
   "no_labels": "Inga labels här ännu",
   "no_labels_hint": "Klicka \"Ny label\" för att lägga till",

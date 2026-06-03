@@ -1,6 +1,7 @@
 import { Api } from '@data-contracts/backend/Api';
 import { Namespace } from '@data-contracts/backend/data-contracts';
 import { Button, FormControl, FormLabel, Input, Select, Spinner } from '@sk-web-gui/react';
+import { EMAIL_WITH_TLD_REGEX } from '@utils/email';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { Minus, Plus } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
@@ -11,10 +12,6 @@ import { capitalize } from 'underscore.string';
 interface EditResourceCategoryProps {
   isNew?: boolean;
 }
-
-// Requires a value of the form local@domain.tld, i.e. the domain must contain a dot.
-// Matches the backend's class-validator @IsEmail() check so the form fails fast instead of a 400.
-const EMAIL_WITH_TLD_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const EditResourceCategory: React.FC<EditResourceCategoryProps> = ({ isNew = true }) => {
   const apiService = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCredentials: true });

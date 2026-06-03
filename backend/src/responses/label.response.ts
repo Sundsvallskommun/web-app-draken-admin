@@ -3,6 +3,13 @@ import ApiResponse from '@/interfaces/api-service.interface';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
 
+export class LabelAttribute {
+  @IsString()
+  key: string;
+  @IsString()
+  value: string;
+}
+
 export class Label {
   @IsString()
   @IsOptional()
@@ -25,6 +32,11 @@ export class Label {
   @Type(() => Label)
   @IsOptional()
   labels?: Label[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LabelAttribute)
+  @IsOptional()
+  attributes?: LabelAttribute[];
 }
 
 export class LabelsApiResponse implements ApiResponse<Label[]> {

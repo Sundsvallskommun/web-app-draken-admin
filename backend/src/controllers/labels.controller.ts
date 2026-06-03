@@ -19,6 +19,7 @@ function mapLabel(label: SupportManagementLabel): Label {
     resourcePath: label.resourcePath,
     isLeaf: !label.labels || label.labels.length === 0,
     labels: label.labels?.map(mapLabel) ?? [],
+    attributes: label.attributes ?? [],
   };
 }
 

@@ -1,3 +1,8 @@
+export interface LabelAttribute {
+  key: string;
+  value: string;
+}
+
 export interface LabelNode {
   id?: string;
   classification: string;
@@ -6,4 +11,5 @@ export interface LabelNode {
   resourcePath?: string;
   isLeaf?: boolean;
   labels?: LabelNode[];
+  attributes?: LabelAttribute[];
 }

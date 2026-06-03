@@ -1,6 +1,7 @@
 import { LabelNode } from '@interfaces/label';
+import { getEscalationEmail } from '@utils/label-attributes';
 import { LabelCopyFields } from '@components/labels/label-copy-fields.component';
-import { ChevronDown, ChevronRight, FolderOpen, Tag } from 'lucide-react';
+import { ChevronDown, ChevronRight, FolderOpen, Mail, Tag } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
 import { useState } from 'react';
 
@@ -46,6 +47,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth, isLast, parentLines, s
   const name = node.displayName || node.classification;
   const childCount = node.labels?.length ?? 0;
   const hasChildren = childCount > 0;
+  const escalationEmail = getEscalationEmail(node);
 
   const shouldAutoExpand = searchQuery ? hasMatchInSubtree(node, searchQuery) : true;
   const [expanded, setExpanded] = useState(shouldAutoExpand);
@@ -129,6 +131,12 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth, isLast, parentLines, s
 
         <span className="text-xs text-dark-disabled ml-8 shrink-0">{node.classification}</span>
         <LabelCopyFields label={node} className="ml-8 shrink-0" />
+        {escalationEmail && (
+          <span className="flex items-center gap-4 text-xs text-dark-secondary ml-8 shrink-0">
+            <Mail size={12} />
+            {escalationEmail}
+          </span>
+        )}
       </div>
 
       {/* Children */}
