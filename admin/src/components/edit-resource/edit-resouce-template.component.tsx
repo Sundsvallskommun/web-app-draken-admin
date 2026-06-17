@@ -1,3 +1,17 @@
+import {
+  APPLICATION_VALUE,
+  CAPACITIES,
+  CAPACITY_LABELS,
+  FACET_KEYS,
+  findSelectionRule,
+  OUTCOME_LABELS,
+  OUTCOMES,
+  Process,
+  PROCESS_LABELS,
+  PROCESSES,
+  TEMPLATE_TYPE_METADATA,
+  TemplateKind,
+} from '@config/template-schema';
 import { JsonEditor } from '@components/json-editor/json-editor';
 import { Resource } from '@interfaces/resource';
 import { Checkbox, FormControl, FormLabel, Input, RadioButton, Select, Textarea } from '@sk-web-gui/react';
@@ -57,13 +71,86 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew, isApp
     [metadata, setValue]
   );
 
+  // Apply several metadata entries atomically (a single read+write), so chained updates
+  // don't clobber each other the way repeated setMetadataEntry calls would.
+  const setMetadataEntries = useCallback(
+    (entries: { key: string; value: string }[]) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let metadataArray: any[] = [];
+      if (typeof metadata === 'string') {
+        try {
+          metadataArray = JSON.parse(metadata || '[]');
+        } catch {
+          metadataArray = [];
+        }
+      } else if (Array.isArray(metadata)) {
+        metadataArray = [...metadata];
+      }
+
+      for (const { key, value } of entries) {
+        metadataArray = metadataArray.filter((item) => item.key !== key);
+        if (value) {
+          metadataArray.push({ key, value });
+        }
+      }
+      setValue('metadata', JSON.stringify(metadataArray, null, 2), { shouldDirty: true });
+    },
+    [metadata, setValue]
+  );
+
   const currentTemplateType = useMemo(() => getMetadata('templateType'), [getMetadata]);
   const currentNamespace = useMemo(() => getMetadata('namespace'), [getMetadata]);
   const currentEditor = useMemo(() => getMetadata('editor'), [getMetadata]);
 
+  // ── Selection facets ───────────────────────────────────────────────────────
+  // For decision/investigation templates, admin picks process + the facets the schema
+  // requires, which generate the routing metadata automatically (no manual key/value).
+  const templateKind: TemplateKind | null =
+    currentTemplateType === TEMPLATE_TYPE_METADATA.DECISION
+      ? 'DECISION'
+      : currentTemplateType === TEMPLATE_TYPE_METADATA.INVESTIGATION
+      ? 'INVESTIGATION'
+      : null;
+  const currentProcess = getMetadata(FACET_KEYS.process) as Process | '';
+  const selectionRule =
+    templateKind && currentProcess ? findSelectionRule(templateKind, currentProcess) : undefined;
+
+  // Raw JSON metadata editing is locked by default so nobody fiddles with the routing
+  // facets by hand; unlock only for informational metadata / special cases.
+  const [metadataUnlocked, setMetadataUnlocked] = useState(false);
+
+  const handleProcessChange = useCallback(
+    (value: Process | '') => {
+      const rule = templateKind && value ? findSelectionRule(templateKind, value) : undefined;
+      const entries: { key: string; value: string }[] = [{ key: FACET_KEYS.process, value }];
+      // Clear facets that the new process no longer requires, to avoid stale routing.
+      (['decision', 'capacity'] as const).forEach((facet) => {
+        if (!rule?.requiredFacets.includes(facet)) {
+          entries.push({ key: FACET_KEYS[facet], value: '' });
+        }
+      });
+      setMetadataEntries(entries);
+    },
+    [templateKind, setMetadataEntries]
+  );
+
+  // Selection facets only apply to Decision/Investigation; clear stale process/decision/capacity
+  // when the template type changes so a previous routing key can't linger on the wrong type.
+  const handleTemplateTypeChange = useCallback(
+    (value: string) => {
+      setMetadataEntries([
+        { key: FACET_KEYS.templateType, value },
+        { key: FACET_KEYS.process, value: '' },
+        { key: FACET_KEYS.decision, value: '' },
+        { key: FACET_KEYS.capacity, value: '' },
+      ]);
+    },
+    [setMetadataEntries]
+  );
+
   useEffect(() => {
-    if (!getMetadata('application')) {
-      setMetadataEntry('application', 'draken');
+    if (!getMetadata(FACET_KEYS.application)) {
+      setMetadataEntry(FACET_KEYS.application, APPLICATION_VALUE);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -151,10 +238,10 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew, isApp
             const val = e.target.value;
             if (val === '__custom__') {
               setCustomType(true);
-              setMetadataEntry('templateType', '');
+              handleTemplateTypeChange('');
             } else {
               setCustomType(false);
-              setMetadataEntry('templateType', val);
+              handleTemplateTypeChange(val);
             }
           }}
         >
@@ -176,6 +263,69 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew, isApp
           />
         )}
       </FormControl>
+      {templateKind && (
+        <div className="flex flex-col gap-12 rounded border-1 border-gray-200 p-16">
+          <div>
+            <FormLabel>Selektering</FormLabel>
+            <p className="text-small text-tertiary">
+              Dessa val genererar mallens metadata automatiskt så den kan väljas utifrån ärendet. Ingen manuell
+              redigering behövs.
+            </p>
+          </div>
+          <FormControl>
+            <FormLabel>Process</FormLabel>
+            <Select
+              className="w-[53rem]"
+              disabled={isApproved}
+              value={currentProcess}
+              onChange={(e) => handleProcessChange(e.target.value as Process | '')}
+            >
+              <Select.Option value="">Välj process</Select.Option>
+              {PROCESSES.map((process) => (
+                <Select.Option value={process} key={process}>
+                  {PROCESS_LABELS[process]}
+                </Select.Option>
+              ))}
+            </Select>
+          </FormControl>
+          {selectionRule?.requiredFacets.includes('decision') && (
+            <FormControl>
+              <FormLabel>Beslutsutfall</FormLabel>
+              <Select
+                className="w-[53rem]"
+                disabled={isApproved}
+                value={getMetadata(FACET_KEYS.decision)}
+                onChange={(e) => setMetadataEntry(FACET_KEYS.decision, e.target.value)}
+              >
+                <Select.Option value="">Välj utfall</Select.Option>
+                {OUTCOMES.map((outcome) => (
+                  <Select.Option value={outcome} key={outcome}>
+                    {OUTCOME_LABELS[outcome]}
+                  </Select.Option>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+          {selectionRule?.requiredFacets.includes('capacity') && (
+            <FormControl>
+              <FormLabel>Kapacitet</FormLabel>
+              <Select
+                className="w-[53rem]"
+                disabled={isApproved}
+                value={getMetadata(FACET_KEYS.capacity)}
+                onChange={(e) => setMetadataEntry(FACET_KEYS.capacity, e.target.value)}
+              >
+                <Select.Option value="">Välj kapacitet</Select.Option>
+                {CAPACITIES.map((capacity) => (
+                  <Select.Option value={capacity} key={capacity}>
+                    {CAPACITY_LABELS[capacity]}
+                  </Select.Option>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        </div>
+      )}
       <FormControl>
         <FormLabel>Namespace</FormLabel>
         <Input
@@ -219,8 +369,24 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew, isApp
         : <Textarea {...register('content')} readOnly={isApproved} rows={25} className="w-[130rem]" />}
       </FormControl>
       <FormControl className="w-full">
-        <FormLabel>{capitalize(t(`templates:properties.metadata`))}</FormLabel>
-        <JsonEditor value={parsedMetadata} onChange={handleMetadataChange} height="400px" readOnly={isApproved} />
+        <div className="flex w-full items-center justify-between">
+          <FormLabel>{capitalize(t(`templates:properties.metadata`))}</FormLabel>
+          {!isApproved && (
+            <Checkbox checked={metadataUnlocked} onChange={(e) => setMetadataUnlocked(e.target.checked)}>
+              Redigera metadata manuellt
+            </Checkbox>
+          )}
+        </div>
+        <p className="text-small text-tertiary">
+          Selekteringsfacetter (process, utfall, kapacitet) sätts via fälten ovan. Lås upp endast för
+          informationsmetadata eller specialfall.
+        </p>
+        <JsonEditor
+          value={parsedMetadata}
+          onChange={handleMetadataChange}
+          height="400px"
+          readOnly={isApproved || !metadataUnlocked}
+        />
       </FormControl>
       <FormControl className="w-full">
         <FormLabel>{capitalize(t(`templates:properties.defaultValues`))}</FormLabel>
