@@ -9,6 +9,7 @@ import EditLayout from '@layouts/edit-layout/edit-layout.component';
 import { getFormattedFields } from '@utils/formatted-field';
 import { useRouteGuard } from '@utils/routeguard.hook';
 import { useCrudHelper } from '@utils/use-crud-helpers';
+import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useResource } from '@utils/use-resource';
 import { GetServerSideProps } from 'next';
@@ -96,8 +97,9 @@ export const EditTemplates: React.FC = () => {
     }
   }, [formdata?.id, isNew, isDirty]);
 
+  const { showTestFeatures } = useIsProductionEnv();
   const metadata = watch('metadata');
-  const isApproved = useMemo(() => isTemplateApproved(metadata), [metadata]);
+  const isApproved = useMemo(() => showTestFeatures && isTemplateApproved(metadata), [metadata, showTestFeatures]);
   const approvedAt = useMemo(() => getApprovalTimestamp(metadata), [metadata]);
 
   const onSubmit = useCallback((data: DataType) => {

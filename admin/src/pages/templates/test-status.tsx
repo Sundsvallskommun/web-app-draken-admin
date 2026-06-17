@@ -5,6 +5,7 @@ import Main from '@layouts/main/main.component';
 import { Api } from '@data-contracts/backend/Api';
 import { Namespace } from '@data-contracts/backend/data-contracts';
 import { AutoTable, AutoTableHeader, Badge, Button, FormControl, FormLabel, Icon, Select, Spinner, useConfirm } from '@sk-web-gui/react';
+import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useResource } from '@utils/use-resource';
 import { getMetadataValue, TEST_STATUS_KEY, TEST_APPROVED_AT_KEY, TEST_STATUS_APPROVED } from '@utils/template-metadata';
@@ -39,6 +40,7 @@ export const TemplateTestStatus: React.FC = () => {
   const confirm = useConfirm();
   const { handleUpdate } = useCrudHelper(resource);
   const { getOne, update } = resources[resource];
+  const { showTestFeatures } = useIsProductionEnv();
 
   const apiService = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCredentials: true });
 
@@ -175,7 +177,7 @@ export const TemplateTestStatus: React.FC = () => {
         const isApproving = approvingIdentifier === value;
         return (
           <div className="text-right w-full flex items-center justify-end gap-4">
-            {item?.testStatus === 'not_approved' && (
+            {item?.testStatus === 'not_approved' && showTestFeatures && (
               <Button
                 size="sm"
                 variant="tertiary"
