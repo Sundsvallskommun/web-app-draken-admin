@@ -10,6 +10,7 @@ datasource db {
 model FeatureFlags {
   id             Int      @id @default(autoincrement())
   name           String
+  description    String   @default("")
   value          String?
   enabled        Boolean  @default(false)
   application    String

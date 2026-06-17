@@ -41,11 +41,12 @@ const featureFlags: Resource<FeatureFlag, FeatureFlagRequestDto, UpdateFeatureFl
 
   defaultValues: {
     name: '',
+    description: '',
     enabled: false,
     application: '',
     namespace: '',
   },
-  requiredFields: ['name', 'enabled', 'application', 'namespace'],
+  requiredFields: ['name', 'description', 'enabled', 'application', 'namespace'],
 };
 
 const namespaces: Resource<Namespace, NamespaceRequestDto, NamespaceRequestDto> = {

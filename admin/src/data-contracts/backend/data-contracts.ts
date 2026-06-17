@@ -13,6 +13,7 @@
 export interface FeatureFlagRequestDto {
   id?: number;
   name: string;
+  description: string;
   enabled: boolean;
   application: string;
   namespace: string;
@@ -21,6 +22,7 @@ export interface FeatureFlagRequestDto {
 export interface UpdateFeatureFlagDto {
   id?: number;
   name?: string;
+  description?: string;
   enabled?: boolean;
   application?: string;
   namespace?: string;
@@ -29,6 +31,7 @@ export interface UpdateFeatureFlagDto {
 export interface FeatureFlag {
   id: number;
   name: string;
+  description: string;
   value?: string;
   enabled: boolean;
   application: string;
