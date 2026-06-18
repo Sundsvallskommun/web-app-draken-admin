@@ -1,4 +1,4 @@
-import { Checkbox, FormControl, FormLabel, Input, Textarea } from '@sk-web-gui/react';
+import { Checkbox, FormControl, FormLabel, Input } from '@sk-web-gui/react';
 import { useTranslation } from 'next-i18next';
 import dynamic from 'next/dynamic';
 import React, { useRef } from 'react';
@@ -15,13 +15,18 @@ export const EditResourceEmailIntegration: React.FC = () => {
   const addSenderAsStakeholder = watch('addSenderAsStakeholder');
   const ignoreAutoReply = watch('ignoreAutoReply');
   const ignoreNoReply = watch('ignoreNoReply');
+  const errandNewEmailTemplate = watch('errandNewEmailTemplate');
   const errandNewEmailHTMLTemplate = watch('errandNewEmailHTMLTemplate');
+  const errandClosedEmailTemplate = watch('errandClosedEmailTemplate');
   const errandClosedEmailHTMLTemplate = watch('errandClosedEmailHTMLTemplate');
 
-  // The editor fires onChange once on mount while it ingests the initial markup; guard
-  // against that so loading an existing config doesn't mark the form dirty on its own.
-  const newHTMLInitialized = useRef(false);
-  const closedHTMLInitialized = useRef(false);
+  // The editor exposes both the HTML markup and a plain-text rendering, so a single
+  // editor feeds both contract fields. It fires onChange once on mount while ingesting
+  // the initial value; guard against that so loading a config doesn't mark it dirty.
+  // Seed the editor from the legacy plain-text template when no HTML exists yet, so
+  // pre-existing configs don't appear empty.
+  const newEmailInitialized = useRef(false);
+  const closedEmailInitialized = useRef(false);
 
   return (
     <div className="flex flex-col gap-24 max-w-[72rem]">
@@ -53,18 +58,17 @@ export const EditResourceEmailIntegration: React.FC = () => {
         </FormControl>
         <FormControl className='w-full'>
           <FormLabel>{capitalize(t('emailIntegration:properties.errandNewEmailTemplate'))}</FormLabel>
-          <Textarea {...register('errandNewEmailTemplate')} className="w-full" rows={10} />
-        </FormControl>
-        <FormControl className='w-full'>
-          <FormLabel>{capitalize(t('emailIntegration:properties.errandNewEmailHTMLTemplate'))}</FormLabel>
           <TextEditor
             className="w-full min-h-[24rem] mb-[5rem]"
-            value={{ markup: errandNewEmailHTMLTemplate ?? '' }}
+            value={{ markup: errandNewEmailHTMLTemplate || errandNewEmailTemplate || '' }}
             onChange={(e) => {
-              setValue('errandNewEmailHTMLTemplate', e.target.value.markup, {
-                shouldDirty: newHTMLInitialized.current,
+              setValue('errandNewEmailHTMLTemplate', e.target.value.markup ?? '', {
+                shouldDirty: newEmailInitialized.current,
               });
-              newHTMLInitialized.current = true;
+              setValue('errandNewEmailTemplate', e.target.value.plainText ?? '', {
+                shouldDirty: newEmailInitialized.current,
+              });
+              newEmailInitialized.current = true;
             }}
           />
         </FormControl>
@@ -78,18 +82,17 @@ export const EditResourceEmailIntegration: React.FC = () => {
         </FormControl>
         <FormControl className='w-full'>
           <FormLabel>{capitalize(t('emailIntegration:properties.errandClosedEmailTemplate'))}</FormLabel>
-          <Textarea  {...register('errandClosedEmailTemplate')} className="w-full" rows={10} />
-        </FormControl>
-        <FormControl className='w-full'>
-          <FormLabel>{capitalize(t('emailIntegration:properties.errandClosedEmailHTMLTemplate'))}</FormLabel>
           <TextEditor
             className="w-full min-h-[24rem] mb-[5rem]"
-            value={{ markup: errandClosedEmailHTMLTemplate ?? '' }}
+            value={{ markup: errandClosedEmailHTMLTemplate || errandClosedEmailTemplate || '' }}
             onChange={(e) => {
-              setValue('errandClosedEmailHTMLTemplate', e.target.value.markup, {
-                shouldDirty: closedHTMLInitialized.current,
+              setValue('errandClosedEmailHTMLTemplate', e.target.value.markup ?? '', {
+                shouldDirty: closedEmailInitialized.current,
               });
-              closedHTMLInitialized.current = true;
+              setValue('errandClosedEmailTemplate', e.target.value.plainText ?? '', {
+                shouldDirty: closedEmailInitialized.current,
+              });
+              closedEmailInitialized.current = true;
             }}
           />
         </FormControl>
