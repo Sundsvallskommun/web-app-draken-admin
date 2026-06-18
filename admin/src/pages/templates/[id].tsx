@@ -1,7 +1,7 @@
 import { Button } from '@components/ui/button';
 import { PocLayout } from '@poc/poc-layout';
 import { TemplateForm } from '@poc/template-form';
-import { usePocRows } from '@poc/use-poc-rows';
+import { usePocRecord } from '@poc/use-poc-rows';
 import { ArrowLeft } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
@@ -13,7 +13,8 @@ export default function PocTemplateEdit() {
   const router = useRouter();
   const rawId = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
   const isNew = rawId === 'new';
-  const { rows, loading, source } = usePocRows('templates');
+  // Fetch the full template via getOne — the list response omits `content`.
+  const { row: initial, loading, source } = usePocRecord('templates', rawId);
 
   if (!router.isReady) {
     return (
@@ -23,7 +24,6 @@ export default function PocTemplateEdit() {
     );
   }
 
-  const initial = !isNew ? rows.find((r) => r.__key === rawId) : undefined;
   const title = isNew ? 'Skapa mall' : String(initial?.name ?? initial?.identifier ?? rawId ?? 'Redigera mall');
 
   return (

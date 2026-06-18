@@ -102,6 +102,54 @@ export function usePocRows(resourceName: string | undefined, namespace?: string)
   return { ...state, resource, refresh: fetchData };
 }
 
+/**
+ * Fetch a SINGLE record via getOne — needed for resources whose list response
+ * omits large fields (e.g. template `content`). Falls back to the matching mock
+ * row when not logged in. `id` is the route id (for templates = identifier).
+ */
+export function usePocRecord(resourceName: string | undefined, id: string | undefined) {
+  const resource = getPocResource(resourceName);
+  const municipalityId = useLocalStorage((s) => s.municipalityId);
+  const [state, setState] = React.useState<{ row?: PocRow; loading: boolean; source: RowSource }>({
+    loading: true,
+    source: 'mock',
+  });
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!resource || !id || id === 'new') {
+        if (!cancelled) setState({ row: undefined, loading: false, source: 'mock' });
+        return;
+      }
+      const mock = withKeys(resource, resource.rows).find((r) => r.__key === id);
+      const getOne = svc(resource.name)?.getOne;
+      if (!getOne) {
+        if (!cancelled) setState({ row: mock, loading: false, source: 'mock' });
+        return;
+      }
+      try {
+        const res = await getOne(municipalityId, id);
+        const data: Record<string, unknown> | undefined = res?.data?.data ?? res?.data;
+        if (!cancelled) {
+          setState(
+            data
+              ? { row: { ...data, __key: computeRowId(resource, data) } as PocRow, loading: false, source: 'api' }
+              : { row: mock, loading: false, source: 'mock' }
+          );
+        }
+      } catch {
+        if (!cancelled) setState({ row: mock, loading: false, source: 'mock-fallback' });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [resourceName, id, municipalityId, resource]);
+
+  return { ...state, resource };
+}
+
 // --- Writes: delegate to the real @config/resources wrappers ---------------
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
