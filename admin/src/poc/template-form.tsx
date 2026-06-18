@@ -5,18 +5,31 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
 import { MonacoField } from '@poc/monaco-field';
 import { pocNamespaces, type PocRow } from '@poc/poc-resources';
 import { createRow, updateRow } from '@poc/use-poc-rows';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ChevronDown, Code2, Plus, Trash2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import * as React from 'react';
 import { toast } from 'sonner';
 
+// Quill-based rich text editor (same component the old admin used). Client-only.
+type TextEditorProps = {
+  className?: string;
+  value: { markup: string };
+  onChange: (e: { target: { value: { markup: string } } }) => void;
+};
+const TextEditor = dynamic(() => import('@sk-web-gui/text-editor'), {
+  ssr: false,
+  loading: () => <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">Laddar editor…</div>,
+}) as React.ComponentType<TextEditorProps>;
+
 const TEMPLATE_TYPES = ['Email', 'Sms', 'Decision', 'Investigation'];
-const MANAGED_KEYS = ['application', 'templateType', 'namespace', 'process'];
+const MANAGED_KEYS = ['application', 'templateType', 'namespace', 'process', 'editor'];
 
 interface MetaEntry {
   key: string;
@@ -52,6 +65,7 @@ export function TemplateForm({ initial, isNew, live = false }: { initial?: PocRo
   const [templateType, setTemplateType] = React.useState(metaVal('templateType'));
   const [namespace, setNamespace] = React.useState(metaVal('namespace'));
   const [process, setProcess] = React.useState(metaVal('process'));
+  const [isRich, setIsRich] = React.useState(metaVal('editor') === 'richtexteditor');
   const [extra, setExtra] = React.useState<MetaEntry[]>(initialMeta.filter((e) => !MANAGED_KEYS.includes(e.key)));
 
   const isDecisionKind = templateType === 'Decision' || templateType === 'Investigation';
@@ -62,6 +76,7 @@ export function TemplateForm({ initial, isNew, live = false }: { initial?: PocRo
     ...(templateType ? [{ key: 'templateType', value: templateType }] : []),
     ...(namespace ? [{ key: 'namespace', value: namespace }] : []),
     ...(isDecisionKind && process ? [{ key: 'process', value: process }] : []),
+    ...(isRich ? [{ key: 'editor', value: 'richtexteditor' }] : []),
     ...extra.filter((e) => e.key),
   ];
 
@@ -173,6 +188,19 @@ export function TemplateForm({ initial, isNew, live = false }: { initial?: PocRo
           </div>
         </div>
 
+        {/* Editor-läge → metadata 'editor' (styr hur innehållet renderas hos konsumenten) */}
+        <div className="mt-4 flex items-center justify-between rounded-md border p-3">
+          <div className="space-y-0.5 pr-4">
+            <Label>Visuell texteditor (rich text)</Label>
+            <p className="text-xs text-muted-foreground">
+              Skriv innehållet i en WYSIWYG-editor i stället för vanlig text. Sparas som metadata{' '}
+              <code className="rounded bg-background px-1 font-mono">editor: richtexteditor</code> så konsument-appen
+              (t.ex. Draken) renderar mallen som rich text.
+            </p>
+          </div>
+          <Switch checked={isRich} onCheckedChange={setIsRich} />
+        </div>
+
         {/* Extra fri metadata (key/value) */}
         <div className="mt-4 flex flex-col gap-2">
           <Label className="text-xs text-muted-foreground">Ytterligare metadata</Label>
@@ -226,10 +254,14 @@ export function TemplateForm({ initial, isNew, live = false }: { initial?: PocRo
         </Collapsible>
       </div>
 
-      {/* Innehåll */}
+      {/* Innehåll – rich text om 'editor: richtexteditor', annars Monaco */}
       <div className="flex flex-col gap-1.5">
         <Label>Innehåll</Label>
-        <MonacoField value={content} onChange={setContent} language="markdown" />
+        {isRich ? (
+          <TextEditor value={{ markup: content }} onChange={(e) => setContent(e.target.value.markup)} />
+        ) : (
+          <MonacoField value={content} onChange={setContent} language="markdown" />
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">

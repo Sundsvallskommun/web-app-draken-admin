@@ -88,3 +88,10 @@ body {
   color: hsl(var(--foreground));
   font-family: 'Raleway', sans-serif;
 }
+
+/* @sk-web-gui/text-editor (Quill) toolbar tooltips were styled by the now-removed
+   @sk-web-gui preset; without it the labels render inline. Buttons keep their
+   aria-label, so hide the visual tooltip text to keep the toolbar clean. */
+.sk-tooltip-text {
+  display: none;
+}
