@@ -14,19 +14,27 @@ yarn dev:poc      # next dev + watch som bygger om PoC-CSS:en automatiskt
 
 Rutter (config-drivna):
 - `/poc` – startsida med resurskort
-- `/poc/[resource]` – lista (TanStack Table: sortering, sök, paginering 10/20/50/Alla, ta bort-dialog)
-- `/poc/[resource]/new` och `/poc/[resource]/[...id]` – skapa/redigera (shadcn `Form` + react-hook-form)
+- `/poc/[resource]` – lista (TanStack Table: sortering, sök, **namespace-filter**, **kolumnval**,
+  **uppdatera**, paginering 10/20/50/Alla, ta bort-dialog)
+- `/poc/[resource]/new` och `/poc/[resource]/[...id]` – skapa/redigera (shadcn `Form` + react-hook-form,
+  spara-knapp inaktiv tills ändring, ta bort med bekräftelse)
+- `/poc/templates/{search,compare,test-status}` – mallarnas extrasidor (Sök, Jämför miljöer, Teststatus)
 
 **Alla 10 resurser är migrerade**: featureFlags, labels (skrivskyddad), roles, statuses,
 contactReasons, categories, emailIntegration, namespaces, templates, jsonSchemas.
+
+Funktionsparitet med gamla admin: **sidebar med expanderbara undermenyer** (Lista alla / Skapa ny
++ mall-extras), **namespace-filter**, **kolumnval**, **uppdatera**, redigerings-verktygsrad
+(ta bort / spara / mall-åtgärder export·förhandsgranska·godkänn) och **Monaco-editor** för
+kod-fält (mallinnehåll = markdown, JSON-schema = json).
 
 Allt drivs av ett enda register, `src/poc/poc-resources.ts` (fältmetadata + mockdata),
 som `src/poc/resource-table.tsx` och `src/poc/resource-form.tsx` renderar generiskt –
 samma mönster som riktiga appens `@config/resources` + `ListResources`.
 
 > All data är mockad – PoC:n pratar inte med backend, i18n eller zustand.
-> Avancerade editorer (Monaco för mallar, schema-builder/RJSF för JSON-scheman,
-> trädvy för etiketter) är **utanför PoC-omfång** och representeras av enklare fält.
+> Kvar utanför PoC-omfång: **schema-builder/RJSF-förhandsvisning** för JSON-scheman och
+> **hierarkisk trädvy** för etiketter (representeras nu av tabell/Monaco-fält).
 
 ## Hur isoleringen fungerar (viktigt)
 
