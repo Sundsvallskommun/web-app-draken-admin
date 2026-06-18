@@ -23,7 +23,8 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
-import { usePocRows } from '@poc/use-poc-rows';
+import { removeRow, usePocRows } from '@poc/use-poc-rows';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
 import {
   type ColumnDef,
   type SortingState,
@@ -79,6 +80,11 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
   const [namespace, setNamespace] = React.useState('');
 
   const { rows, loading, source, error, refresh } = usePocRows(resource.name, namespace || undefined);
+  const municipalityId = useLocalStorage((s) => s.municipalityId);
+
+  // Keep delete handlers (created inside the columns memo) reading fresh values.
+  const ctx = React.useRef({ live: false, municipalityId, refresh });
+  ctx.current = { live: source === 'api', municipalityId, refresh };
 
   const tableFields = resource.fields.filter((f) => f.inTable);
   const hasActions = !resource.readOnly;
@@ -108,7 +114,7 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
           return (
             <div className="flex justify-end gap-1">
               <Button asChild variant="ghost" size="icon" aria-label={`Redigera ${title}`}>
-                <NextLink href={`/${resource.name}/${item.id}`}>
+                <NextLink href={`/${resource.name}/${item.__key}`}>
                   <Pencil className="size-4" />
                 </NextLink>
               </Button>
@@ -127,7 +133,20 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Avbryt</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => toast.success(`${title} togs bort (skrivning ej kopplad ännu).`)}
+                        onClick={async () => {
+                          if (!ctx.current.live) {
+                            toast.success(`${title} togs bort (exempeldata – ingen riktig radering).`);
+                            return;
+                          }
+                          try {
+                            await removeRow(resource.name, ctx.current.municipalityId, item);
+                            toast.success(`${title} togs bort.`);
+                            ctx.current.refresh();
+                          } catch (err) {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            toast.error(`Kunde inte ta bort: ${(err as any)?.response?.data?.message ?? 'fel'}`);
+                          }
+                        }}
                       >
                         Ta bort
                       </AlertDialogAction>

@@ -19,7 +19,7 @@ export default function PocResourceEdit() {
   const isNew = rawId === 'new';
 
   // Fetches via the real service layer (mock fallback when not logged in).
-  const { rows, loading, resource } = usePocRows(resourceName);
+  const { rows, loading, resource, source } = usePocRows(resourceName);
 
   if (!router.isReady) {
     return (
@@ -37,7 +37,7 @@ export default function PocResourceEdit() {
     );
   }
 
-  const initial = !isNew ? rows.find((r) => r.id === rawId) : undefined;
+  const initial = !isNew ? rows.find((r) => r.__key === rawId) : undefined;
   const firstKey = resource.fields[0].key;
   const title = isNew
     ? `Skapa ${resource.label.toLowerCase()}`
@@ -61,7 +61,7 @@ export default function PocResourceEdit() {
       ) : !isNew && !initial ? (
         <p className="text-muted-foreground">Hittade ingen post med id {rawId}.</p>
       ) : (
-        <ResourceForm resource={resource} initial={initial} isNew={isNew} />
+        <ResourceForm resource={resource} initial={initial} isNew={isNew} live={source === 'api'} />
       )}
     </PocLayout>
   );

@@ -24,8 +24,14 @@ så logga in som vanligt för att se riktig data.
 Resurser: featureFlags, labels (träd), roles, statuses, contactReasons, categories,
 emailIntegration, namespaces, templates (Monaco + sök/jämför/teststatus), jsonSchemas (builder).
 
+Skrivningar (skapa/redigera/ta bort) går via samma `@config/resources`-wrappers som
+förr (`createRow/updateRow/removeRow` i `use-poc-rows.ts`). De är **skarpa när riktig
+data är laddad** (inloggad); på fallback-exempeldata är de dry-run så inget muteras av
+misstag.
+
 ## Kvar att göra
 
-- **Skrivningar** (skapa/redigera/ta bort) är ännu **dry-run** (toast) – läsning går mot riktig backend, skrivning ska kopplas mot `create/update/remove`.
+- Verifiera skrivningarna inloggat (kunde inte testas utan session vid migreringen).
+- JSON-schemats **spara** via builder är fortfarande dry-run (buildern lyfter inte sitt schema-state ännu).
 - Mallarnas **riktiga** jämför/godkänn/versionering mot API (compare-service).
 - i18n (appen använder hårdkodad svenska i shadcn-delen; `next-i18next` finns kvar men oanvänt).

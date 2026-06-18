@@ -25,10 +25,15 @@ import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
 import { MonacoField } from '@poc/monaco-field';
 import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
+import { createRow, removeRow, updateRow } from '@poc/use-poc-rows';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { Download, Eye, ShieldCheck, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
 
 function defaultFor(field: FieldDef, initial?: PocRow) {
   const v = initial?.[field.key];
@@ -40,21 +45,51 @@ export function ResourceForm({
   resource,
   initial,
   isNew,
+  live = false,
 }: {
   resource: PocResource;
   initial?: PocRow;
   isNew: boolean;
+  /** True when real data is loaded (logged in) → writes hit the API. */
+  live?: boolean;
 }) {
   const router = useRouter();
+  const municipalityId = useLocalStorage((s) => s.municipalityId);
   const defaultValues = Object.fromEntries(resource.fields.map((f) => [f.key, defaultFor(f, initial)]));
   const form = useForm<Record<string, unknown>>({ defaultValues });
   const isDirty = form.formState.isDirty;
   const isTemplate = resource.name === 'templates';
 
-  const onSubmit = (values: Record<string, unknown>) => {
+  const onSubmit = async (values: Record<string, unknown>) => {
     const title = String(values[resource.fields[0].key] ?? '');
-    toast.success(`${isNew ? 'Skapade' : 'Sparade'} ${resource.label.toLowerCase()} "${title}" (PoC – inget sparas på riktigt).`);
-    router.push(`/${resource.name}`);
+    if (!live) {
+      toast.success(`${isNew ? 'Skapade' : 'Sparade'} ${resource.label.toLowerCase()} "${title}" (exempeldata – inget sparas).`);
+      router.push(`/${resource.name}`);
+      return;
+    }
+    try {
+      if (isNew) await createRow(resource.name, municipalityId, values);
+      else await updateRow(resource.name, municipalityId, initial as PocRow, values);
+      toast.success(`${isNew ? 'Skapade' : 'Sparade'} ${resource.label.toLowerCase()} "${title}".`);
+      router.push(`/${resource.name}`);
+    } catch (err) {
+      toast.error(`Kunde inte spara: ${errMsg(err)}`);
+    }
+  };
+
+  const onDelete = async () => {
+    if (!live || !initial) {
+      toast.success(`${title} togs bort (exempeldata – ingen riktig radering).`);
+      router.push(`/${resource.name}`);
+      return;
+    }
+    try {
+      await removeRow(resource.name, municipalityId, initial);
+      toast.success(`${title} togs bort.`);
+      router.push(`/${resource.name}`);
+    } catch (err) {
+      toast.error(`Kunde inte ta bort: ${errMsg(err)}`);
+    }
   };
 
   const title = String(initial?.[resource.fields[0].key] ?? '');
@@ -183,14 +218,7 @@ export function ResourceForm({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      toast.success(`${title} togs bort (PoC – ingen riktig radering).`);
-                      router.push(`/${resource.name}`);
-                    }}
-                  >
-                    Ta bort
-                  </AlertDialogAction>
+                  <AlertDialogAction onClick={onDelete}>Ta bort</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

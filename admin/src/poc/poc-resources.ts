@@ -34,7 +34,7 @@ export interface FieldDef {
   inTable?: boolean;
 }
 
-export type PocRow = { id: string } & Record<string, unknown>;
+export type PocRow = { id: string; __key?: string } & Record<string, unknown>;
 
 export interface PocResource {
   name: string;

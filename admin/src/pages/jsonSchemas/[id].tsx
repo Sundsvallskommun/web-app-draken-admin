@@ -66,7 +66,7 @@ export default function PocJsonSchemaEdit() {
     );
   }
 
-  const initial = !isNew ? rows.find((r) => r.id === rawId) : undefined;
+  const initial = !isNew ? rows.find((r) => r.__key === rawId) : undefined;
   const title = isNew ? 'Skapa JSON-schema' : String(initial?.name ?? rawId ?? 'Redigera JSON-schema');
 
   return (
