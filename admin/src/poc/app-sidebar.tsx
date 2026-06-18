@@ -30,7 +30,6 @@ import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ChevronRight, ChevronsUpDown, ExternalLink, Flame, LogOut } from 'lucide-react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { toast } from 'sonner';
 import { useShallow } from 'zustand/react/shallow';
 import { ModeToggle } from './mode-toggle';
 
@@ -57,15 +56,18 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-3 px-2 py-1.5">
-          <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Flame className="size-5" />
-          </div>
-          <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="truncate font-semibold">Draken Admin</span>
-            <span className="truncate text-xs text-muted-foreground">shadcn PoC</span>
-          </div>
-        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <NextLink href="/">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <Flame className="size-5" />
+                </div>
+                <span className="truncate font-semibold">Sundsvall Draken</span>
+              </NextLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
 
       <SidebarContent>
@@ -105,7 +107,8 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="gap-2">
-        <div className="group-data-[collapsible=icon]:hidden">
+        {/* Hidden when the sidebar is collapsed to the icon rail */}
+        <div className="flex flex-col gap-2 group-data-[collapsible=icon]:hidden">
           <Select value={String(municipalityId)} onValueChange={(v) => setMunicipalityId(Number(v))}>
             <SelectTrigger className="w-full">
               <SelectValue />
@@ -115,42 +118,50 @@ export function AppSidebar() {
               <SelectItem value="2260">Ånge</SelectItem>
             </SelectContent>
           </Select>
+
+          <Button variant="outline" className="w-full justify-between" asChild>
+            <a href="https://smaug-test.sundsvall.se/start" target="_blank" rel="noreferrer">
+              Smaug
+              <ExternalLink className="size-4" />
+            </a>
+          </Button>
+
+          <ModeToggle className="w-full justify-start" />
         </div>
 
-        <Button variant="outline" className="w-full justify-between group-data-[collapsible=icon]:hidden" asChild>
-          <a href="https://smaug-test.sundsvall.se/start" target="_blank" rel="noreferrer">
-            Smaug
-            <ExternalLink className="size-4" />
-          </a>
-        </Button>
-
-        <div className="flex items-center gap-2 group-data-[collapsible=icon]:flex-col">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex-1 justify-start gap-2 px-2">
-                <Avatar className="size-7">
-                  <AvatarFallback className="text-xs">ME</AvatarFallback>
-                </Avatar>
-                <span className="truncate group-data-[collapsible=icon]:hidden">Max Eriksson</span>
-                <ChevronsUpDown className="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start" className="w-56">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">Max Eriksson</span>
-                  <span className="text-xs text-muted-foreground">max.z.eriksson@sundsvall.se</span>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => toast('Utloggning (PoC – ingen riktig session).')}>
-                <LogOut className="size-4" />
-                Logga ut
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <ModeToggle className="group-data-[collapsible=icon]:w-full" />
-        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton size="lg">
+                  <Avatar className="size-8 rounded-lg">
+                    <AvatarFallback className="rounded-lg text-xs">ME</AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left leading-tight">
+                    <span className="truncate text-sm font-medium">Max Eriksson</span>
+                    <span className="truncate text-xs text-muted-foreground">max.z.eriksson@sundsvall.se</span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Max Eriksson</span>
+                    <span className="text-xs text-muted-foreground">max.z.eriksson@sundsvall.se</span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <NextLink href="/logout">
+                    <LogOut className="size-4" />
+                    Logga ut
+                  </NextLink>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

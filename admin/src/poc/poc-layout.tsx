@@ -17,7 +17,7 @@ export function PocLayout({ title, breadcrumb, actions, children }: PocLayoutPro
   return (
     <>
       <Head>
-        <title>{`${title} – ${appName} admin`}</title>
+        <title>{`${title} – ${appName}`}</title>
       </Head>
 
       <a
