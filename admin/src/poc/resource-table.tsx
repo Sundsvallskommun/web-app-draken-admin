@@ -11,13 +11,23 @@ import {
 } from '@components/ui/alert-dialog';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@components/ui/dropdown-menu';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
 import {
   type ColumnDef,
+  type ColumnFiltersState,
   type SortingState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -25,7 +35,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Pencil, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Pencil, RefreshCcw, SlidersHorizontal, Trash2 } from 'lucide-react';
 import NextLink from 'next/link';
 import * as React from 'react';
 import { toast } from 'sonner';
@@ -64,9 +74,19 @@ function renderCell(field: FieldDef, value: unknown, emphasize: boolean) {
 export function ResourceTable({ resource }: { resource: PocResource }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [filter, setFilter] = React.useState('');
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
 
   const tableFields = resource.fields.filter((f) => f.inTable);
   const hasActions = !resource.readOnly;
+  const labelByKey = React.useMemo(
+    () => Object.fromEntries(tableFields.map((f) => [f.key, f.label])),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [resource.name]
+  );
+
+  // Namespace filter only when namespace references *other* namespaces (select).
+  const namespaceField = resource.fields.find((f) => f.key === 'namespace' && f.type === 'select');
 
   const columns = React.useMemo<ColumnDef<PocRow>[]>(() => {
     const cols: ColumnDef<PocRow>[] = tableFields.map((field, index) => ({
@@ -78,6 +98,7 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
     if (hasActions) {
       cols.push({
         id: 'actions',
+        enableHiding: false,
         header: () => <span className="sr-only">Åtgärder</span>,
         cell: ({ row }) => {
           const item = row.original;
@@ -124,9 +145,11 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
   const table = useReactTable({
     data: resource.rows,
     columns,
-    state: { sorting, globalFilter: filter },
+    state: { sorting, globalFilter: filter, columnFilters, columnVisibility },
     onSortingChange: setSorting,
     onGlobalFilterChange: setFilter,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -139,14 +162,75 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
   const onPageSizeChange = (value: string) =>
     table.setPageSize(value === 'all' ? resource.rows.length : Number(value));
 
+  const namespaceValue = (table.getColumn('namespace')?.getFilterValue() as string) ?? 'all';
+  const onNamespaceChange = (value: string) =>
+    table.getColumn('namespace')?.setFilterValue(value === 'all' ? undefined : value);
+
+  const onRefresh = () => {
+    setSorting([]);
+    setFilter('');
+    setColumnFilters([]);
+    table.setPageIndex(0);
+    toast('Listan uppdaterad (PoC – mockad data).');
+  };
+
+  const hideableColumns = table.getAllColumns().filter((c) => c.getCanHide());
+
   return (
     <div className="flex flex-col gap-4">
-      <Input
-        placeholder="Sök…"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        className="max-w-xs"
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          placeholder="Sök…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="max-w-xs"
+        />
+
+        {namespaceField && (
+          <Select value={namespaceValue} onValueChange={onNamespaceChange}>
+            <SelectTrigger className="w-[16rem]" aria-label="Filtrera på namespace">
+              <SelectValue placeholder="Alla namespace" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alla namespace</SelectItem>
+              {namespaceField.options?.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onRefresh}>
+            <RefreshCcw className="size-4" />
+            Uppdatera
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <SlidersHorizontal className="size-4" />
+                Kolumner
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Visa kolumner</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {hideableColumns.map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  {labelByKey[column.id] ?? column.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
 
       <div className="rounded-md border">
         <Table>
@@ -172,8 +256,8 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                  Inga rader matchade sökningen.
+                <TableCell colSpan={table.getVisibleFlatColumns().length} className="h-24 text-center text-muted-foreground">
+                  Inga rader matchade filtret.
                 </TableCell>
               </TableRow>
             )}

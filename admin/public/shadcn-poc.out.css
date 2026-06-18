@@ -370,6 +370,10 @@
   width: var(--sidebar-width);
 }
 
+.shadcn-poc .w-\[16rem\] {
+  width: 16rem;
+}
+
 .shadcn-poc .w-\[1px\] {
   width: 1px;
 }
@@ -1793,6 +1797,11 @@
 
 .shadcn-poc :is(.group[data-side="right"] .group-data-\[side\=right\]\:rotate-180) {
   --tw-rotate: 180deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.shadcn-poc :is(.group\/collapsible[data-state="open"] .group-data-\[state\=open\]\/collapsible\:rotate-90) {
+  --tw-rotate: 90deg;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 

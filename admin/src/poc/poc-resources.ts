@@ -45,6 +45,8 @@ export interface PocResource {
   canRemove: boolean;
   /** List only, no create/edit (e.g. labels). */
   readOnly?: boolean;
+  /** Extra sidebar sub-links (e.g. templates: search / compare / test-status). */
+  extraNav?: { label: string; href: string }[];
   fields: FieldDef[];
   rows: PocRow[];
 }

@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@components/ui/dropdown-menu';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import {
   Sidebar,
@@ -20,18 +21,34 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
 } from '@components/ui/sidebar';
-import { pocResources } from '@poc/poc-resources';
-import { ChevronsUpDown, ExternalLink, Flame, LogOut } from 'lucide-react';
+import { type PocResource, pocResources } from '@poc/poc-resources';
+import { ChevronRight, ChevronsUpDown, ExternalLink, Flame, LogOut } from 'lucide-react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { toast } from 'sonner';
 import { ModeToggle } from './mode-toggle';
 
+interface NavItem {
+  label: string;
+  href: string;
+}
+
+function subItems(resource: PocResource): NavItem[] {
+  const items: NavItem[] = [{ label: 'Lista alla', href: `/poc/${resource.name}` }];
+  if (resource.canCreate) items.push({ label: 'Skapa ny', href: `/poc/${resource.name}/new` });
+  if (resource.extraNav) items.push(...resource.extraNav);
+  return items;
+}
+
 export function AppSidebar() {
   const router = useRouter();
-  const active = (name: string) => router.asPath.startsWith(`/poc/${name}`);
+  const pathOnly = router.asPath.split('?')[0];
+  const active = (name: string) => pathOnly === `/poc/${name}` || pathOnly.startsWith(`/poc/${name}/`);
 
   return (
     <Sidebar collapsible="icon">
@@ -53,15 +70,30 @@ export function AppSidebar() {
           <SidebarMenu>
             {pocResources.map((resource) => {
               const Icon = resource.icon;
+              const isActive = active(resource.name);
               return (
-                <SidebarMenuItem key={resource.name}>
-                  <SidebarMenuButton asChild isActive={active(resource.name)} tooltip={resource.label}>
-                    <NextLink href={`/poc/${resource.name}`}>
-                      <Icon />
-                      <span>{resource.label}</span>
-                    </NextLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <Collapsible key={resource.name} asChild defaultOpen={isActive} className="group/collapsible">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton tooltip={resource.label} isActive={isActive}>
+                        <Icon />
+                        <span>{resource.label}</span>
+                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {subItems(resource).map((item) => (
+                          <SidebarMenuSubItem key={item.href}>
+                            <SidebarMenuSubButton asChild isActive={pathOnly === item.href}>
+                              <NextLink href={item.href}>{item.label}</NextLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
               );
             })}
           </SidebarMenu>
