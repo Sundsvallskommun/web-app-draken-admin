@@ -1,5 +1,4 @@
 import { Api } from '@data-contracts/backend/Api';
-import { pocNamespaces } from '@poc/poc-resources';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import * as React from 'react';
 
@@ -8,20 +7,14 @@ export interface NsOption {
   label: string;
 }
 
-const fallbackOptions: NsOption[] = pocNamespaces.map((ns) => ({
-  value: ns.namespace,
-  label: `${ns.displayName} (${ns.namespace})`,
-}));
-
 /**
- * Namespace options for selects/filters. Fetches the full list from the same
- * endpoint the old admin used (namespaceControllerGetNamespaces → all
- * namespaces for the municipality); falls back to the static example list when
- * not logged in. Refetches when the municipality changes.
+ * Namespace options for selects/filters — fetched from the backend
+ * (namespaceControllerGetNamespaces → all namespaces for the municipality).
+ * Refetches when the municipality changes.
  */
 export function usePocNamespaces(): NsOption[] {
   const municipalityId = useLocalStorage((s) => s.municipalityId);
-  const [options, setOptions] = React.useState<NsOption[]>(fallbackOptions);
+  const [options, setOptions] = React.useState<NsOption[]>([]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -30,7 +23,7 @@ export function usePocNamespaces(): NsOption[] {
       .namespaceControllerGetNamespaces(municipalityId)
       .then((res) => {
         const list: Array<{ namespace: string; displayName?: string }> = res?.data?.data ?? [];
-        if (!cancelled && list.length) {
+        if (!cancelled) {
           setOptions(
             list.map((ns) => ({
               value: ns.namespace,
@@ -40,7 +33,7 @@ export function usePocNamespaces(): NsOption[] {
         }
       })
       .catch(() => {
-        /* not logged in / API down → keep fallback */
+        if (!cancelled) setOptions([]);
       });
     return () => {
       cancelled = true;

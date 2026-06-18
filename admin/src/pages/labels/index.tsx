@@ -1,31 +1,28 @@
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { LabelTree, type LabelNode } from '@poc/label-tree';
-import { pocNamespaces } from '@poc/poc-resources';
+import { PocLayout } from '@poc/poc-layout';
 import { usePocNamespaces } from '@poc/use-poc-namespaces';
 import { usePocRows } from '@poc/use-poc-rows';
 import { Loader2, Search, TriangleAlert } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
-import { PocLayout } from '@poc/poc-layout';
 import * as React from 'react';
 
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
 export default function PocLabels() {
-  const [namespace, setNamespace] = React.useState(pocNamespaces[0].namespace);
+  const [namespace, setNamespace] = React.useState('');
   const [query, setQuery] = React.useState('');
   const namespaceOptions = usePocNamespaces();
-  const { rows, loading, source, error } = usePocRows('labels', namespace);
+  const { rows, loading, error } = usePocRows('labels', namespace || undefined);
 
   return (
     <PocLayout title="Etiketter" breadcrumb="Resurser">
       <div className="flex flex-col gap-4">
-        {source !== 'api' && !loading && (
-          <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        {error && !loading && (
+          <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             <TriangleAlert className="size-4 shrink-0" />
-            {error === '401'
-              ? 'Inte inloggad mot backend – visar exempelträd. Logga in i vanliga admin (öppna /) för riktig data.'
-              : `Kunde inte hämta från API:et (fel ${error}) – visar exempelträd.`}
+            {error === '401' ? 'Du är inte inloggad.' : `Kunde inte hämta data (fel ${error}).`}
           </div>
         )}
 
@@ -41,7 +38,7 @@ export default function PocLabels() {
           </div>
           <Select value={namespace} onValueChange={setNamespace}>
             <SelectTrigger className="w-[16rem]" aria-label="Namespace">
-              <SelectValue />
+              <SelectValue placeholder="Välj namespace" />
             </SelectTrigger>
             <SelectContent>
               {namespaceOptions.map((ns) => (

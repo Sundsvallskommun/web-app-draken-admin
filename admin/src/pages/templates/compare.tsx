@@ -1,62 +1,53 @@
-import { Badge } from '@components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { PocLayout } from '@poc/poc-layout';
-import { getPocResource } from '@poc/poc-resources';
+import { usePocRecord, usePocRows } from '@poc/use-poc-rows';
+import { Info } from 'lucide-react';
+import type { GetServerSideProps } from 'next';
 import * as React from 'react';
 
-const templates = getPocResource('templates')?.rows ?? [];
-
-// Mocked production content (differs from test for some templates).
-const prodOverrides: Record<string, string> = {
-  'errand.closed': 'Hej {{name}},\n\nDitt ärende är avslutat.',
-};
+export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
 export default function TemplateCompare() {
-  const [selected, setSelected] = React.useState(String(templates[0]?.id ?? ''));
-  const tpl = templates.find((t) => t.id === selected);
-  const testContent = String(tpl?.content ?? '');
-  const prodContent = prodOverrides[selected] ?? testContent;
-  const differs = testContent !== prodContent;
+  const { rows } = usePocRows('templates');
+  const [selected, setSelected] = React.useState('');
+  // Full content comes from getOne (the list omits it).
+  const { row, loading } = usePocRecord('templates', selected || undefined);
 
   return (
     <PocLayout title="Jämför miljöer" breadcrumb="Mallar">
       <div className="flex flex-col gap-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <Select value={selected} onValueChange={setSelected}>
-            <SelectTrigger className="w-[22rem]" aria-label="Välj mall">
-              <SelectValue placeholder="Välj mall" />
-            </SelectTrigger>
-            <SelectContent>
-              {templates.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {String(t.name)} ({String(t.identifier)})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {differs ? (
-            <Badge variant="destructive">Skiljer sig mellan miljöer</Badge>
-          ) : (
-            <Badge>Identiska</Badge>
-          )}
+        <Select value={selected} onValueChange={setSelected}>
+          <SelectTrigger className="w-[24rem]" aria-label="Välj mall">
+            <SelectValue placeholder="Välj mall" />
+          </SelectTrigger>
+          <SelectContent>
+            {rows.map((t) => (
+              <SelectItem key={t.__key} value={String(t.__key)}>
+                {String(t.name ?? t.identifier)} ({String(t.identifier)})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+          <Info className="size-4 shrink-0" />
+          Jämförelse mellan test- och produktionsmiljö kräver compare-tjänsten (ej kopplad i denna branch). Nedan visas
+          mallens aktuella innehåll.
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {[
-            { env: 'Test', content: testContent },
-            { env: 'Produktion', content: prodContent },
-          ].map(({ env, content }) => (
-            <Card key={env}>
-              <CardHeader>
-                <CardTitle className="text-base">{env}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="overflow-auto rounded-md bg-muted p-4 font-mono text-sm">{content}</pre>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {selected && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Innehåll</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="overflow-auto rounded-md bg-muted p-4 font-mono text-sm">
+                {loading ? 'Hämtar…' : String(row?.content ?? '')}
+              </pre>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </PocLayout>
   );

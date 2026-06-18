@@ -50,7 +50,7 @@ function parseMeta(m: unknown): MetaEntry[] {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
 
-export function TemplateForm({ initial, isNew, live = false }: { initial?: PocRow; isNew: boolean; live?: boolean }) {
+export function TemplateForm({ initial, isNew }: { initial?: PocRow; isNew: boolean }) {
   const router = useRouter();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const namespaceOptions = usePocNamespaces();
@@ -92,11 +92,6 @@ export function TemplateForm({ initial, isNew, live = false }: { initial?: PocRo
       versionIncrement,
       metadata: JSON.stringify(metadata),
     };
-    if (!live) {
-      toast.success(`${isNew ? 'Skapade' : 'Sparade'} mall "${name || identifier}" (exempeldata – inget sparas).`);
-      router.push('/templates');
-      return;
-    }
     try {
       if (isNew) await createRow('templates', municipalityId, data);
       else await updateRow('templates', municipalityId, initial as PocRow, data);

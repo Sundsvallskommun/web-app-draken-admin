@@ -5,7 +5,8 @@ import { Textarea } from '@components/ui/textarea';
 import { PocLayout } from '@poc/poc-layout';
 import { type PocRow } from '@poc/poc-resources';
 import { SchemaBuilder } from '@poc/schema-builder';
-import { usePocRows } from '@poc/use-poc-rows';
+import { createRow, updateRow, usePocRows } from '@poc/use-poc-rows';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ArrowLeft } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
@@ -15,11 +16,28 @@ import { toast } from 'sonner';
 
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
+
 function Editor({ initial, isNew }: { initial?: PocRow; isNew: boolean }) {
   const router = useRouter();
+  const municipalityId = useLocalStorage((s) => s.municipalityId);
   const [name, setName] = React.useState(String(initial?.name ?? ''));
   const [version, setVersion] = React.useState(String(initial?.version ?? '1.0'));
   const [description, setDescription] = React.useState(String(initial?.description ?? ''));
+  const [value, setValue] = React.useState<object>({});
+
+  const onSave = async () => {
+    const data = { name, version, description, value };
+    try {
+      if (isNew) await createRow('jsonSchemas', municipalityId, data);
+      else await updateRow('jsonSchemas', municipalityId, initial as PocRow, data);
+      toast.success(`${isNew ? 'Skapade' : 'Sparade'} schema "${name}".`);
+      router.push('/jsonSchemas');
+    } catch (err) {
+      toast.error(`Kunde inte spara: ${errMsg(err)}`);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -38,12 +56,10 @@ function Editor({ initial, isNew }: { initial?: PocRow; isNew: boolean }) {
         </div>
       </div>
 
-      <SchemaBuilder value={initial?.value} />
+      <SchemaBuilder value={initial?.value} onChange={setValue} />
 
       <div className="flex gap-3 border-t pt-6">
-        <Button onClick={() => { toast.success(`${isNew ? 'Skapade' : 'Sparade'} schema "${name}" (skrivning ej kopplad ännu).`); router.push('/jsonSchemas'); }}>
-          {isNew ? 'Skapa' : 'Spara ändringar'}
-        </Button>
+        <Button onClick={onSave}>{isNew ? 'Skapa' : 'Spara ändringar'}</Button>
         <Button variant="outline" onClick={() => router.push('/jsonSchemas')}>
           Avbryt
         </Button>

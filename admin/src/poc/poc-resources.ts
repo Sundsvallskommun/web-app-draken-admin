@@ -1,9 +1,7 @@
 /**
- * Config-driven registry for the shadcn PoC. Mirrors the real
- * `@config/resources` (field metadata + which actions exist), but with
- * hardcoded Swedish labels and mock rows so the PoC renders standalone
- * (no backend / i18n / zustand). The generic list/edit pages under
- * `pages/[resource]/*` render entirely from this registry.
+ * Resource registry: field metadata + which actions each resource supports.
+ * Drives the generic list/edit pages. No data lives here — rows come from the
+ * backend via `@config/resources` (see use-poc-rows.ts).
  */
 import {
   Boxes,
@@ -28,6 +26,7 @@ export interface FieldDef {
   required?: boolean;
   /** Disabled when editing an existing record (e.g. name / namespace keys). */
   lockedOnEdit?: boolean;
+  /** Options for non-namespace selects (namespace options are fetched live). */
   options?: { value: string; label: string }[];
   help?: string;
   /** Show this field as a column in the list table. */
@@ -48,53 +47,19 @@ export interface PocResource {
   /** Extra sidebar sub-links (e.g. templates: search / compare / test-status). */
   extraNav?: { label: string; href: string }[];
   fields: FieldDef[];
-  rows: PocRow[];
 }
 
-export const pocNamespaces = [
-  { namespace: 'CONTACTCENTER', displayName: 'Kontaktcenter' },
-  { namespace: 'BYGGLOV', displayName: 'Bygglov' },
-  { namespace: 'MEX', displayName: 'Mark och exploatering' },
-];
-
-const nsOptions = pocNamespaces.map((ns) => ({ value: ns.namespace, label: `${ns.displayName} (${ns.namespace})` }));
 const nsField = (): FieldDef => ({
   key: 'namespace',
   label: 'Namespace',
   type: 'select',
   required: true,
   lockedOnEdit: true,
-  options: nsOptions,
   inTable: true,
 });
+
+// Status values for the e-post-integration selects (a small config enum).
 const statusOptions = ['NEW', 'ONGOING', 'SOLVED', 'SUSPENDED'].map((s) => ({ value: s, label: s }));
-
-// ---------------------------------------------------------------------------
-
-const statusBase: PocRow[] = [
-  { id: 'CONTACTCENTER/CONTACT', name: 'CONTACT', displayName: 'Återkoppling', externalDisplayName: 'Vi återkommer', namespace: 'CONTACTCENTER', updatedAt: '2026-05-12' },
-  { id: 'CONTACTCENTER/NEW', name: 'NEW', displayName: 'Nytt ärende', externalDisplayName: 'Mottaget', namespace: 'CONTACTCENTER', updatedAt: '2026-05-30' },
-  { id: 'CONTACTCENTER/ONGOING', name: 'ONGOING', displayName: 'Pågående', externalDisplayName: 'Under handläggning', namespace: 'CONTACTCENTER', updatedAt: '2026-06-01' },
-  { id: 'CONTACTCENTER/SOLVED', name: 'SOLVED', displayName: 'Avslutat', externalDisplayName: 'Klart', namespace: 'CONTACTCENTER', updatedAt: '2026-06-10' },
-  { id: 'BYGGLOV/PENDING', name: 'PENDING', displayName: 'Väntar på svar', externalDisplayName: 'Inväntar dig', namespace: 'BYGGLOV', updatedAt: '2026-04-22' },
-  { id: 'BYGGLOV/ASSIGNED', name: 'ASSIGNED', displayName: 'Tilldelat', externalDisplayName: 'Handläggare utsedd', namespace: 'BYGGLOV', updatedAt: '2026-06-14' },
-  { id: 'BYGGLOV/REJECTED', name: 'REJECTED', displayName: 'Avvisat', externalDisplayName: 'Avslaget', namespace: 'BYGGLOV', updatedAt: '2026-03-18' },
-  { id: 'MEX/SUSPENDED', name: 'SUSPENDED', displayName: 'Parkerat', externalDisplayName: 'Pausat', namespace: 'MEX', updatedAt: '2026-06-16' },
-];
-const statusFiller: PocRow[] = Array.from({ length: 22 }, (_, i) => {
-  const ns = ['CONTACTCENTER', 'BYGGLOV', 'MEX'][i % 3];
-  const n = i + 1;
-  return {
-    id: `${ns}/STATUS_${n}`,
-    name: `STATUS_${n}`,
-    displayName: `Status ${n}`,
-    externalDisplayName: `Extern status ${n}`,
-    namespace: ns,
-    updatedAt: `2026-0${(i % 6) + 1}-${String((i % 27) + 1).padStart(2, '0')}`,
-  };
-});
-
-// ---------------------------------------------------------------------------
 
 export const pocResources: PocResource[] = [
   {
@@ -111,13 +76,6 @@ export const pocResources: PocResource[] = [
       nsField(),
       { key: 'enabled', label: 'Aktiverad', type: 'switch', inTable: true },
     ],
-    rows: [
-      { id: 'CONTACTCENTER/newInbox', name: 'newInbox', description: 'Ny inkorgsvy', application: 'draken', namespace: 'CONTACTCENTER', enabled: true },
-      { id: 'CONTACTCENTER/aiSummary', name: 'aiSummary', description: 'AI-sammanfattning av ärenden', application: 'draken', namespace: 'CONTACTCENTER', enabled: false },
-      { id: 'BYGGLOV/mapView', name: 'mapView', description: 'Kartvy för ärenden', application: 'draken', namespace: 'BYGGLOV', enabled: true },
-      { id: 'BYGGLOV/bulkActions', name: 'bulkActions', description: 'Massåtgärder i listan', application: 'draken', namespace: 'BYGGLOV', enabled: false },
-      { id: 'MEX/exportPdf', name: 'exportPdf', description: 'Exportera till PDF', application: 'draken', namespace: 'MEX', enabled: true },
-    ],
   },
   {
     name: 'labels',
@@ -133,37 +91,6 @@ export const pocResources: PocResource[] = [
       { key: 'resourceName', label: 'Resursnamn', type: 'text', inTable: true },
       nsField(),
     ],
-    // Hierarchical mock (matches the real LabelNode shape: nested `labels`).
-    // Used as fallback by the tree view when the API isn't reachable.
-    rows: [
-      {
-        id: 'vatten', classification: 'CATEGORY', displayName: 'Vatten och avlopp', resourceName: 'vatten-avlopp', namespace: 'CONTACTCENTER',
-        labels: [
-          {
-            id: 'vatten-fel', classification: 'TYPE', displayName: 'Felanmälan', resourceName: 'felanmalan',
-            labels: [
-              { id: 'vatten-fel-lacka', classification: 'SUBTYPE', displayName: 'Vattenläcka', resourceName: 'vattenlacka', isLeaf: true },
-              { id: 'vatten-fel-stopp', classification: 'SUBTYPE', displayName: 'Avloppsstopp', resourceName: 'avloppsstopp', isLeaf: true },
-            ],
-          },
-          { id: 'vatten-fraga', classification: 'TYPE', displayName: 'Fråga', resourceName: 'fraga', isLeaf: true },
-        ],
-      },
-      {
-        id: 'avfall', classification: 'CATEGORY', displayName: 'Avfall och återvinning', resourceName: 'avfall', namespace: 'CONTACTCENTER',
-        labels: [
-          { id: 'avfall-hamtning', classification: 'TYPE', displayName: 'Hämtning', resourceName: 'hamtning', isLeaf: true },
-          { id: 'avfall-kart', classification: 'TYPE', displayName: 'Kärl och behållare', resourceName: 'karl', isLeaf: true },
-        ],
-      },
-      {
-        id: 'gata', classification: 'CATEGORY', displayName: 'Gata och park', resourceName: 'gata-park', namespace: 'CONTACTCENTER',
-        labels: [
-          { id: 'gata-belysning', classification: 'TYPE', displayName: 'Gatubelysning', resourceName: 'belysning', isLeaf: true },
-          { id: 'gata-vinter', classification: 'TYPE', displayName: 'Vinterväghållning', resourceName: 'vinter', isLeaf: true },
-        ],
-      },
-    ],
   },
   {
     name: 'roles',
@@ -176,13 +103,6 @@ export const pocResources: PocResource[] = [
       { key: 'name', label: 'Namn', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
       nsField(),
-    ],
-    rows: [
-      { id: 'CONTACTCENTER/ADMIN', name: 'ADMIN', displayName: 'Administratör', namespace: 'CONTACTCENTER' },
-      { id: 'CONTACTCENTER/AGENT', name: 'AGENT', displayName: 'Handläggare', namespace: 'CONTACTCENTER' },
-      { id: 'BYGGLOV/INSPECTOR', name: 'INSPECTOR', displayName: 'Inspektör', namespace: 'BYGGLOV' },
-      { id: 'BYGGLOV/VIEWER', name: 'VIEWER', displayName: 'Läsbehörig', namespace: 'BYGGLOV' },
-      { id: 'MEX/MANAGER', name: 'MANAGER', displayName: 'Chef', namespace: 'MEX' },
     ],
   },
   {
@@ -199,7 +119,6 @@ export const pocResources: PocResource[] = [
       nsField(),
       { key: 'updatedAt', label: 'Uppdaterad', type: 'text', inTable: true },
     ],
-    rows: [...statusBase, ...statusFiller],
   },
   {
     name: 'contactReasons',
@@ -212,12 +131,6 @@ export const pocResources: PocResource[] = [
       { key: 'reason', label: 'Orsak', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
       nsField(),
-    ],
-    rows: [
-      { id: 'CONTACTCENTER/INVOICE', reason: 'INVOICE', displayName: 'Faktura', namespace: 'CONTACTCENTER' },
-      { id: 'CONTACTCENTER/COMPLAINT', reason: 'COMPLAINT', displayName: 'Klagomål', namespace: 'CONTACTCENTER' },
-      { id: 'BYGGLOV/QUESTION', reason: 'QUESTION', displayName: 'Fråga om bygglov', namespace: 'BYGGLOV' },
-      { id: 'MEX/PURCHASE', reason: 'PURCHASE', displayName: 'Markförvärv', namespace: 'MEX' },
     ],
   },
   {
@@ -233,12 +146,6 @@ export const pocResources: PocResource[] = [
       { key: 'sortOrder', label: 'Sorteringsordning', type: 'number', inTable: true },
       { key: 'types', label: 'Typer (kommaseparerat)', type: 'text', help: 'T.ex. "STÖRNING, AVBROTT".' },
       nsField(),
-    ],
-    rows: [
-      { id: 'CONTACTCENTER/WATER', name: 'WATER', displayName: 'Vatten', sortOrder: 1, types: 'STÖRNING, AVBROTT', namespace: 'CONTACTCENTER' },
-      { id: 'CONTACTCENTER/WASTE', name: 'WASTE', displayName: 'Avfall', sortOrder: 2, types: 'HÄMTNING', namespace: 'CONTACTCENTER' },
-      { id: 'BYGGLOV/BUILD', name: 'BUILD', displayName: 'Byggnation', sortOrder: 1, types: 'NYBYGGNAD, TILLBYGGNAD', namespace: 'BYGGLOV' },
-      { id: 'MEX/LAND', name: 'LAND', displayName: 'Mark', sortOrder: 1, types: 'KÖP, ARRENDE', namespace: 'MEX' },
     ],
   },
   {
@@ -260,10 +167,6 @@ export const pocResources: PocResource[] = [
       { key: 'ignoreAutoReply', label: 'Ignorera autosvar', type: 'switch' },
       { key: 'ignoreNoReply', label: 'Ignorera no-reply', type: 'switch' },
     ],
-    rows: [
-      { id: 'CONTACTCENTER', namespace: 'CONTACTCENTER', enabled: true, errandNewEmailSender: 'kontakt@sundsvall.se', errandClosedEmailSender: 'noreply@sundsvall.se', statusForNew: 'NEW', inactiveStatus: 'SUSPENDED', daysOfInactivityBeforeReject: 30, addSenderAsStakeholder: true, ignoreAutoReply: true, ignoreNoReply: true },
-      { id: 'BYGGLOV', namespace: 'BYGGLOV', enabled: false, errandNewEmailSender: 'bygglov@sundsvall.se', errandClosedEmailSender: '', statusForNew: 'NEW', inactiveStatus: 'SUSPENDED', daysOfInactivityBeforeReject: 14, addSenderAsStakeholder: false, ignoreAutoReply: true, ignoreNoReply: true },
-    ],
   },
   {
     name: 'namespaces',
@@ -279,11 +182,6 @@ export const pocResources: PocResource[] = [
       { key: 'notificationTTLInDays', label: 'Notis-TTL (dagar)', type: 'number', required: true, inTable: true },
       { key: 'accessControl', label: 'Åtkomstkontroll', type: 'switch' },
       { key: 'notifyReporter', label: 'Notifiera anmälare', type: 'switch' },
-    ],
-    rows: [
-      { id: 'CONTACTCENTER', namespace: 'CONTACTCENTER', displayName: 'Kontaktcenter', shortCode: 'CC', notificationTTLInDays: 40, accessControl: false, notifyReporter: true },
-      { id: 'BYGGLOV', namespace: 'BYGGLOV', displayName: 'Bygglov', shortCode: 'BL', notificationTTLInDays: 90, accessControl: true, notifyReporter: false },
-      { id: 'MEX', namespace: 'MEX', displayName: 'Mark och exploatering', shortCode: 'MEX', notificationTTLInDays: 60, accessControl: true, notifyReporter: true },
     ],
   },
   {
@@ -303,13 +201,8 @@ export const pocResources: PocResource[] = [
       { key: 'name', label: 'Namn', type: 'text', inTable: true },
       { key: 'version', label: 'Version', type: 'text', inTable: true },
       { key: 'description', label: 'Beskrivning', type: 'textarea' },
-      { key: 'content', label: 'Innehåll', type: 'code', help: 'Markdown i Monaco-editor.' },
+      { key: 'content', label: 'Innehåll', type: 'code' },
       { key: 'changeLog', label: 'Ändringslogg', type: 'text' },
-    ],
-    rows: [
-      { id: 'errand.confirmation', identifier: 'errand.confirmation', name: 'Bekräftelse ärende', version: '1.3', description: 'Skickas när ett ärende skapas.', content: '<p>Hej {{name}},</p><p>Vi har tagit emot ditt ärende <strong>{{errandId}}</strong>.</p>', changeLog: 'Lade till ärende-id', metadata: '[{"key":"application","value":"draken"},{"key":"templateType","value":"Email"},{"key":"namespace","value":"CONTACTCENTER"},{"key":"editor","value":"richtexteditor"}]' },
-      { id: 'errand.closed', identifier: 'errand.closed', name: 'Avslutat ärende', version: '2.0', description: 'Skickas när ett ärende avslutas.', content: 'Hej {{name}},\n\nDitt ärende är nu avslutat.', changeLog: 'Ny ton', metadata: '[{"key":"application","value":"draken"},{"key":"templateType","value":"Email"},{"key":"namespace","value":"CONTACTCENTER"}]' },
-      { id: 'decision.letter', identifier: 'decision.letter', name: 'Beslutsbrev', version: '1.0', description: 'Beslutsmall för bygglov.', content: '# Beslut\n\n{{decision}}', changeLog: 'Första versionen', metadata: '[{"key":"application","value":"draken"},{"key":"templateType","value":"Decision"},{"key":"namespace","value":"BYGGLOV"},{"key":"process","value":"FT"}]' },
     ],
   },
   {
@@ -323,11 +216,7 @@ export const pocResources: PocResource[] = [
       { key: 'name', label: 'Namn', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'version', label: 'Version', type: 'text', required: true, inTable: true },
       { key: 'description', label: 'Beskrivning', type: 'textarea', inTable: true },
-      { key: 'value', label: 'Schema (JSON)', type: 'code', required: true, help: 'JSON i Monaco-editor. (Schema-builder/förhandsvisning är utanför PoC-omfång.)' },
-    ],
-    rows: [
-      { id: 'contact-form', name: 'contact-form', version: '1.2', description: 'Kontaktformulär', value: '{\n  "type": "object",\n  "properties": {\n    "email": { "type": "string" }\n  }\n}' },
-      { id: 'building-permit', name: 'building-permit', version: '3.0', description: 'Bygglovsansökan', value: '{\n  "type": "object",\n  "properties": {\n    "area": { "type": "number" }\n  }\n}' },
+      { key: 'value', label: 'Schema (JSON)', type: 'code', required: true },
     ],
   },
 ];

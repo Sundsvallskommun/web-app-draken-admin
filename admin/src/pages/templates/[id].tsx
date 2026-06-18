@@ -14,7 +14,7 @@ export default function PocTemplateEdit() {
   const rawId = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
   const isNew = rawId === 'new';
   // Fetch the full template via getOne — the list response omits `content`.
-  const { row: initial, loading, source } = usePocRecord('templates', rawId);
+  const { row: initial, loading } = usePocRecord('templates', rawId);
 
   if (!router.isReady) {
     return (
@@ -44,7 +44,7 @@ export default function PocTemplateEdit() {
       ) : !isNew && !initial ? (
         <p className="text-muted-foreground">Hittade ingen mall med id {rawId}.</p>
       ) : (
-        <TemplateForm initial={initial} isNew={isNew} live={source === 'api'} />
+        <TemplateForm initial={initial} isNew={isNew} />
       )}
     </PocLayout>
   );

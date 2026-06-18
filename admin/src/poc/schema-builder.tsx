@@ -130,7 +130,7 @@ function FieldPreview({ field }: { field: BuilderField }) {
   );
 }
 
-export function SchemaBuilder({ value }: { value: unknown }) {
+export function SchemaBuilder({ value, onChange }: { value: unknown; onChange?: (schema: object) => void }) {
   const [fields, setFields] = React.useState<BuilderField[]>(() => parseSchema(value));
 
   const update = (id: string, patch: Partial<BuilderField>) =>
@@ -140,6 +140,12 @@ export function SchemaBuilder({ value }: { value: unknown }) {
     setFields((fs) => [...fs, { id: uid(), name: `field${fs.length + 1}`, title: '', type: 'text', required: false, options: '' }]);
 
   const schema = buildSchema(fields);
+
+  // Lift the generated schema so the page can save it.
+  React.useEffect(() => {
+    onChange?.(buildSchema(fields));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fields]);
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

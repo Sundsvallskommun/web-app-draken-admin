@@ -2,21 +2,21 @@ import { Badge } from '@components/ui/badge';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { PocLayout } from '@poc/poc-layout';
-import { getPocResource, type PocRow } from '@poc/poc-resources';
+import { usePocRows } from '@poc/use-poc-rows';
 import { ArrowRight, Search } from 'lucide-react';
+import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
 import * as React from 'react';
 
-const templates = getPocResource('templates')?.rows ?? [];
+export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
 export default function TemplateSearch() {
+  const { rows, loading } = usePocRows('templates');
   const [q, setQ] = React.useState('');
   const term = q.trim().toLowerCase();
-  const results: PocRow[] = term
-    ? templates.filter((t) =>
-        [t.identifier, t.name, t.description].some((v) => String(v ?? '').toLowerCase().includes(term))
-      )
-    : templates;
+  const results = term
+    ? rows.filter((t) => [t.identifier, t.name, t.description].some((v) => String(v ?? '').toLowerCase().includes(term)))
+    : rows;
 
   return (
     <PocLayout title="Sök efter mall" breadcrumb="Mallar">
@@ -32,19 +32,19 @@ export default function TemplateSearch() {
           />
         </div>
 
-        <p className="text-sm text-muted-foreground">{results.length} mallar</p>
+        <p className="text-sm text-muted-foreground">{loading ? 'Hämtar…' : `${results.length} mallar`}</p>
 
         <ul className="flex flex-col gap-2">
           {results.map((t) => (
-            <li key={t.id}>
-              <NextLink href={`/templates/${t.id}`}>
+            <li key={t.__key}>
+              <NextLink href={`/templates/${t.__key}`}>
                 <Card className="flex items-center justify-between p-4 transition-colors hover:border-primary">
                   <div className="flex flex-col">
-                    <span className="font-medium">{String(t.name)}</span>
+                    <span className="font-medium">{String(t.name ?? t.identifier)}</span>
                     <span className="text-sm text-muted-foreground">{String(t.identifier)}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="secondary">v{String(t.version)}</Badge>
+                    {t.version != null && <Badge variant="secondary">v{String(t.version)}</Badge>}
                     <ArrowRight className="size-4 text-muted-foreground" />
                   </div>
                 </Card>

@@ -80,13 +80,13 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [namespace, setNamespace] = React.useState('');
 
-  const { rows, loading, source, error, refresh } = usePocRows(resource.name, namespace || undefined);
+  const { rows, loading, error, refresh } = usePocRows(resource.name, namespace || undefined);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const nsOptions = usePocNamespaces();
 
   // Keep delete handlers (created inside the columns memo) reading fresh values.
-  const ctx = React.useRef({ live: false, municipalityId, refresh });
-  ctx.current = { live: source === 'api', municipalityId, refresh };
+  const ctx = React.useRef({ municipalityId, refresh });
+  ctx.current = { municipalityId, refresh };
 
   const tableFields = resource.fields.filter((f) => f.inTable);
   const hasActions = !resource.readOnly;
@@ -136,10 +136,6 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
                       <AlertDialogCancel>Avbryt</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={async () => {
-                          if (!ctx.current.live) {
-                            toast.success(`${title} togs bort (exempeldata – ingen riktig radering).`);
-                            return;
-                          }
                           try {
                             await removeRow(resource.name, ctx.current.municipalityId, item);
                             toast.success(`${title} togs bort.`);
@@ -187,12 +183,10 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {source !== 'api' && !loading && (
-        <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      {error && !loading && (
+        <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <TriangleAlert className="size-4 shrink-0" />
-          {error === '401'
-            ? 'Inte inloggad mot backend – visar exempeldata. Logga in i vanliga admin (öppna /) för riktig data.'
-            : `Kunde inte hämta från API:et (fel ${error}) – visar exempeldata.`}
+          {error === '401' ? 'Du är inte inloggad.' : `Kunde inte hämta data (fel ${error}).`}
         </div>
       )}
 

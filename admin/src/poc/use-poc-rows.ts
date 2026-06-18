@@ -4,23 +4,16 @@ import { useLocalStorage } from '@utils/use-localstorage.hook';
 import * as React from 'react';
 
 /**
- * Data layer for the shadcn admin. Fetches real data through the SAME service
- * layer the existing admin uses (`@config/resources` → backend on
- * NEXT_PUBLIC_API_URL, with the session cookie). If the call fails (e.g. not
- * logged in → 401), it falls back to the static example rows so the UI still
- * renders, and reports `source` so the page can show a banner.
- *
- * Writes (create/update/remove) delegate to the same `@config/resources`
- * wrappers the old admin used, with the same id conventions (see apiEditId).
- * Callers only invoke them when `source === 'api'` (real data loaded); on
- * fallback data writes stay dry-run so we never mutate against example rows.
+ * Data layer for the admin. Fetches real data through the app's service layer
+ * (`@config/resources` → backend on NEXT_PUBLIC_API_URL with the session
+ * cookie). No mock/fallback data — on failure the caller shows an error state.
  */
 
-export type RowSource = 'api' | 'mock' | 'mock-fallback';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const svc = (name: string): any => (realResources as any)[name];
 
-// Stable per-row key used ONLY for edit routing (mirrors the mock ids and the
-// real list pages' `${namespace}/${name}`). The real row fields are preserved
-// untouched on the row for writes — this is stored separately as `__key`.
+// Stable per-row key used for edit routing (`${namespace}/${id}` for namespaced
+// resources). The real record fields are preserved untouched for writes.
 export function computeRowId(resource: PocResource, row: Record<string, unknown>): string {
   const primary = resource.fields[0].key;
   if (primary === 'namespace') return String(row.namespace ?? '');
@@ -30,8 +23,7 @@ export function computeRowId(resource: PocResource, row: Record<string, unknown>
   return hasNamespace && row.namespace ? `${row.namespace}/${key}` : String(key);
 }
 
-// The identifier each resource's update/remove wrapper expects — matches the
-// composite ids the old list pages built from the real record.
+// The identifier each resource's update/remove wrapper expects.
 export function apiEditId(resource: PocResource, row: PocRow): string | number {
   switch (resource.name) {
     case 'featureFlags':
@@ -43,7 +35,6 @@ export function apiEditId(resource: PocResource, row: PocRow): string | number {
     case 'emailIntegration':
       return row.namespace as string;
     default:
-      // statuses / roles / categories / contactReasons → `${namespace}/${id}`
       return `${row.namespace}/${row.id}`;
   }
 }
@@ -51,46 +42,40 @@ export function apiEditId(resource: PocResource, row: PocRow): string | number {
 const withKeys = (resource: PocResource, rows: Record<string, unknown>[]): PocRow[] =>
   rows.map((r) => ({ ...r, id: (r.id as string) ?? computeRowId(resource, r), __key: computeRowId(resource, r) }));
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const errorCode = (e: any): string => {
+  const status = e?.response?.status;
+  return status ? String(status) : 'network';
+};
+
 interface PocRowsState {
   rows: PocRow[];
   loading: boolean;
   error: string | null;
-  source: RowSource;
 }
 
 export function usePocRows(resourceName: string | undefined, namespace?: string) {
   const resource = getPocResource(resourceName);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
-  const [state, setState] = React.useState<PocRowsState>({ rows: [], loading: true, error: null, source: 'mock' });
+  const [state, setState] = React.useState<PocRowsState>({ rows: [], loading: true, error: null });
 
   const fetchData = React.useCallback(async () => {
     if (!resource) {
-      setState({ rows: [], loading: false, error: 'unknown-resource', source: 'mock' });
+      setState({ rows: [], loading: false, error: 'unknown-resource' });
       return;
     }
-    const mockRows = withKeys(resource, resource.rows);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const getMany = (realResources as any)[resource.name]?.getMany;
+    const getMany = svc(resource.name)?.getMany;
     if (!getMany) {
-      setState({ rows: mockRows, loading: false, error: null, source: 'mock' });
+      setState({ rows: [], loading: false, error: 'no-endpoint' });
       return;
     }
-
     setState((s) => ({ ...s, loading: true }));
     try {
-      const filter = namespace ? { namespace } : undefined;
-      const res = await getMany(municipalityId, filter);
+      const res = await getMany(municipalityId, namespace ? { namespace } : undefined);
       const raw: Record<string, unknown>[] = res?.data?.data ?? [];
-      setState({ rows: withKeys(resource, raw), loading: false, error: null, source: 'api' });
+      setState({ rows: withKeys(resource, raw), loading: false, error: null });
     } catch (e) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const status = (e as any)?.response?.status;
-      setState({
-        rows: mockRows,
-        loading: false,
-        error: status === 401 ? '401' : status ? String(status) : 'network',
-        source: 'mock-fallback',
-      });
+      setState({ rows: [], loading: false, error: errorCode(e) });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resource?.name, namespace, municipalityId]);
@@ -104,42 +89,40 @@ export function usePocRows(resourceName: string | undefined, namespace?: string)
 
 /**
  * Fetch a SINGLE record via getOne — needed for resources whose list response
- * omits large fields (e.g. template `content`). Falls back to the matching mock
- * row when not logged in. `id` is the route id (for templates = identifier).
+ * omits large fields (e.g. template `content`). `id` is the route id.
  */
 export function usePocRecord(resourceName: string | undefined, id: string | undefined) {
   const resource = getPocResource(resourceName);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
-  const [state, setState] = React.useState<{ row?: PocRow; loading: boolean; source: RowSource }>({
+  const [state, setState] = React.useState<{ row?: PocRow; loading: boolean; error: string | null }>({
     loading: true,
-    source: 'mock',
+    error: null,
   });
 
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
       if (!resource || !id || id === 'new') {
-        if (!cancelled) setState({ row: undefined, loading: false, source: 'mock' });
+        if (!cancelled) setState({ row: undefined, loading: false, error: null });
         return;
       }
-      const mock = withKeys(resource, resource.rows).find((r) => r.__key === id);
       const getOne = svc(resource.name)?.getOne;
       if (!getOne) {
-        if (!cancelled) setState({ row: mock, loading: false, source: 'mock' });
+        if (!cancelled) setState({ row: undefined, loading: false, error: 'no-endpoint' });
         return;
       }
       try {
         const res = await getOne(municipalityId, id);
         const data: Record<string, unknown> | undefined = res?.data?.data ?? res?.data;
         if (!cancelled) {
-          setState(
-            data
-              ? { row: { ...data, __key: computeRowId(resource, data) } as PocRow, loading: false, source: 'api' }
-              : { row: mock, loading: false, source: 'mock' }
-          );
+          setState({
+            row: data ? ({ ...data, __key: computeRowId(resource, data) } as PocRow) : undefined,
+            loading: false,
+            error: data ? null : 'not-found',
+          });
         }
-      } catch {
-        if (!cancelled) setState({ row: mock, loading: false, source: 'mock-fallback' });
+      } catch (e) {
+        if (!cancelled) setState({ row: undefined, loading: false, error: errorCode(e) });
       }
     })();
     return () => {
@@ -151,9 +134,6 @@ export function usePocRecord(resourceName: string | undefined, id: string | unde
 }
 
 // --- Writes: delegate to the real @config/resources wrappers ---------------
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const svc = (name: string): any => (realResources as any)[name];
 
 export async function createRow(name: string, municipalityId: number, data: Record<string, unknown>) {
   const create = svc(name)?.create;

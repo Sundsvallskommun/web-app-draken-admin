@@ -42,18 +42,7 @@ function defaultFor(field: FieldDef, initial?: PocRow) {
   return field.type === 'switch' ? false : field.type === 'number' ? '' : '';
 }
 
-export function ResourceForm({
-  resource,
-  initial,
-  isNew,
-  live = false,
-}: {
-  resource: PocResource;
-  initial?: PocRow;
-  isNew: boolean;
-  /** True when real data is loaded (logged in) → writes hit the API. */
-  live?: boolean;
-}) {
+export function ResourceForm({ resource, initial, isNew }: { resource: PocResource; initial?: PocRow; isNew: boolean }) {
   const router = useRouter();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const namespaceOptions = usePocNamespaces();
@@ -62,17 +51,14 @@ export function ResourceForm({
   const isDirty = form.formState.isDirty;
   const isTemplate = resource.name === 'templates';
 
+  const title = String(initial?.[resource.fields[0].key] ?? '');
+
   const onSubmit = async (values: Record<string, unknown>) => {
-    const title = String(values[resource.fields[0].key] ?? '');
-    if (!live) {
-      toast.success(`${isNew ? 'Skapade' : 'Sparade'} ${resource.label.toLowerCase()} "${title}" (exempeldata – inget sparas).`);
-      router.push(`/${resource.name}`);
-      return;
-    }
+    const name = String(values[resource.fields[0].key] ?? '');
     try {
       if (isNew) await createRow(resource.name, municipalityId, values);
       else await updateRow(resource.name, municipalityId, initial as PocRow, values);
-      toast.success(`${isNew ? 'Skapade' : 'Sparade'} ${resource.label.toLowerCase()} "${title}".`);
+      toast.success(`${isNew ? 'Skapade' : 'Sparade'} ${resource.label.toLowerCase()} "${name}".`);
       router.push(`/${resource.name}`);
     } catch (err) {
       toast.error(`Kunde inte spara: ${errMsg(err)}`);
@@ -80,11 +66,7 @@ export function ResourceForm({
   };
 
   const onDelete = async () => {
-    if (!live || !initial) {
-      toast.success(`${title} togs bort (exempeldata – ingen riktig radering).`);
-      router.push(`/${resource.name}`);
-      return;
-    }
+    if (!initial) return;
     try {
       await removeRow(resource.name, municipalityId, initial);
       toast.success(`${title} togs bort.`);
@@ -93,8 +75,6 @@ export function ResourceForm({
       toast.error(`Kunde inte ta bort: ${errMsg(err)}`);
     }
   };
-
-  const title = String(initial?.[resource.fields[0].key] ?? '');
 
   return (
     <Form {...form}>
