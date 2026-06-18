@@ -2,6 +2,7 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { LabelTree, type LabelNode } from '@poc/label-tree';
 import { pocNamespaces } from '@poc/poc-resources';
+import { usePocNamespaces } from '@poc/use-poc-namespaces';
 import { usePocRows } from '@poc/use-poc-rows';
 import { Loader2, Search, TriangleAlert } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
@@ -13,6 +14,7 @@ export const getServerSideProps: GetServerSideProps = async () => ({ props: {} }
 export default function PocLabels() {
   const [namespace, setNamespace] = React.useState(pocNamespaces[0].namespace);
   const [query, setQuery] = React.useState('');
+  const namespaceOptions = usePocNamespaces();
   const { rows, loading, source, error } = usePocRows('labels', namespace);
 
   return (
@@ -42,9 +44,9 @@ export default function PocLabels() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {pocNamespaces.map((ns) => (
-                <SelectItem key={ns.namespace} value={ns.namespace}>
-                  {ns.displayName} ({ns.namespace})
+              {namespaceOptions.map((ns) => (
+                <SelectItem key={ns.value} value={ns.value}>
+                  {ns.label}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
 import { MonacoField } from '@poc/monaco-field';
-import { pocNamespaces, type PocRow } from '@poc/poc-resources';
+import { type PocRow } from '@poc/poc-resources';
+import { usePocNamespaces } from '@poc/use-poc-namespaces';
 import { createRow, updateRow } from '@poc/use-poc-rows';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ChevronDown, Code2, Plus, Trash2 } from 'lucide-react';
@@ -52,6 +53,7 @@ const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
 export function TemplateForm({ initial, isNew, live = false }: { initial?: PocRow; isNew: boolean; live?: boolean }) {
   const router = useRouter();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
+  const namespaceOptions = usePocNamespaces();
 
   const initialMeta = parseMeta(initial?.metadata);
   const metaVal = (k: string) => initialMeta.find((e) => e.key === k)?.value ?? '';
@@ -149,9 +151,9 @@ export function TemplateForm({ initial, isNew, live = false }: { initial?: PocRo
                 <SelectValue placeholder="Välj namespace" />
               </SelectTrigger>
               <SelectContent>
-                {pocNamespaces.map((ns) => (
-                  <SelectItem key={ns.namespace} value={ns.namespace}>
-                    {ns.displayName} ({ns.namespace})
+                {namespaceOptions.map((ns) => (
+                  <SelectItem key={ns.value} value={ns.value}>
+                    {ns.label}
                   </SelectItem>
                 ))}
               </SelectContent>

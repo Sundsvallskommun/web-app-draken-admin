@@ -25,6 +25,7 @@ import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
 import { MonacoField } from '@poc/monaco-field';
 import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
+import { usePocNamespaces } from '@poc/use-poc-namespaces';
 import { createRow, removeRow, updateRow } from '@poc/use-poc-rows';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { Download, Eye, ShieldCheck, Trash2 } from 'lucide-react';
@@ -55,6 +56,7 @@ export function ResourceForm({
 }) {
   const router = useRouter();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
+  const namespaceOptions = usePocNamespaces();
   const defaultValues = Object.fromEntries(resource.fields.map((f) => [f.key, defaultFor(f, initial)]));
   const form = useForm<Record<string, unknown>>({ defaultValues });
   const isDirty = form.formState.isDirty;
@@ -134,7 +136,7 @@ export function ResourceForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {field.options?.map((opt) => (
+                          {(field.key === 'namespace' ? namespaceOptions : field.options)?.map((opt) => (
                             <SelectItem key={opt.value} value={opt.value}>
                               {opt.label}
                             </SelectItem>

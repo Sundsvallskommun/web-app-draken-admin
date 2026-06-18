@@ -23,6 +23,7 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
+import { usePocNamespaces } from '@poc/use-poc-namespaces';
 import { removeRow, usePocRows } from '@poc/use-poc-rows';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import {
@@ -81,6 +82,7 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
 
   const { rows, loading, source, error, refresh } = usePocRows(resource.name, namespace || undefined);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
+  const nsOptions = usePocNamespaces();
 
   // Keep delete handlers (created inside the columns memo) reading fresh values.
   const ctx = React.useRef({ live: false, municipalityId, refresh });
@@ -204,7 +206,7 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Alla namespace</SelectItem>
-              {namespaceField.options?.map((opt) => (
+              {nsOptions.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
                 </SelectItem>
