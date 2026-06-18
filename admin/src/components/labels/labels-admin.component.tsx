@@ -1,10 +1,12 @@
 import { LabelNode } from '@interfaces/label';
 import { getLabels, saveLabels } from '@services/label-service';
 import { Button, FormControl, FormLabel, Input, Spinner, useSnackbar } from '@sk-web-gui/react';
+import { isValidEmail } from '@utils/email';
+import { getEscalationEmail, setEscalationEmail } from '@utils/label-attributes';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { LabelCopyFields } from '@components/labels/label-copy-fields.component';
 import { LabelTreeView } from '@components/labels/label-tree-view.component';
-import { ChevronRight, FolderOpen, List, Network, Pencil, Plus, Tag, Trash, X } from 'lucide-react';
+import { ChevronRight, FolderOpen, List, Mail, Network, Pencil, Plus, Tag, Trash, X } from 'lucide-react';
 import { useTranslation } from 'next-i18next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -94,6 +96,7 @@ const stripForApi = (labels: LabelNode[]): LabelNode[] => {
     displayName: label.displayName,
     resourceName: label.resourceName,
     ...(label.resourcePath ? { resourcePath: label.resourcePath } : {}),
+    ...(label.attributes && label.attributes.length > 0 ? { attributes: label.attributes } : {}),
     ...(label.labels && label.labels.length > 0 ? { labels: stripForApi(label.labels) } : {}),
   }));
 };
@@ -162,11 +165,13 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
   const [addResourceName, setAddResourceName] = useState('');
   const [addResourceNameManuallySet, setAddResourceNameManuallySet] = useState(false);
   const [addClassification, setAddClassification] = useState('');
+  const [addEscalationEmail, setAddEscalationEmail] = useState('');
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editDisplayName, setEditDisplayName] = useState('');
   const [editResourceName, setEditResourceName] = useState('');
   const [editResourceNameManuallySet, setEditResourceNameManuallySet] = useState(false);
   const [editClassification, setEditClassification] = useState('');
+  const [editEscalationEmail, setEditEscalationEmail] = useState('');
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
 
   const fetchLabels = useCallback(async () => {
@@ -210,6 +215,9 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
   const isSearching = searchQuery.trim().length > 0;
   const addResourceNameIsValid = isValidResourceName(addResourceName.trim());
   const editResourceNameIsValid = isValidResourceName(editResourceName.trim());
+  // An empty escalation email is allowed (the attribute is simply omitted); a non-empty one must be valid.
+  const addEmailIsValid = !addEscalationEmail.trim() || isValidEmail(addEscalationEmail.trim());
+  const editEmailIsValid = !editEscalationEmail.trim() || isValidEmail(editEscalationEmail.trim());
 
   // Build breadcrumb items
   const breadcrumbs: { label: string; pathTo: number[] }[] = [{ label: t('labels:root'), pathTo: [] }];
@@ -242,12 +250,13 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
     const displayName = addDisplayName.trim();
     const resourceName = addResourceName.trim();
     const classification = addClassification.trim();
-    if (!displayName || !resourceName || !classification || !isValidResourceName(resourceName)) return;
+    if (!displayName || !resourceName || !classification || !isValidResourceName(resourceName) || !addEmailIsValid) return;
 
     const newLabel: LabelNode = {
       classification,
       displayName,
       resourceName,
+      attributes: setEscalationEmail([], addEscalationEmail),
       labels: [],
     };
 
@@ -257,6 +266,7 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
     setAddResourceName('');
     setAddResourceNameManuallySet(false);
     setAddClassification('');
+    setAddEscalationEmail('');
     setIsAdding(false);
     await persistTree(newTree);
   };
@@ -265,7 +275,7 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
     const displayName = editDisplayName.trim();
     const resourceName = editResourceName.trim();
     const classification = editClassification.trim();
-    if (!displayName || !resourceName || !classification || !isValidResourceName(resourceName)) return;
+    if (!displayName || !resourceName || !classification || !isValidResourceName(resourceName) || !editEmailIsValid) return;
 
     const newTree = mutateAtPath(data, path, (children) =>
       children.map((child, i) =>
@@ -275,6 +285,7 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
               classification,
               displayName,
               resourceName,
+              attributes: setEscalationEmail(child.attributes, editEscalationEmail),
             }
           : child
       )
@@ -285,6 +296,7 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
     setEditResourceName('');
     setEditResourceNameManuallySet(false);
     setEditClassification('');
+    setEditEscalationEmail('');
     await persistTree(newTree);
   };
 
@@ -312,11 +324,13 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
     setAddResourceName('');
     setAddResourceNameManuallySet(false);
     setAddClassification('');
+    setAddEscalationEmail('');
     setEditingIndex(null);
     setEditDisplayName('');
     setEditResourceName('');
     setEditResourceNameManuallySet(false);
     setEditClassification('');
+    setEditEscalationEmail('');
     setDeleteConfirmIndex(null);
   };
 
@@ -393,6 +407,7 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
               </p>
               {searchResults.map((result, i) => {
                 const childCount = result.label.labels?.length ?? 0;
+                const escalationEmail = getEscalationEmail(result.label);
                 return (
                   <div
                     key={result.label.id ?? `search-${i}`}
@@ -422,6 +437,12 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
                         )}
                       </button>
                       <LabelCopyFields label={result.label} />
+                      {escalationEmail && (
+                        <span className="flex items-center gap-4 text-xs text-dark-secondary">
+                          <Mail size={12} />
+                          {escalationEmail}
+                        </span>
+                      )}
                     </div>
                     {childCount > 0 && (
                       <span className="bg-vattjom-surface-primary text-vattjom-text-secondary text-xs px-8 py-2 rounded-button ml-auto">
@@ -475,6 +496,7 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
             {currentChildren.map((label, index) => {
               const childCount = label.labels?.length ?? 0;
               const descendantCount = countDescendants(label);
+              const escalationEmail = getEscalationEmail(label);
               const isEditing = editingIndex === index;
               const isDeleting = deleteConfirmIndex === index;
 
@@ -538,12 +560,27 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
                             if (e.key === 'Escape') resetUIState();
                           }}
                         />
+                        <Input
+                          className="flex-grow"
+                          size="sm"
+                          type="email"
+                          value={editEscalationEmail}
+                          placeholder={t('labels:properties.escalationEmail')}
+                          onChange={(e) => setEditEscalationEmail(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleEdit(index);
+                            if (e.key === 'Escape') resetUIState();
+                          }}
+                        />
+                        {!editEmailIsValid && (
+                          <p className="text-xs text-error">{t('labels:invalid_email')}</p>
+                        )}
                       </div>
                       <Button
                         size="sm"
                         variant="primary"
                         onClick={() => handleEdit(index)}
-                        disabled={saving || !editDisplayName.trim() || !editResourceName.trim() || !editClassification.trim() || !editResourceNameIsValid}
+                        disabled={saving || !editDisplayName.trim() || !editResourceName.trim() || !editClassification.trim() || !editResourceNameIsValid || !editEmailIsValid}
                       >
                         {t('common:save')}
                       </Button>
@@ -591,6 +628,12 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
                           <span className="text-xs text-dark-disabled">{label.classification}</span>
                           <LabelCopyFields label={label} />
                         </div>
+                        {escalationEmail && (
+                          <span className="flex items-center gap-4 text-xs text-dark-secondary">
+                            <Mail size={12} />
+                            {escalationEmail}
+                          </span>
+                        )}
                         {path.length === 0 && descendantCount > 0 && (
                           <span className="text-xs text-dark-secondary">
                             {t('labels:depth_summary', {
@@ -612,6 +655,7 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
                             setEditResourceName(label.resourceName ?? '');
                             setEditResourceNameManuallySet(false);
                             setEditClassification(label.classification ?? '');
+                            setEditEscalationEmail(getEscalationEmail(label));
                             setDeleteConfirmIndex(null);
                             setIsAdding(false);
                           }}
@@ -689,12 +733,27 @@ export const LabelsAdmin: React.FC<LabelsAdminProps> = ({ namespace }) => {
                       if (e.key === 'Escape') resetUIState();
                     }}
                   />
+                  <Input
+                    className="flex-grow"
+                    size="sm"
+                    type="email"
+                    placeholder={t('labels:properties.escalationEmail')}
+                    value={addEscalationEmail}
+                    onChange={(e) => setAddEscalationEmail(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAdd();
+                      if (e.key === 'Escape') resetUIState();
+                    }}
+                  />
+                  {!addEmailIsValid && (
+                    <p className="text-xs text-error">{t('labels:invalid_email')}</p>
+                  )}
                 </div>
                 <Button
                   size="sm"
                   variant="primary"
                   onClick={handleAdd}
-                  disabled={saving || !addDisplayName.trim() || !addResourceName.trim() || !addClassification.trim() || !addResourceNameIsValid}
+                  disabled={saving || !addDisplayName.trim() || !addResourceName.trim() || !addClassification.trim() || !addResourceNameIsValid || !addEmailIsValid}
                 >
                   {t('common:save')}
                 </Button>

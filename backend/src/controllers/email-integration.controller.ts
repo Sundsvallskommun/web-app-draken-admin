@@ -92,12 +92,14 @@ export class EmailIntegrationController {
         errandNewEmailSender: body.errandNewEmailSender,
         errandNewEmailTemplate: body.errandNewEmailTemplate,
         errandNewEmailHTMLTemplate: body.errandNewEmailHTMLTemplate,
-        daysOfInactivityBeforeReject: body.daysOfInactivityBeforeReject,
+        // The supportmanagement contract types these as string|null, so serialise the
+        // DTO's number/boolean to string before sending. mapEmailIntegration reverses this on read.
+        daysOfInactivityBeforeReject: body.daysOfInactivityBeforeReject?.toString(),
         statusForNew: body.statusForNew,
         triggerStatusChangeOn: body.triggerStatusChangeOn,
         statusChangeTo: body.statusChangeTo,
         inactiveStatus: body.inactiveStatus,
-        addSenderAsStakeholder: body.addSenderAsStakeholder,
+        addSenderAsStakeholder: body.addSenderAsStakeholder?.toString(),
         stakeholderRole: body.stakeholderRole,
         errandChannel: body.errandChannel,
         ignoreAutoReply: body.ignoreAutoReply,
