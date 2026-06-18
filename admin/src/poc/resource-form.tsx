@@ -1,3 +1,14 @@
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@components/ui/alert-dialog';
 import { Button } from '@components/ui/button';
 import {
   Form,
@@ -13,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
 import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
+import { Download, Eye, ShieldCheck, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -35,12 +47,16 @@ export function ResourceForm({
   const router = useRouter();
   const defaultValues = Object.fromEntries(resource.fields.map((f) => [f.key, defaultFor(f, initial)]));
   const form = useForm<Record<string, unknown>>({ defaultValues });
+  const isDirty = form.formState.isDirty;
+  const isTemplate = resource.name === 'templates';
 
   const onSubmit = (values: Record<string, unknown>) => {
     const title = String(values[resource.fields[0].key] ?? '');
     toast.success(`${isNew ? 'Skapade' : 'Sparade'} ${resource.label.toLowerCase()} "${title}" (PoC – inget sparas på riktigt).`);
     router.push(`/poc/${resource.name}`);
   };
+
+  const title = String(initial?.[resource.fields[0].key] ?? '');
 
   return (
     <Form {...form}>
@@ -118,11 +134,65 @@ export function ResourceForm({
           );
         })}
 
-        <div className="flex gap-3">
-          <Button type="submit">{isNew ? 'Skapa' : 'Spara ändringar'}</Button>
+        <div className="flex flex-wrap items-center gap-3 border-t pt-6">
+          <Button type="submit" disabled={!isDirty}>
+            {isNew ? 'Skapa' : 'Spara ändringar'}
+          </Button>
           <Button type="button" variant="outline" onClick={() => router.push(`/poc/${resource.name}`)}>
             Avbryt
           </Button>
+
+          {isTemplate && (
+            <>
+              <Button type="button" variant="ghost" onClick={() => toast('Exporterar mall som JSON (PoC).')}>
+                <Download className="size-4" />
+                Exportera
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => toast('Genererar PDF-förhandsvisning (PoC).')}>
+                <Eye className="size-4" />
+                Förhandsgranska
+              </Button>
+              {!isNew && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="text-emerald-600"
+                  onClick={() => toast.success('Mallen godkänd för produktion (PoC).')}
+                >
+                  <ShieldCheck className="size-4" />
+                  Godkänn för produktion
+                </Button>
+              )}
+            </>
+          )}
+
+          {!isNew && resource.canRemove && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" variant="ghost" className="ml-auto text-destructive hover:text-destructive">
+                  <Trash2 className="size-4" />
+                  Ta bort
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Ta bort {title || 'posten'}?</AlertDialogTitle>
+                  <AlertDialogDescription>Detta går inte att ångra.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      toast.success(`${title} togs bort (PoC – ingen riktig radering).`);
+                      router.push(`/poc/${resource.name}`);
+                    }}
+                  >
+                    Ta bort
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </form>
     </Form>
