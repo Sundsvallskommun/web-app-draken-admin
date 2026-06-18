@@ -26,6 +26,14 @@
   pointer-events: none;
 }
 
+.shadcn-poc .\!visible {
+  visibility: visible !important;
+}
+
+.shadcn-poc .visible {
+  visibility: visible;
+}
+
 .shadcn-poc .static {
   position: static;
 }
@@ -170,6 +178,10 @@
 
 .shadcn-poc .mb-6 {
   margin-bottom: 1.5rem;
+}
+
+.shadcn-poc .ml-1 {
+  margin-left: 0.25rem;
 }
 
 .shadcn-poc .ml-2 {
@@ -641,6 +653,10 @@
   white-space: nowrap;
 }
 
+.shadcn-poc .rounded {
+  border-radius: 0.25rem;
+}
+
 .shadcn-poc .rounded-full {
   border-radius: 9999px;
 }
@@ -700,6 +716,11 @@
 
 .shadcn-poc .border-transparent {
   border-color: transparent;
+}
+
+.shadcn-poc .bg-amber-200 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(253 230 138 / var(--tw-bg-opacity, 1));
 }
 
 .shadcn-poc .bg-amber-50 {
@@ -779,6 +800,10 @@
   padding: 0.5rem;
 }
 
+.shadcn-poc .p-3 {
+  padding: 0.75rem;
+}
+
 .shadcn-poc .p-4 {
   padding: 1rem;
 }
@@ -787,9 +812,19 @@
   padding: 1.5rem;
 }
 
+.shadcn-poc .px-0\.5 {
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
+}
+
 .shadcn-poc .px-1 {
   padding-left: 0.25rem;
   padding-right: 0.25rem;
+}
+
+.shadcn-poc .px-1\.5 {
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
 }
 
 .shadcn-poc .px-2 {
@@ -835,6 +870,11 @@
 .shadcn-poc .py-2 {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
+}
+
+.shadcn-poc .py-8 {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
 .shadcn-poc .pl-2 {
@@ -945,6 +985,11 @@
 .shadcn-poc .text-amber-900 {
   --tw-text-opacity: 1;
   color: rgb(120 53 15 / var(--tw-text-opacity, 1));
+}
+
+.shadcn-poc .text-amber-950 {
+  --tw-text-opacity: 1;
+  color: rgb(69 26 3 / var(--tw-text-opacity, 1));
 }
 
 .shadcn-poc .text-card-foreground {
@@ -1340,6 +1385,10 @@
 
 .shadcn-poc .hover\:bg-destructive\/90:hover {
   background-color: hsl(var(--destructive) / 0.9);
+}
+
+.shadcn-poc .hover\:bg-muted:hover {
+  background-color: hsl(var(--muted));
 }
 
 .shadcn-poc .hover\:bg-muted\/50:hover {
@@ -1944,9 +1993,18 @@
   border-color: rgb(146 64 14 / var(--tw-border-opacity, 1));
 }
 
+.shadcn-poc .dark\:bg-amber-500\/40:is(.dark *) {
+  background-color: rgb(245 158 11 / 0.4);
+}
+
 .shadcn-poc .dark\:bg-amber-950:is(.dark *) {
   --tw-bg-opacity: 1;
   background-color: rgb(69 26 3 / var(--tw-bg-opacity, 1));
+}
+
+.shadcn-poc .dark\:text-amber-100:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(254 243 199 / var(--tw-text-opacity, 1));
 }
 
 .shadcn-poc .dark\:text-amber-200:is(.dark *) {

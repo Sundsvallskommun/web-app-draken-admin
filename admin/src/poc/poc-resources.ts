@@ -133,12 +133,36 @@ export const pocResources: PocResource[] = [
       { key: 'resourceName', label: 'Resursnamn', type: 'text', inTable: true },
       nsField(),
     ],
+    // Hierarchical mock (matches the real LabelNode shape: nested `labels`).
+    // Used as fallback by the tree view when the API isn't reachable.
     rows: [
-      { id: '1', classification: 'CATEGORY', displayName: 'Vatten och avlopp', resourceName: 'vatten-avlopp', namespace: 'CONTACTCENTER' },
-      { id: '2', classification: 'TYPE', displayName: 'Felanmälan', resourceName: 'felanmalan', namespace: 'CONTACTCENTER' },
-      { id: '3', classification: 'CATEGORY', displayName: 'Nybyggnad', resourceName: 'nybyggnad', namespace: 'BYGGLOV' },
-      { id: '4', classification: 'TYPE', displayName: 'Tillbyggnad', resourceName: 'tillbyggnad', namespace: 'BYGGLOV' },
-      { id: '5', classification: 'CATEGORY', displayName: 'Markköp', resourceName: 'markkop', namespace: 'MEX' },
+      {
+        id: 'vatten', classification: 'CATEGORY', displayName: 'Vatten och avlopp', resourceName: 'vatten-avlopp', namespace: 'CONTACTCENTER',
+        labels: [
+          {
+            id: 'vatten-fel', classification: 'TYPE', displayName: 'Felanmälan', resourceName: 'felanmalan',
+            labels: [
+              { id: 'vatten-fel-lacka', classification: 'SUBTYPE', displayName: 'Vattenläcka', resourceName: 'vattenlacka', isLeaf: true },
+              { id: 'vatten-fel-stopp', classification: 'SUBTYPE', displayName: 'Avloppsstopp', resourceName: 'avloppsstopp', isLeaf: true },
+            ],
+          },
+          { id: 'vatten-fraga', classification: 'TYPE', displayName: 'Fråga', resourceName: 'fraga', isLeaf: true },
+        ],
+      },
+      {
+        id: 'avfall', classification: 'CATEGORY', displayName: 'Avfall och återvinning', resourceName: 'avfall', namespace: 'CONTACTCENTER',
+        labels: [
+          { id: 'avfall-hamtning', classification: 'TYPE', displayName: 'Hämtning', resourceName: 'hamtning', isLeaf: true },
+          { id: 'avfall-kart', classification: 'TYPE', displayName: 'Kärl och behållare', resourceName: 'karl', isLeaf: true },
+        ],
+      },
+      {
+        id: 'gata', classification: 'CATEGORY', displayName: 'Gata och park', resourceName: 'gata-park', namespace: 'CONTACTCENTER',
+        labels: [
+          { id: 'gata-belysning', classification: 'TYPE', displayName: 'Gatubelysning', resourceName: 'belysning', isLeaf: true },
+          { id: 'gata-vinter', classification: 'TYPE', displayName: 'Vinterväghållning', resourceName: 'vinter', isLeaf: true },
+        ],
+      },
     ],
   },
   {
