@@ -13,9 +13,12 @@ import {
   TemplateKind,
 } from '@config/template-schema';
 import { JsonEditor } from '@components/json-editor/json-editor';
+import { Api } from '@data-contracts/backend/Api';
+import { Namespace } from '@data-contracts/backend/data-contracts';
 import { Resource } from '@interfaces/resource';
-import { Checkbox, FormControl, FormLabel, Input, RadioButton, Select, Textarea } from '@sk-web-gui/react';
+import { Checkbox, FormControl, FormLabel, Input, Link, RadioButton, Select, Textarea } from '@sk-web-gui/react';
 import { getMetadataValue } from '@utils/template-metadata';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useTranslation } from 'next-i18next';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -37,7 +40,11 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew, isApp
 
   const { t } = useTranslation();
 
+  const { municipalityId } = useLocalStorage();
+
   const isInitialized = useRef(false);
+
+  const [namespaces, setNamespaces] = useState<Namespace[]>([]);
 
   const { register, watch, setValue } = useFormContext<DataType>();
 
@@ -101,6 +108,26 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew, isApp
   const currentTemplateType = useMemo(() => getMetadata('templateType'), [getMetadata]);
   const currentNamespace = useMemo(() => getMetadata('namespace'), [getMetadata]);
   const currentEditor = useMemo(() => getMetadata('editor'), [getMetadata]);
+
+  useEffect(() => {
+    const apiService = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCredentials: true });
+    apiService.namespaceControllerGetNamespaces(municipalityId).then((res) => {
+      setNamespaces(res.data.data);
+    });
+  }, [municipalityId]);
+
+  // Preserve a previously saved namespace that isn't in the fetched list (e.g. legacy
+  // free-text values) so switching to a Select can't silently drop it.
+  const namespaceOptions = useMemo(() => {
+    const options = namespaces.map((ns) => ({
+      value: ns.namespace,
+      label: `${ns.displayName} (${ns.namespace})`,
+    }));
+    if (currentNamespace && !namespaces.some((ns) => ns.namespace === currentNamespace)) {
+      options.unshift({ value: currentNamespace, label: currentNamespace });
+    }
+    return options;
+  }, [namespaces, currentNamespace]);
 
   // ── Selection facets ───────────────────────────────────────────────────────
   // For decision/investigation templates, admin picks process + the facets the schema
@@ -328,12 +355,27 @@ export const EditResourceTemplate: React.FC<EditResourceProps> = ({ isNew, isApp
       )}
       <FormControl>
         <FormLabel>Namespace</FormLabel>
-        <Input
+        <Select
           className="w-[53rem]"
-          readOnly={isApproved}
+          disabled={isApproved}
           value={currentNamespace}
           onChange={(e) => setMetadataEntry('namespace', e.target.value)}
-        />
+        >
+          <Select.Option value="">Välj ett alternativ</Select.Option>
+          {namespaceOptions.map((option) => (
+            <Select.Option value={option.value} key={option.value}>
+              {option.label}
+            </Select.Option>
+          ))}
+        </Select>
+        {!isApproved && (
+          <span className="text-small text-tertiary">
+            Saknas namespacet?{' '}
+            <Link href="/namespaces/new" target="_blank">
+              Lägg till ett nytt namespace
+            </Link>
+          </span>
+        )}
       </FormControl>
       <FormControl>
         <Checkbox
