@@ -53,25 +53,14 @@ export function AppSidebar() {
           <SidebarMenu>
             {pocResources.map((resource) => {
               const Icon = resource.icon;
-              const implemented = resource.name === 'statuses';
               return (
                 <SidebarMenuItem key={resource.name}>
-                  {implemented ? (
-                    <SidebarMenuButton asChild isActive={active(resource.name)} tooltip={resource.label}>
-                      <NextLink href={`/poc/${resource.name}`}>
-                        <Icon />
-                        <span>{resource.label}</span>
-                      </NextLink>
-                    </SidebarMenuButton>
-                  ) : (
-                    <SidebarMenuButton
-                      tooltip={resource.label}
-                      onClick={() => toast.info('Endast "Statusar" är med i PoC:n ännu.')}
-                    >
+                  <SidebarMenuButton asChild isActive={active(resource.name)} tooltip={resource.label}>
+                    <NextLink href={`/poc/${resource.name}`}>
                       <Icon />
                       <span>{resource.label}</span>
-                    </SidebarMenuButton>
-                  )}
+                    </NextLink>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               );
             })}

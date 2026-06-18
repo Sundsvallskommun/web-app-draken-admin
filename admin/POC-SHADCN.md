@@ -12,13 +12,21 @@ yarn dev:poc      # next dev + watch som bygger om PoC-CSS:en automatiskt
 
 Öppna sedan **http://localhost:3002/poc**. (Eller kör `yarn dev` + `yarn poc:css` en gång.)
 
-Rutter:
+Rutter (config-drivna):
 - `/poc` – startsida med resurskort
-- `/poc/statuses` – lista (TanStack Table: sortering, sök, paginering, ta bort-dialog)
-- `/poc/statuses/new` och `/poc/statuses/[id]` – skapa/redigera (shadcn `Form` + react-hook-form)
+- `/poc/[resource]` – lista (TanStack Table: sortering, sök, paginering 10/20/50/Alla, ta bort-dialog)
+- `/poc/[resource]/new` och `/poc/[resource]/[...id]` – skapa/redigera (shadcn `Form` + react-hook-form)
 
-> All data är mockad (`src/poc/poc-resources.ts`) – PoC:n pratar inte med backend,
-> i18n eller zustand. Endast resursen **Statusar** är fullt implementerad.
+**Alla 10 resurser är migrerade**: featureFlags, labels (skrivskyddad), roles, statuses,
+contactReasons, categories, emailIntegration, namespaces, templates, jsonSchemas.
+
+Allt drivs av ett enda register, `src/poc/poc-resources.ts` (fältmetadata + mockdata),
+som `src/poc/resource-table.tsx` och `src/poc/resource-form.tsx` renderar generiskt –
+samma mönster som riktiga appens `@config/resources` + `ListResources`.
+
+> All data är mockad – PoC:n pratar inte med backend, i18n eller zustand.
+> Avancerade editorer (Monaco för mallar, schema-builder/RJSF för JSON-scheman,
+> trädvy för etiketter) är **utanför PoC-omfång** och representeras av enklare fält.
 
 ## Hur isoleringen fungerar (viktigt)
 

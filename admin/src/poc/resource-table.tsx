@@ -13,15 +13,8 @@ import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@components/ui/table';
-import { type Status } from '@poc/poc-resources';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
+import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
 import {
   type ColumnDef,
   type SortingState,
@@ -50,82 +43,86 @@ function SortHeader({ column, children }: { column: any; children: React.ReactNo
   );
 }
 
-export function StatusesTable({ data }: { data: Status[] }) {
+function renderCell(field: FieldDef, value: unknown, emphasize: boolean) {
+  if (field.type === 'switch') {
+    return value ? (
+      <Badge>Ja</Badge>
+    ) : (
+      <Badge variant="outline" className="text-muted-foreground">
+        Nej
+      </Badge>
+    );
+  }
+  if (field.type === 'select') {
+    return value ? <Badge variant="secondary">{String(value)}</Badge> : null;
+  }
+  const text = value == null ? '' : String(value);
+  if (emphasize) return <span className="font-medium">{text}</span>;
+  return <span className="text-muted-foreground">{text}</span>;
+}
+
+export function ResourceTable({ resource }: { resource: PocResource }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [filter, setFilter] = React.useState('');
 
-  const columns = React.useMemo<ColumnDef<Status>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: ({ column }) => <SortHeader column={column}>Namn</SortHeader>,
-        cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
-      },
-      {
-        accessorKey: 'displayName',
-        header: ({ column }) => <SortHeader column={column}>Visningsnamn</SortHeader>,
-        cell: ({ row }) => row.original.displayName,
-      },
-      {
-        accessorKey: 'externalDisplayName',
-        header: 'Externt visningsnamn',
-        cell: ({ row }) => <span className="text-muted-foreground">{row.original.externalDisplayName}</span>,
-      },
-      {
-        accessorKey: 'namespace',
-        header: ({ column }) => <SortHeader column={column}>Namespace</SortHeader>,
-        cell: ({ row }) => <Badge variant="secondary">{row.original.namespace}</Badge>,
-      },
-      {
-        accessorKey: 'updatedAt',
-        header: ({ column }) => <SortHeader column={column}>Uppdaterad</SortHeader>,
-        cell: ({ row }) => <span className="text-muted-foreground tabular-nums">{row.original.updatedAt}</span>,
-      },
-      {
+  const tableFields = resource.fields.filter((f) => f.inTable);
+  const hasActions = !resource.readOnly;
+
+  const columns = React.useMemo<ColumnDef<PocRow>[]>(() => {
+    const cols: ColumnDef<PocRow>[] = tableFields.map((field, index) => ({
+      accessorKey: field.key,
+      header: ({ column }) => <SortHeader column={column}>{field.label}</SortHeader>,
+      cell: ({ row }) => renderCell(field, row.original[field.key], index === 0),
+    }));
+
+    if (hasActions) {
+      cols.push({
         id: 'actions',
         header: () => <span className="sr-only">Åtgärder</span>,
         cell: ({ row }) => {
-          const status = row.original;
+          const item = row.original;
+          const title = String(item[tableFields[0]?.key ?? 'id'] ?? item.id);
           return (
             <div className="flex justify-end gap-1">
-              <Button asChild variant="ghost" size="icon" aria-label={`Redigera ${status.name}`}>
-                <NextLink href={`/poc/statuses/${status.namespace}__${status.id}`}>
+              <Button asChild variant="ghost" size="icon" aria-label={`Redigera ${title}`}>
+                <NextLink href={`/poc/${resource.name}/${item.id}`}>
                   <Pencil className="size-4" />
                 </NextLink>
               </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label={`Ta bort ${status.name}`}>
-                    <Trash2 className="size-4 text-destructive" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Ta bort {status.name}?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Detta går inte att ångra. Statusen tas bort från namespace {status.namespace}.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => toast.success(`${status.name} togs bort (PoC – ingen riktig radering).`)}
-                    >
-                      Ta bort
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {resource.canRemove && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label={`Ta bort ${title}`}>
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Ta bort {title}?</AlertDialogTitle>
+                      <AlertDialogDescription>Detta går inte att ångra.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => toast.success(`${title} togs bort (PoC – ingen riktig radering).`)}
+                      >
+                        Ta bort
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           );
         },
-      },
-    ],
-    []
-  );
+      });
+    }
+    return cols;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resource.name]);
 
   const table = useReactTable({
-    data,
+    data: resource.rows,
     columns,
     state: { sorting, globalFilter: filter },
     onSortingChange: setSorting,
@@ -138,16 +135,14 @@ export function StatusesTable({ data }: { data: Status[] }) {
   });
 
   const pageSize = table.getState().pagination.pageSize;
-  const showingAll = pageSize >= data.length;
-  const pageSizeValue = showingAll ? 'all' : String(pageSize);
-  const onPageSizeChange = (value: string) => {
-    table.setPageSize(value === 'all' ? data.length : Number(value));
-  };
+  const pageSizeValue = ['10', '20', '50'].includes(String(pageSize)) ? String(pageSize) : 'all';
+  const onPageSizeChange = (value: string) =>
+    table.setPageSize(value === 'all' ? resource.rows.length : Number(value));
 
   return (
     <div className="flex flex-col gap-4">
       <Input
-        placeholder="Sök status…"
+        placeholder="Sök…"
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
         className="max-w-xs"
@@ -160,9 +155,7 @@ export function StatusesTable({ data }: { data: Status[] }) {
               <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
                   <TableHead key={header.id} className={header.id === 'actions' ? 'text-right' : undefined}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -180,7 +173,7 @@ export function StatusesTable({ data }: { data: Status[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                  Inga statusar matchade sökningen.
+                  Inga rader matchade sökningen.
                 </TableCell>
               </TableRow>
             )}
@@ -202,9 +195,7 @@ export function StatusesTable({ data }: { data: Status[] }) {
               <SelectItem value="all">Alla</SelectItem>
             </SelectContent>
           </Select>
-          <span className="text-sm text-muted-foreground">
-            av {table.getFilteredRowModel().rows.length} statusar
-          </span>
+          <span className="text-sm text-muted-foreground">av {table.getFilteredRowModel().rows.length} rader</span>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>

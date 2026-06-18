@@ -152,6 +152,10 @@
   margin-left: -0.75rem;
 }
 
+.shadcn-poc .mb-4 {
+  margin-bottom: 1rem;
+}
+
 .shadcn-poc .mb-6 {
   margin-bottom: 1.5rem;
 }
@@ -174,6 +178,10 @@
 
 .shadcn-poc .mt-4 {
   margin-top: 1rem;
+}
+
+.shadcn-poc .block {
+  display: block;
 }
 
 .shadcn-poc .flex {
@@ -310,6 +318,10 @@
   min-height: 0px;
 }
 
+.shadcn-poc .min-h-\[60px\] {
+  min-height: 60px;
+}
+
 .shadcn-poc .min-h-svh {
   min-height: 100svh;
 }
@@ -406,6 +418,10 @@
   max-width: 32rem;
 }
 
+.shadcn-poc .max-w-xl {
+  max-width: 36rem;
+}
+
 .shadcn-poc .max-w-xs {
   max-width: 20rem;
 }
@@ -477,6 +493,10 @@
   cursor: default;
 }
 
+.shadcn-poc .cursor-pointer {
+  cursor: pointer;
+}
+
 .shadcn-poc .select-none {
   -webkit-user-select: none;
           user-select: none;
@@ -536,6 +556,12 @@
 
 .shadcn-poc .gap-6 {
   gap: 1.5rem;
+}
+
+.shadcn-poc :is(.space-y-0\.5 > :not([hidden]) ~ :not([hidden])) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.125rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.125rem * var(--tw-space-y-reverse));
 }
 
 .shadcn-poc :is(.space-y-1\.5 > :not([hidden]) ~ :not([hidden])) {
@@ -598,6 +624,10 @@
 
 .shadcn-poc .border {
   border-width: 1px;
+}
+
+.shadcn-poc .border-2 {
+  border-width: 2px;
 }
 
 .shadcn-poc .border-b {
@@ -794,6 +824,14 @@
   vertical-align: middle;
 }
 
+.shadcn-poc .font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.shadcn-poc .text-\[0\.85em\] {
+  font-size: 0.85em;
+}
+
 .shadcn-poc .text-\[0\.8rem\] {
   font-size: 0.8rem;
 }
@@ -954,6 +992,12 @@
 
 .shadcn-poc .outline {
   outline-style: solid;
+}
+
+.shadcn-poc .ring-0 {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
 
 .shadcn-poc .ring-sidebar-ring {
@@ -1389,6 +1433,14 @@
   --tw-ring-color: hsl(var(--sidebar-ring));
 }
 
+.shadcn-poc .focus-visible\:ring-offset-2:focus-visible {
+  --tw-ring-offset-width: 2px;
+}
+
+.shadcn-poc .focus-visible\:ring-offset-background:focus-visible {
+  --tw-ring-offset-color: hsl(var(--background));
+}
+
 .shadcn-poc .active\:bg-sidebar-accent:active {
   background-color: hsl(var(--sidebar-accent));
 }
@@ -1503,8 +1555,22 @@
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
+.shadcn-poc .data-\[state\=checked\]\:translate-x-4[data-state="checked"] {
+  --tw-translate-x: 1rem;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.shadcn-poc .data-\[state\=unchecked\]\:translate-x-0[data-state="unchecked"] {
+  --tw-translate-x: 0px;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
 .shadcn-poc .data-\[active\=true\]\:bg-sidebar-accent[data-active="true"] {
   background-color: hsl(var(--sidebar-accent));
+}
+
+.shadcn-poc .data-\[state\=checked\]\:bg-primary[data-state="checked"] {
+  background-color: hsl(var(--primary));
 }
 
 .shadcn-poc .data-\[state\=open\]\:bg-accent[data-state="open"] {
@@ -1517,6 +1583,10 @@
 
 .shadcn-poc .data-\[state\=selected\]\:bg-muted[data-state="selected"] {
   background-color: hsl(var(--muted));
+}
+
+.shadcn-poc .data-\[state\=unchecked\]\:bg-input[data-state="unchecked"] {
+  background-color: hsl(var(--input));
 }
 
 .shadcn-poc .data-\[active\=true\]\:font-medium[data-active="true"] {
