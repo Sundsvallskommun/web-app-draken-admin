@@ -3,7 +3,7 @@
  * `@config/resources` (field metadata + which actions exist), but with
  * hardcoded Swedish labels and mock rows so the PoC renders standalone
  * (no backend / i18n / zustand). The generic list/edit pages under
- * `pages/poc/[resource]/*` render entirely from this registry.
+ * `pages/[resource]/*` render entirely from this registry.
  */
 import {
   Boxes,
@@ -294,9 +294,9 @@ export const pocResources: PocResource[] = [
     canCreate: true,
     canRemove: false,
     extraNav: [
-      { label: 'Sök efter mall', href: '/poc/templates/search' },
-      { label: 'Jämför miljöer', href: '/poc/templates/compare' },
-      { label: 'Teststatus', href: '/poc/templates/test-status' },
+      { label: 'Sök efter mall', href: '/templates/search' },
+      { label: 'Jämför miljöer', href: '/templates/compare' },
+      { label: 'Teststatus', href: '/templates/test-status' },
     ],
     fields: [
       { key: 'identifier', label: 'Identifierare', type: 'text', required: true, lockedOnEdit: true, inTable: true },

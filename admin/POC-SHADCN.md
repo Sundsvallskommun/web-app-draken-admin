@@ -1,74 +1,31 @@
-# shadcn/ui PoC – Draken Admin
+# Draken Admin – shadcn/ui
 
-En **proof-of-concept** som visar Draken Admin byggd med [shadcn/ui](https://ui.shadcn.com)
-(Radix UI-primitiver + Tailwind) i stället för `@sk-web-gui`. Ligger på branchen
-`poc/shadcn` och rör **inte** den befintliga appen.
+Frontend byggd med [shadcn/ui](https://ui.shadcn.com) (Radix UI + Tailwind). På branchen
+`poc/shadcn` har **@sk-web-gui ersatts helt** av shadcn — det är nu appens enda designsystem.
 
-## Köra PoC:n
+## Köra
 
 ```bash
-yarn dev:poc      # next dev + watch som bygger om PoC-CSS:en automatiskt
+yarn dev      # http://localhost:3002 (kräver inloggning mot backend)
+yarn build    # produktionsbygge
 ```
 
-Öppna sedan **http://localhost:3002/poc**. (Eller kör `yarn dev` + `yarn poc:css` en gång.)
+Appen körs bakom `LoginGuard` mot samma backend som tidigare (`NEXT_PUBLIC_API_URL`),
+så logga in som vanligt för att se riktig data.
 
-Rutter (config-drivna):
-- `/poc` – startsida med resurskort
-- `/poc/[resource]` – lista (TanStack Table: sortering, sök, **namespace-filter**, **kolumnval**,
-  **uppdatera**, paginering 10/20/50/Alla, ta bort-dialog)
-- `/poc/[resource]/new` och `/poc/[resource]/[...id]` – skapa/redigera (shadcn `Form` + react-hook-form,
-  spara-knapp inaktiv tills ändring, ta bort med bekräftelse)
-- `/poc/templates/{search,compare,test-status}` – mallarnas extrasidor (Sök, Jämför miljöer, Teststatus)
+## Struktur
 
-**Alla 10 resurser är migrerade**: featureFlags, labels (skrivskyddad), roles, statuses,
-contactReasons, categories, emailIntegration, namespaces, templates, jsonSchemas.
+- **Tema:** `tailwind.config.js` (shadcn-tema) + CSS-variabler i `src/styles/tailwind.scss`.
+- **Providers:** `src/layouts/app/app-layout.component.tsx` – next-themes (ljus/mörk) + `LoginGuard` + global `Toaster` (sonner).
+- **Skal/sidor:** `src/poc/` (layout, sidebar, generisk tabell/formulär, etikett-träd, schema-builder, Monaco-fält). Rutter under `src/pages/`.
+- **Komponenter:** `src/components/ui/*` (shadcn, new-york). `components.json` pekar på den globala configen så `npx shadcn add …` fungerar.
+- **Data:** `src/poc/use-poc-rows.ts` hämtar via `@config/resources` (samma tjänstelager som förr); faller tillbaka till exempeldata + banner om backend inte nås.
 
-Funktionsparitet med gamla admin: **sidebar med expanderbara undermenyer** (Lista alla / Skapa ny
-+ mall-extras), **namespace-filter**, **kolumnval**, **uppdatera**, redigerings-verktygsrad
-(ta bort / spara / mall-åtgärder export·förhandsgranska·godkänn) och **Monaco-editor** för
-kod-fält (mallinnehåll = markdown, JSON-schema = json).
+Resurser: featureFlags, labels (träd), roles, statuses, contactReasons, categories,
+emailIntegration, namespaces, templates (Monaco + sök/jämför/teststatus), jsonSchemas (builder).
 
-Allt drivs av ett enda register, `src/poc/poc-resources.ts` (fältmetadata + mockdata),
-som `src/poc/resource-table.tsx` och `src/poc/resource-form.tsx` renderar generiskt –
-samma mönster som riktiga appens `@config/resources` + `ListResources`.
+## Kvar att göra
 
-**Datakälla:** listorna hämtar **riktig data via samma tjänstelager som gamla admin**
-(`@config/resources` → backend på `NEXT_PUBLIC_API_URL`, med sessionscookie). Är man inte
-inloggad (401) faller den tillbaka till exempeldata med en banner. Logga in i vanliga admin
-(öppna `/`) för riktig data. Se `src/poc/use-poc-rows.ts`.
-
-Avancerade vyer (portade): **etikett-träd** (`label-tree.tsx`), **JSON-schema-builder +
-live-förhandsvisning** (`schema-builder.tsx`), **Monaco-editor** för mallar/scheman, samt
-mall-extrasidorna (sök/jämför/teststatus).
-
-> Kvar: skrivningar (skapa/redigera/ta bort) är ännu **dry-run** (toast) – kopplas mot API
-> härnäst; mallarnas **riktiga** jämför/godkänn/versionering mot API; samt själva **rutt-bytet**
-> av de skarpa rutterna (görs sist, när allt är portat och verifierat i inloggat läge).
-
-## Hur isoleringen fungerar (viktigt)
-
-shadcn och `@sk-web-gui` gör båda anspråk på samma generiska Tailwind-tokens
-(`primary`, `background`, `border`, `input`, `ring`, `accent`, `muted`, `popover`…),
-så de kan **inte dela samma Tailwind-config**. För att testa shadcn utan att röra
-den befintliga appen är PoC:n helt isolerad:
-
-| Fil | Roll |
-|---|---|
-| `tailwind.poc.config.js` | Egen Tailwind-config, **utan** sk-web-gui-preset. `important: '.shadcn-poc'` scopar alla utilities. |
-| `src/styles/shadcn-poc.css` | shadcn CSS-variabler (ljus/mörk), scopeade till `.shadcn-poc` / `.shadcn-poc.dark`. Ingen global `@tailwind base`. |
-| `public/shadcn-poc.out.css` | Byggs av `yarn poc:css`. Laddas bara av PoC-layouten via `<link>`. |
-| `src/poc/poc-layout.tsx` | Sätter klassen `shadcn-poc` på `<html>` (så Radix-portaler under `body` också omfattas) och städar bort den när man lämnar PoC:n. |
-| `src/layouts/app/app-layout.component.tsx` | `/poc`-rutter hoppar över `GuiProvider` + `LoginGuard`. |
-
-Resten av appen (`tailwind.config.js`, alla befintliga sidor) är **orörd**.
-
-## Komponenter
-
-- shadcn-komponenter: `src/components/ui/*` (standard new-york-stil, hämtade från registryt)
-- `components.json` pekar på PoC-configen, så `npx shadcn add <komponent>` /
-  shadcn-MCP:n lägger nya komponenter i rätt isolerade kontext.
-- `cn`-hjälparen: `src/utils/cn.ts`
-
-## Slänga PoC:n
-
-`git checkout main` – inget av detta finns på `main`.
+- **Skrivningar** (skapa/redigera/ta bort) är ännu **dry-run** (toast) – läsning går mot riktig backend, skrivning ska kopplas mot `create/update/remove`.
+- Mallarnas **riktiga** jämför/godkänn/versionering mot API (compare-service).
+- i18n (appen använder hårdkodad svenska i shadcn-delen; `next-i18next` finns kvar men oanvänt).

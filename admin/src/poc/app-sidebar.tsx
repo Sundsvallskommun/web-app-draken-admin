@@ -1,5 +1,4 @@
 import { Avatar, AvatarFallback } from '@components/ui/avatar';
-import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import {
   DropdownMenu,
@@ -41,8 +40,8 @@ interface NavItem {
 }
 
 function subItems(resource: PocResource): NavItem[] {
-  const items: NavItem[] = [{ label: 'Lista alla', href: `/poc/${resource.name}` }];
-  if (resource.canCreate) items.push({ label: 'Skapa ny', href: `/poc/${resource.name}/new` });
+  const items: NavItem[] = [{ label: 'Lista alla', href: `/${resource.name}` }];
+  if (resource.canCreate) items.push({ label: 'Skapa ny', href: `/${resource.name}/new` });
   if (resource.extraNav) items.push(...resource.extraNav);
   return items;
 }
@@ -53,7 +52,7 @@ export function AppSidebar() {
     useShallow((s) => [s.municipalityId, s.setMunicipalityId])
   );
   const pathOnly = router.asPath.split('?')[0];
-  const active = (name: string) => pathOnly === `/poc/${name}` || pathOnly.startsWith(`/poc/${name}/`);
+  const active = (name: string) => pathOnly === `/${name}` || pathOnly.startsWith(`/${name}/`);
 
   return (
     <Sidebar collapsible="icon">

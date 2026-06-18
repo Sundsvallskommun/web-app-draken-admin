@@ -1,124 +1,94 @@
-import { EditResourceJsonSchema } from '@components/edit-resource/edit-resource-jsonschema.component';
-import { EditorToolbar } from '@components/editor-toolbar/editor-toolbar';
-import LoaderFullScreen from '@components/loader/loader-fullscreen';
-import resources from '@config/resources';
-import { Resource, ResourceResponse } from '@interfaces/resource';
-import { ResourceName } from '@interfaces/resource-name';
-import EditLayout from '@layouts/edit-layout/edit-layout.component';
-import { useRouteGuard } from '@utils/routeguard.hook';
-import { useCrudHelper } from '@utils/use-crud-helpers';
-import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { useResource } from '@utils/use-resource';
-import { GetServerSideProps } from 'next';
-import { useTranslation } from 'next-i18next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { useParams } from 'next/navigation';
+import { Button } from '@components/ui/button';
+import { Input } from '@components/ui/input';
+import { Label } from '@components/ui/label';
+import { Textarea } from '@components/ui/textarea';
+import { PocLayout } from '@poc/poc-layout';
+import { type PocRow } from '@poc/poc-resources';
+import { SchemaBuilder } from '@poc/schema-builder';
+import { usePocRows } from '@poc/use-poc-rows';
+import { ArrowLeft } from 'lucide-react';
+import type { GetServerSideProps } from 'next';
+import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import { FieldValues, FormProvider, useForm } from 'react-hook-form';
-import { capitalize } from 'underscore.string';
+import * as React from 'react';
+import { toast } from 'sonner';
 
-export const EditJsonSchema: React.FC = () => {
-  const { t } = useTranslation();
+export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
+
+function Editor({ initial, isNew }: { initial?: PocRow; isNew: boolean }) {
   const router = useRouter();
-  const { municipalityId } = useLocalStorage();
+  const [name, setName] = React.useState(String(initial?.name ?? ''));
+  const [version, setVersion] = React.useState(String(initial?.version ?? '1.0'));
+  const [description, setDescription] = React.useState(String(initial?.description ?? ''));
 
-  const { id: _id } = useParams();
-  const resource = 'jsonSchemas';
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <Label>Namn *</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} disabled={!isNew} />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label>Version *</Label>
+          <Input value={version} onChange={(e) => setVersion(e.target.value)} />
+        </div>
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <Label>Beskrivning</Label>
+          <Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
+        </div>
+      </div>
 
-  const { create, update, getOne, defaultValues } = resources[resource as ResourceName];
-  const { refresh } = useResource(resource as ResourceName);
+      <SchemaBuilder value={initial?.value} />
 
-  const { handleGetOne, handleCreate, handleUpdate } = useCrudHelper(resource as ResourceName);
-
-  type CreateType = Parameters<NonNullable<Resource<FieldValues>['create']>>[1];
-  type UpdateType = Parameters<NonNullable<Resource<FieldValues>['update']>>[2];
-  type DataType = CreateType | UpdateType;
-
-  const form = useForm<DataType>({
-    defaultValues: defaultValues,
-  });
-  const {
-    handleSubmit,
-    reset,
-    formState: { isDirty },
-  } = form;
-
-  const id = _id === 'new' ? undefined : _id;
-
-  const [loaded, setLoaded] = useState<boolean>(false);
-  const [isNew, setIsNew] = useState<boolean>(!id);
-
-  useRouteGuard(isDirty);
-
-  useEffect(() => {
-    if (id) {
-      setIsNew(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    if (id && getOne) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      handleGetOne<any>(() => getOne(municipalityId, id as any)).then(res => {
-        reset(res);
-        setIsNew(false);
-        setLoaded(true);
-      });
-    } else {
-      reset(defaultValues);
-      setIsNew(true);
-      setLoaded(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
-
-  const onSubmit = async (data: DataType) => {
-    if (isNew) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await handleCreate(() => create?.(municipalityId, data as any) as ResourceResponse<any>);
-      if (result) {
-        // Navigate to the created schema
-        router.push(`/${resource}/${result.id}`);
-        refresh();
-      }
-    } else if (id && update) {
-      // Update creates a new version of the schema
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await handleUpdate(() => update(municipalityId, id as any, data) as ResourceResponse<any>);
-      if (result?.data) {
-        // Navigate to the new version
-        router.push(`/${resource}/${result.data.id}`);
-        refresh();
-      }
-    }
-  };
-
-  return !loaded || !resource ? (
-    <LoaderFullScreen />
-  ) : (
-    <EditLayout
-      title={
-        isNew
-          ? capitalize(t('common:create_new', { resource: t(`${resource}:name`, { count: 1 }) }))
-          : capitalize(t('common:edit', { resource: t(`${resource}:name_one`) }))
-      }
-      backLink={`/${resource}`}
-    >
-      <FormProvider {...form}>
-        <form className="flex flex-row gap-32 justify-between grow flex-wrap" onSubmit={handleSubmit(onSubmit)}>
-          <EditorToolbar resource={resource} isDirty={isDirty} id={id} />
-          <EditResourceJsonSchema isNew={isNew} schemaId={id as string} />
-        </form>
-      </FormProvider>
-    </EditLayout>
+      <div className="flex gap-3 border-t pt-6">
+        <Button onClick={() => { toast.success(`${isNew ? 'Skapade' : 'Sparade'} schema "${name}" (skrivning ej kopplad ännu).`); router.push('/jsonSchemas'); }}>
+          {isNew ? 'Skapa' : 'Spara ändringar'}
+        </Button>
+        <Button variant="outline" onClick={() => router.push('/jsonSchemas')}>
+          Avbryt
+        </Button>
+      </div>
+    </div>
   );
-};
+}
 
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
-  props: {
-    ...(await serverSideTranslations(locale, ['common', 'crud', 'layout', 'jsonSchemas', ...Object.keys(resources)])),
-  },
-});
+export default function PocJsonSchemaEdit() {
+  const router = useRouter();
+  const rawId = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
+  const isNew = rawId === 'new';
+  const { rows, loading } = usePocRows('jsonSchemas');
 
-export default EditJsonSchema;
+  if (!router.isReady) {
+    return (
+      <PocLayout title="Laddar…" breadcrumb="JSON-scheman">
+        {null}
+      </PocLayout>
+    );
+  }
+
+  const initial = !isNew ? rows.find((r) => r.id === rawId) : undefined;
+  const title = isNew ? 'Skapa JSON-schema' : String(initial?.name ?? rawId ?? 'Redigera JSON-schema');
+
+  return (
+    <PocLayout
+      title={title}
+      breadcrumb="JSON-scheman"
+      actions={
+        <Button asChild variant="ghost" size="sm">
+          <NextLink href="/jsonSchemas">
+            <ArrowLeft className="size-4" />
+            Tillbaka
+          </NextLink>
+        </Button>
+      }
+    >
+      {!isNew && loading ? (
+        <p className="text-muted-foreground">Hämtar…</p>
+      ) : !isNew && !initial ? (
+        <p className="text-muted-foreground">Hittade inget schema med id {rawId}.</p>
+      ) : (
+        <Editor initial={initial} isNew={isNew} />
+      )}
+    </PocLayout>
+  );
+}

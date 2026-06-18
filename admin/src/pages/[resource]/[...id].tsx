@@ -49,7 +49,7 @@ export default function PocResourceEdit() {
       breadcrumb={resource.label}
       actions={
         <Button asChild variant="ghost" size="sm">
-          <NextLink href={`/poc/${resource.name}`}>
+          <NextLink href={`/${resource.name}`}>
             <ArrowLeft className="size-4" />
             Tillbaka
           </NextLink>

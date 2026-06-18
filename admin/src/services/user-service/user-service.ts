@@ -1,9 +1,10 @@
 import { ApiResponse, apiService } from '../api-service';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { __DEV__ } from '@sk-web-gui/react';
 import { emptyUser, UserPermissions } from './defaults';
 import { ServiceResponse } from '@interfaces/services';
+
+const __DEV__ = process.env.NODE_ENV !== 'production';
 
 export interface User {
   name: string;

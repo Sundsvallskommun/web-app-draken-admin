@@ -4,8 +4,8 @@
   "rsc": false,
   "tsx": true,
   "tailwind": {
-    "config": "tailwind.poc.config.js",
-    "css": "src/styles/shadcn-poc.css",
+    "config": "tailwind.config.js",
+    "css": "src/styles/tailwind.scss",
     "baseColor": "slate",
     "cssVariables": true,
     "prefix": ""

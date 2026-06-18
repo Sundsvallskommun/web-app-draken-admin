@@ -5,6 +5,14 @@
     "react-refresh/only-export-components": ["error", { "allowExportNames": ["getServerSideProps"] }],
     "@typescript-eslint/no-explicit-any": "error"
   },
+  "overrides": [
+    {
+      "files": ["src/components/ui/**/*.{ts,tsx}"],
+      "rules": {
+        "react-refresh/only-export-components": "off"
+      }
+    }
+  ],
   "env": {
     "node": true,
     "browser": true,

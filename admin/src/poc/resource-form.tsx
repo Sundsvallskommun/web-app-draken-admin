@@ -54,7 +54,7 @@ export function ResourceForm({
   const onSubmit = (values: Record<string, unknown>) => {
     const title = String(values[resource.fields[0].key] ?? '');
     toast.success(`${isNew ? 'Skapade' : 'Sparade'} ${resource.label.toLowerCase()} "${title}" (PoC – inget sparas på riktigt).`);
-    router.push(`/poc/${resource.name}`);
+    router.push(`/${resource.name}`);
   };
 
   const title = String(initial?.[resource.fields[0].key] ?? '');
@@ -140,7 +140,7 @@ export function ResourceForm({
           <Button type="submit" disabled={!isDirty}>
             {isNew ? 'Skapa' : 'Spara ändringar'}
           </Button>
-          <Button type="button" variant="outline" onClick={() => router.push(`/poc/${resource.name}`)}>
+          <Button type="button" variant="outline" onClick={() => router.push(`/${resource.name}`)}>
             Avbryt
           </Button>
 
@@ -186,7 +186,7 @@ export function ResourceForm({
                   <AlertDialogAction
                     onClick={() => {
                       toast.success(`${title} togs bort (PoC – ingen riktig radering).`);
-                      router.push(`/poc/${resource.name}`);
+                      router.push(`/${resource.name}`);
                     }}
                   >
                     Ta bort

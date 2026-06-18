@@ -1,8 +1,14 @@
-import LoaderFullScreen from '@components/loader/loader-fullscreen';
 import { useUserStore } from '@services/user-service/user-service';
+import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+
+const LoaderFullScreen = () => (
+  <div className="flex min-h-screen w-full items-center justify-center bg-background text-muted-foreground">
+    <Loader2 className="size-8 animate-spin" />
+  </div>
+);
 
 export const LoginGuard: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const user = useUserStore(useShallow((s) => s.user));

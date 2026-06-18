@@ -40,6 +40,7 @@ import NextLink from 'next/link';
 import * as React from 'react';
 import { toast } from 'sonner';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SortHeader({ column, children }: { column: any; children: React.ReactNode }) {
   return (
     <Button
@@ -107,7 +108,7 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
           return (
             <div className="flex justify-end gap-1">
               <Button asChild variant="ghost" size="icon" aria-label={`Redigera ${title}`}>
-                <NextLink href={`/poc/${resource.name}/${item.id}`}>
+                <NextLink href={`/${resource.name}/${item.id}`}>
                   <Pencil className="size-4" />
                 </NextLink>
               </Button>

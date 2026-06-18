@@ -1,46 +1,59 @@
-import { LabelsAdmin } from '@components/labels/labels-admin.component';
-import resources from '@config/resources';
-import ListLayout from '@layouts/list-layout/list-layout.component';
-import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { useResource } from '@utils/use-resource';
-import { GetServerSideProps } from 'next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { Input } from '@components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import { LabelTree, type LabelNode } from '@poc/label-tree';
+import { pocNamespaces } from '@poc/poc-resources';
+import { usePocRows } from '@poc/use-poc-rows';
+import { Loader2, Search, TriangleAlert } from 'lucide-react';
+import type { GetServerSideProps } from 'next';
+import { PocLayout } from '@poc/poc-layout';
+import * as React from 'react';
 
-export const Labels: React.FC = () => {
-  const router = useRouter();
-  const { namespace: urlNamespace } = router.query;
+export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
-  const { municipalityId, selectedNamespace } = useLocalStorage();
-
-  const activeNamespace = typeof urlNamespace === 'string' ? urlNamespace : selectedNamespace || undefined;
-  const filter = activeNamespace ? { namespace: activeNamespace } : undefined;
-  const resource = 'labels';
-
-  const properties = ['classification', 'displayName'];
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { loaded, refresh } = useResource(resource, filter as any);
-
-  useEffect(() => {
-    refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeNamespace, municipalityId]);
+export default function PocLabels() {
+  const [namespace, setNamespace] = React.useState(pocNamespaces[0].namespace);
+  const [query, setQuery] = React.useState('');
+  const { rows, loading, source, error } = usePocRows('labels', namespace);
 
   return (
-    resource && (
-      <ListLayout resource={resource} properties={properties} showFilter>
-        {loaded && activeNamespace && <LabelsAdmin namespace={activeNamespace} />}
-      </ListLayout>
-    )
+    <PocLayout title="Etiketter" breadcrumb="Resurser">
+      <div className="flex flex-col gap-4">
+        {source !== 'api' && !loading && (
+          <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+            <TriangleAlert className="size-4 shrink-0" />
+            {error === '401'
+              ? 'Inte inloggad mot backend – visar exempelträd. Logga in i vanliga admin (öppna /) för riktig data.'
+              : 'Kunde inte nå API:et – visar exempelträd.'}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative max-w-xs flex-1">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Sök i trädet…"
+              className="pl-9"
+            />
+          </div>
+          <Select value={namespace} onValueChange={setNamespace}>
+            <SelectTrigger className="w-[16rem]" aria-label="Namespace">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {pocNamespaces.map((ns) => (
+                <SelectItem key={ns.namespace} value={ns.namespace}>
+                  {ns.displayName} ({ns.namespace})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+        </div>
+
+        <LabelTree data={rows as unknown as LabelNode[]} query={query} />
+      </div>
+    </PocLayout>
   );
-};
-
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
-  props: {
-    ...(await serverSideTranslations(locale, ['common', 'layout', 'crud', ...Object.keys(resources)])),
-  },
-});
-
-export default Labels;
+}
