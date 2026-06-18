@@ -1,5 +1,6 @@
 import resources from '@config/resources';
 import { MenuIndex, MenuVertical } from '@sk-web-gui/react';
+import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import NextLink from 'next/link';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +9,7 @@ import { capitalize } from 'underscore.string';
 export const Menu = () => {
   const [current, setCurrent] = useState<string>('');
   const { t } = useTranslation();
+  const { showTestFeatures } = useIsProductionEnv();
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -64,7 +66,7 @@ export const Menu = () => {
                       </NextLink>
                     </MenuVertical.Item>
                   )}
-                  {resourcename === 'templates' && (
+                  {resourcename === 'templates' && showTestFeatures && (
                     <MenuVertical.Item menuIndex={`${resource.name}-test-status`}>
                       <NextLink href={`/${resource.name}/test-status`}>
                         Teststatus

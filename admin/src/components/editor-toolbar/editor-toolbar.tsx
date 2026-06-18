@@ -3,6 +3,7 @@ import { ResourceName } from '@interfaces/resource-name';
 import { PreviewTemplate, Template } from '@services/templating/templating-service';
 import { Button, Icon, useConfirm } from '@sk-web-gui/react';
 import { useCrudHelper } from '@utils/use-crud-helpers';
+import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useResource } from '@utils/use-resource';
 import { exportTemplateToJson } from '@utils/template-export-import';
@@ -22,7 +23,7 @@ interface ToolbarProps {
   onUnapprove?: () => void;
 }
 
-export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id, isApproved, onApprove, onUnapprove }) => {
+export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id, isApproved: isApprovedProp, onApprove, onUnapprove }) => {
   const router = useRouter();
   const parentPath = resource ? `/${resource}` : router.pathname.split('/[')[0].replace('/new', '');
   const { remove } = resources[resource];
@@ -31,6 +32,8 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id, i
   const confirm = useConfirm();
   const { reset, watch } = useFormContext();
   const { municipalityId } = useLocalStorage();
+  const { showTestFeatures } = useIsProductionEnv();
+  const isApproved = showTestFeatures ? isApprovedProp : false;
 
   const content = watch('content');
   const namespace = watch('namespace');
@@ -112,7 +115,7 @@ export const EditorToolbar: React.FC<ToolbarProps> = ({ resource, isDirty, id, i
       )}
       {resource === 'templates' && (
         <>
-          {!isApproved && id && (
+          {!isApproved && showTestFeatures && id && (
             <Button
               variant="tertiary"
               color="gronsta"
