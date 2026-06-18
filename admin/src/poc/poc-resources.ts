@@ -307,9 +307,9 @@ export const pocResources: PocResource[] = [
       { key: 'changeLog', label: 'Ändringslogg', type: 'text' },
     ],
     rows: [
-      { id: 'errand.confirmation', identifier: 'errand.confirmation', name: 'Bekräftelse ärende', version: '1.3', description: 'Skickas när ett ärende skapas.', content: 'Hej {{name}},\n\nVi har tagit emot ditt ärende {{errandId}}.', changeLog: 'Lade till ärende-id' },
-      { id: 'errand.closed', identifier: 'errand.closed', name: 'Avslutat ärende', version: '2.0', description: 'Skickas när ett ärende avslutas.', content: 'Hej {{name}},\n\nDitt ärende är nu avslutat.', changeLog: 'Ny ton' },
-      { id: 'decision.letter', identifier: 'decision.letter', name: 'Beslutsbrev', version: '1.0', description: 'Beslutsmall för bygglov.', content: '# Beslut\n\n{{decision}}', changeLog: 'Första versionen' },
+      { id: 'errand.confirmation', identifier: 'errand.confirmation', name: 'Bekräftelse ärende', version: '1.3', description: 'Skickas när ett ärende skapas.', content: 'Hej {{name}},\n\nVi har tagit emot ditt ärende {{errandId}}.', changeLog: 'Lade till ärende-id', metadata: '[{"key":"application","value":"draken"},{"key":"templateType","value":"Email"},{"key":"namespace","value":"CONTACTCENTER"}]' },
+      { id: 'errand.closed', identifier: 'errand.closed', name: 'Avslutat ärende', version: '2.0', description: 'Skickas när ett ärende avslutas.', content: 'Hej {{name}},\n\nDitt ärende är nu avslutat.', changeLog: 'Ny ton', metadata: '[{"key":"application","value":"draken"},{"key":"templateType","value":"Email"},{"key":"namespace","value":"CONTACTCENTER"}]' },
+      { id: 'decision.letter', identifier: 'decision.letter', name: 'Beslutsbrev', version: '1.0', description: 'Beslutsmall för bygglov.', content: '# Beslut\n\n{{decision}}', changeLog: 'Första versionen', metadata: '[{"key":"application","value":"draken"},{"key":"templateType","value":"Decision"},{"key":"namespace","value":"BYGGLOV"},{"key":"process","value":"FT"}]' },
     ],
   },
   {
