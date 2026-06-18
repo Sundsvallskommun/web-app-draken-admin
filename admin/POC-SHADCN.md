@@ -37,10 +37,13 @@ samma mönster som riktiga appens `@config/resources` + `ListResources`.
 inloggad (401) faller den tillbaka till exempeldata med en banner. Logga in i vanliga admin
 (öppna `/`) för riktig data. Se `src/poc/use-poc-rows.ts`.
 
-> Skrivningar (skapa/redigera/ta bort) är ännu **dry-run** (toast) – kopplas mot API i nästa steg.
-> Kvar att portera: **schema-builder/RJSF-förhandsvisning** (JSON-scheman) och **hierarkisk
-> trädvy** (etiketter). Rutt-byte av de 7 enkla resurserna till de skarpa rutterna görs när
-> riktig data är bekräftad i inloggat läge.
+Avancerade vyer (portade): **etikett-träd** (`label-tree.tsx`), **JSON-schema-builder +
+live-förhandsvisning** (`schema-builder.tsx`), **Monaco-editor** för mallar/scheman, samt
+mall-extrasidorna (sök/jämför/teststatus).
+
+> Kvar: skrivningar (skapa/redigera/ta bort) är ännu **dry-run** (toast) – kopplas mot API
+> härnäst; mallarnas **riktiga** jämför/godkänn/versionering mot API; samt själva **rutt-bytet**
+> av de skarpa rutterna (görs sist, när allt är portat och verifierat i inloggat läge).
 
 ## Hur isoleringen fungerar (viktigt)
 

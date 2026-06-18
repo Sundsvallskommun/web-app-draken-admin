@@ -370,6 +370,10 @@
   width: 75%;
 }
 
+.shadcn-poc .w-36 {
+  width: 9rem;
+}
+
 .shadcn-poc .w-4 {
   width: 1rem;
 }
@@ -557,6 +561,10 @@
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 
+.shadcn-poc .flex-row {
+  flex-direction: row;
+}
+
 .shadcn-poc .flex-col {
   flex-direction: column;
 }
@@ -591,6 +599,10 @@
 
 .shadcn-poc .gap-1 {
   gap: 0.25rem;
+}
+
+.shadcn-poc .gap-1\.5 {
+  gap: 0.375rem;
 }
 
 .shadcn-poc .gap-2 {
@@ -2013,6 +2025,10 @@
 }
 
 @media (min-width: 640px) {
+  .shadcn-poc .sm\:col-span-2 {
+    grid-column: span 2 / span 2;
+  }
+
   .shadcn-poc .sm\:mt-0 {
     margin-top: 0px;
   }
