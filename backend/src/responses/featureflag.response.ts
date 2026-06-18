@@ -9,6 +9,8 @@ export class FeatureFlag implements Partial<_FeatureFlag> {
   @IsString()
   name: string;
   @IsString()
+  description: string;
+  @IsString()
   @IsOptional()
   value?: string;
   @IsBoolean()

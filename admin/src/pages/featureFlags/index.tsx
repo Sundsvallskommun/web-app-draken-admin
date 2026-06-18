@@ -18,7 +18,7 @@ export const FeatureFlags: React.FC = () => {
   const filter = activeNamespace ? { namespace: activeNamespace } : undefined;
   const resource = 'featureFlags';
 
-  const properties = ['id', 'name', 'value', 'enabled', 'application', 'namespace', 'createdAt', 'updatedAt'];
+  const properties = ['id', 'name', 'description', 'value', 'enabled', 'application', 'namespace', 'createdAt', 'updatedAt'];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, refresh, loaded } = useResource(resource, filter as any);

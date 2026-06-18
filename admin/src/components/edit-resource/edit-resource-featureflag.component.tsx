@@ -1,6 +1,6 @@
 import { Api } from '@data-contracts/backend/Api';
 import { Namespace } from '@data-contracts/backend/data-contracts';
-import { FormControl, FormLabel, Input, Select, Spinner, Switch } from '@sk-web-gui/react';
+import { FormControl, FormLabel, Input, Select, Spinner, Switch, Textarea } from '@sk-web-gui/react';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { useTranslation } from 'next-i18next';
 import React, { useEffect, useState } from 'react';
@@ -87,6 +87,10 @@ export const EditResourceFeatureFlag: React.FC<EditResourceProps> = ({ isNew }) 
           <Switch {...register('enabled')} />
         </FormControl>
       </div>
+      <FormControl required>
+        <FormLabel>{capitalize(t(`featureFlags:properties.description`))}</FormLabel>
+        <Textarea {...register('description', { required: true })} rows={4} className="w-[36rem]" />
+      </FormControl>
       <FormControl>
         <FormLabel>{capitalize(t(`featureFlags:properties.value`))}</FormLabel>
         <Input {...register('value')} className="w-[36rem]" />

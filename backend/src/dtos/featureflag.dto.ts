@@ -7,6 +7,8 @@ export class FeatureFlagRequestDto implements Partial<_FeatureFlag> {
   id?: number;
   @IsString()
   name: string;
+  @IsString()
+  description: string;
   @IsBoolean()
   enabled: boolean;
   @IsString()
@@ -22,6 +24,9 @@ export class UpdateFeatureFlagDto implements Partial<_FeatureFlag> {
   @IsString()
   @IsOptional()
   name?: string;
+  @IsString()
+  @IsOptional()
+  description?: string;
   @IsBoolean()
   @IsOptional()
   enabled?: boolean;

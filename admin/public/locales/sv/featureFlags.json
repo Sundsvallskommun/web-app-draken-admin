@@ -6,6 +6,7 @@
   "properties": {
     "id": "ID",
     "name": "Namn",
+    "description": "Beskrivning",
     "value": "Värde",
     "enabled": "Aktiverad",
     "application": "Applikation",
