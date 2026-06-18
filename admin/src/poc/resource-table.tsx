@@ -190,7 +190,7 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
           <TriangleAlert className="size-4 shrink-0" />
           {error === '401'
             ? 'Inte inloggad mot backend – visar exempeldata. Logga in i vanliga admin (öppna /) för riktig data.'
-            : 'Kunde inte nå API:et – visar exempeldata.'}
+            : `Kunde inte hämta från API:et (fel ${error}) – visar exempeldata.`}
         </div>
       )}
 
