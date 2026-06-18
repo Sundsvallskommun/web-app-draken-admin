@@ -23,6 +23,7 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
+import { MonacoField } from '@poc/monaco-field';
 import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
 import { Download, Eye, ShieldCheck, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/router';
@@ -105,15 +106,16 @@ export function ResourceForm({
                           ))}
                         </SelectContent>
                       </Select>
-                    ) : field.type === 'textarea' || field.type === 'code' ? (
+                    ) : field.type === 'code' ? (
+                      <MonacoField
+                        value={(rhf.value as string) ?? ''}
+                        onChange={rhf.onChange}
+                        disabled={disabled}
+                        language={resource.name === 'jsonSchemas' ? 'json' : 'markdown'}
+                      />
+                    ) : field.type === 'textarea' ? (
                       <FormControl>
-                        <Textarea
-                          {...rhf}
-                          value={(rhf.value as string) ?? ''}
-                          disabled={disabled}
-                          rows={field.type === 'code' ? 8 : 3}
-                          className={field.type === 'code' ? 'font-mono text-[0.85em]' : undefined}
-                        />
+                        <Textarea {...rhf} value={(rhf.value as string) ?? ''} disabled={disabled} rows={3} />
                       </FormControl>
                     ) : (
                       <FormControl>

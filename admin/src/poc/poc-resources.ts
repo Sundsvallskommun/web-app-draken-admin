@@ -269,12 +269,17 @@ export const pocResources: PocResource[] = [
     icon: FileText,
     canCreate: true,
     canRemove: false,
+    extraNav: [
+      { label: 'Sök efter mall', href: '/poc/templates/search' },
+      { label: 'Jämför miljöer', href: '/poc/templates/compare' },
+      { label: 'Teststatus', href: '/poc/templates/test-status' },
+    ],
     fields: [
       { key: 'identifier', label: 'Identifierare', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'name', label: 'Namn', type: 'text', inTable: true },
       { key: 'version', label: 'Version', type: 'text', inTable: true },
       { key: 'description', label: 'Beskrivning', type: 'textarea' },
-      { key: 'content', label: 'Innehåll', type: 'code', help: 'I riktiga appen är detta en Monaco-editor (utanför PoC-omfång).' },
+      { key: 'content', label: 'Innehåll', type: 'code', help: 'Markdown i Monaco-editor.' },
       { key: 'changeLog', label: 'Ändringslogg', type: 'text' },
     ],
     rows: [
@@ -294,7 +299,7 @@ export const pocResources: PocResource[] = [
       { key: 'name', label: 'Namn', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'version', label: 'Version', type: 'text', required: true, inTable: true },
       { key: 'description', label: 'Beskrivning', type: 'textarea', inTable: true },
-      { key: 'value', label: 'Schema (JSON)', type: 'code', required: true, help: 'I riktiga appen finns en schema-builder + förhandsvisning (utanför PoC-omfång).' },
+      { key: 'value', label: 'Schema (JSON)', type: 'code', required: true, help: 'JSON i Monaco-editor. (Schema-builder/förhandsvisning är utanför PoC-omfång.)' },
     ],
     rows: [
       { id: 'contact-form', name: 'contact-form', version: '1.2', description: 'Kontaktformulär', value: '{\n  "type": "object",\n  "properties": {\n    "email": { "type": "string" }\n  }\n}' },
