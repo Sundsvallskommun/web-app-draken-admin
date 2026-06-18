@@ -53,26 +53,21 @@ export function AppSidebar() {
   );
   const pathOnly = router.asPath.split('?')[0];
   const active = (name: string) => pathOnly === `/${name}` || pathOnly.startsWith(`/${name}/`);
-  const municipalityName = municipalityId === 2260 ? 'Ånge' : 'Sundsvall';
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <NextLink
           href="/"
-          className="flex items-center gap-2 overflow-hidden rounded-md p-1.5 hover:bg-sidebar-accent group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1"
-          aria-label="Sundsvalls Draken – till startsidan"
+          className="flex items-center overflow-hidden rounded-md p-1.5 hover:bg-sidebar-accent group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1"
+          aria-label="Draken – till startsidan"
         >
           {/* Compact mark when collapsed to the icon rail */}
           <div className="hidden aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground group-data-[collapsible=icon]:flex">
             <Flame className="size-5" />
           </div>
-          {/* Sundsvalls kommun logo + app name when expanded */}
-          <Logo className="h-7 w-auto shrink-0 text-sidebar-foreground group-data-[collapsible=icon]:hidden" />
-          <div className="grid leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-sm font-semibold">Draken</span>
-            <span className="truncate text-xs text-muted-foreground">{municipalityName}</span>
-          </div>
+          {/* Sundsvalls kommun logo when expanded */}
+          <Logo className="h-8 w-auto shrink-0 text-sidebar-foreground group-data-[collapsible=icon]:hidden" />
         </NextLink>
       </SidebarHeader>
 

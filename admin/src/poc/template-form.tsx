@@ -1,6 +1,7 @@
 import { PROCESS_LABELS, PROCESSES } from '@config/template-schema';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components/ui/collapsible';
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
@@ -9,7 +10,7 @@ import { MonacoField } from '@poc/monaco-field';
 import { pocNamespaces, type PocRow } from '@poc/poc-resources';
 import { createRow, updateRow } from '@poc/use-poc-rows';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, Code2, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import * as React from 'react';
 import { toast } from 'sonner';
@@ -207,6 +208,22 @@ export function TemplateForm({ initial, isNew, live = false }: { initial?: PocRo
             </Badge>
           ))}
         </div>
+
+        {/* Klicka fram metadatan som JSON (det som skickas in) */}
+        <Collapsible className="mt-3 group/meta">
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="text-muted-foreground">
+              <Code2 className="size-4" />
+              Visa som JSON
+              <ChevronDown className="size-4 transition-transform group-data-[state=open]/meta:rotate-180" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <pre className="mt-2 max-h-72 overflow-auto rounded-md border bg-muted p-3 font-mono text-xs leading-relaxed">
+              {JSON.stringify(metadata, null, 2)}
+            </pre>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       {/* Innehåll */}
