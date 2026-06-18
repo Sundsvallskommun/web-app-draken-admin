@@ -32,9 +32,15 @@ Allt drivs av ett enda register, `src/poc/poc-resources.ts` (fältmetadata + moc
 som `src/poc/resource-table.tsx` och `src/poc/resource-form.tsx` renderar generiskt –
 samma mönster som riktiga appens `@config/resources` + `ListResources`.
 
-> All data är mockad – PoC:n pratar inte med backend, i18n eller zustand.
-> Kvar utanför PoC-omfång: **schema-builder/RJSF-förhandsvisning** för JSON-scheman och
-> **hierarkisk trädvy** för etiketter (representeras nu av tabell/Monaco-fält).
+**Datakälla:** listorna hämtar **riktig data via samma tjänstelager som gamla admin**
+(`@config/resources` → backend på `NEXT_PUBLIC_API_URL`, med sessionscookie). Är man inte
+inloggad (401) faller den tillbaka till exempeldata med en banner. Logga in i vanliga admin
+(öppna `/`) för riktig data. Se `src/poc/use-poc-rows.ts`.
+
+> Skrivningar (skapa/redigera/ta bort) är ännu **dry-run** (toast) – kopplas mot API i nästa steg.
+> Kvar att portera: **schema-builder/RJSF-förhandsvisning** (JSON-scheman) och **hierarkisk
+> trädvy** (etiketter). Rutt-byte av de 7 enkla resurserna till de skarpa rutterna görs när
+> riktig data är bekräftad i inloggat läge.
 
 ## Hur isoleringen fungerar (viktigt)
 

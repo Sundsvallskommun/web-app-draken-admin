@@ -23,9 +23,9 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
+import { usePocRows } from '@poc/use-poc-rows';
 import {
   type ColumnDef,
-  type ColumnFiltersState,
   type SortingState,
   type VisibilityState,
   flexRender,
@@ -35,7 +35,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Pencil, RefreshCcw, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Loader2, Pencil, RefreshCcw, SlidersHorizontal, Trash2, TriangleAlert } from 'lucide-react';
 import NextLink from 'next/link';
 import * as React from 'react';
 import { toast } from 'sonner';
@@ -74,8 +74,10 @@ function renderCell(field: FieldDef, value: unknown, emphasize: boolean) {
 export function ResourceTable({ resource }: { resource: PocResource }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [filter, setFilter] = React.useState('');
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [namespace, setNamespace] = React.useState('');
+
+  const { rows, loading, source, error, refresh } = usePocRows(resource.name, namespace || undefined);
 
   const tableFields = resource.fields.filter((f) => f.inTable);
   const hasActions = !resource.readOnly;
@@ -85,7 +87,6 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
     [resource.name]
   );
 
-  // Namespace filter only when namespace references *other* namespaces (select).
   const namespaceField = resource.fields.find((f) => f.key === 'namespace' && f.type === 'select');
 
   const columns = React.useMemo<ColumnDef<PocRow>[]>(() => {
@@ -125,7 +126,7 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Avbryt</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => toast.success(`${title} togs bort (PoC – ingen riktig radering).`)}
+                        onClick={() => toast.success(`${title} togs bort (skrivning ej kopplad ännu).`)}
                       >
                         Ta bort
                       </AlertDialogAction>
@@ -143,12 +144,11 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
   }, [resource.name]);
 
   const table = useReactTable({
-    data: resource.rows,
+    data: rows,
     columns,
-    state: { sorting, globalFilter: filter, columnFilters, columnVisibility },
+    state: { sorting, globalFilter: filter, columnVisibility },
     onSortingChange: setSorting,
     onGlobalFilterChange: setFilter,
-    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -159,35 +159,26 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
 
   const pageSize = table.getState().pagination.pageSize;
   const pageSizeValue = ['10', '20', '50'].includes(String(pageSize)) ? String(pageSize) : 'all';
-  const onPageSizeChange = (value: string) =>
-    table.setPageSize(value === 'all' ? resource.rows.length : Number(value));
-
-  const namespaceValue = (table.getColumn('namespace')?.getFilterValue() as string) ?? 'all';
-  const onNamespaceChange = (value: string) =>
-    table.getColumn('namespace')?.setFilterValue(value === 'all' ? undefined : value);
-
-  const onRefresh = () => {
-    setSorting([]);
-    setFilter('');
-    setColumnFilters([]);
-    table.setPageIndex(0);
-    toast('Listan uppdaterad (PoC – mockad data).');
-  };
+  const onPageSizeChange = (value: string) => table.setPageSize(value === 'all' ? rows.length || 1 : Number(value));
 
   const hideableColumns = table.getAllColumns().filter((c) => c.getCanHide());
 
   return (
     <div className="flex flex-col gap-4">
+      {source !== 'api' && !loading && (
+        <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          <TriangleAlert className="size-4 shrink-0" />
+          {error === '401'
+            ? 'Inte inloggad mot backend – visar exempeldata. Logga in i vanliga admin (öppna /) för riktig data.'
+            : 'Kunde inte nå API:et – visar exempeldata.'}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
-        <Input
-          placeholder="Sök…"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="max-w-xs"
-        />
+        <Input placeholder="Sök…" value={filter} onChange={(e) => setFilter(e.target.value)} className="max-w-xs" />
 
         {namespaceField && (
-          <Select value={namespaceValue} onValueChange={onNamespaceChange}>
+          <Select value={namespace || 'all'} onValueChange={(v) => setNamespace(v === 'all' ? '' : v)}>
             <SelectTrigger className="w-[16rem]" aria-label="Filtrera på namespace">
               <SelectValue placeholder="Alla namespace" />
             </SelectTrigger>
@@ -203,7 +194,8 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
         )}
 
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onRefresh}>
+          {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+          <Button variant="outline" size="sm" onClick={() => refresh()}>
             <RefreshCcw className="size-4" />
             Uppdatera
           </Button>
@@ -257,7 +249,7 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={table.getVisibleFlatColumns().length} className="h-24 text-center text-muted-foreground">
-                  Inga rader matchade filtret.
+                  {loading ? 'Hämtar…' : 'Inga rader.'}
                 </TableCell>
               </TableRow>
             )}

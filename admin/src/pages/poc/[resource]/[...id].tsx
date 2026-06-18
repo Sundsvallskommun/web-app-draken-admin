@@ -1,7 +1,7 @@
 import { Button } from '@components/ui/button';
 import { PocLayout } from '@poc/poc-layout';
-import { getPocResource } from '@poc/poc-resources';
 import { ResourceForm } from '@poc/resource-form';
+import { usePocRows } from '@poc/use-poc-rows';
 import { ArrowLeft } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
@@ -16,8 +16,10 @@ export default function PocResourceEdit() {
   const idSegments = router.query.id;
   // Composite ids (e.g. "CONTACTCENTER/ONGOING") arrive as multiple segments.
   const rawId = Array.isArray(idSegments) ? idSegments.join('/') : idSegments;
+  const isNew = rawId === 'new';
 
-  const resource = getPocResource(resourceName);
+  // Fetches via the real service layer (mock fallback when not logged in).
+  const { rows, loading, resource } = usePocRows(resourceName);
 
   if (!router.isReady) {
     return (
@@ -35,12 +37,11 @@ export default function PocResourceEdit() {
     );
   }
 
-  const isNew = rawId === 'new';
-  const initial = !isNew ? resource.rows.find((r) => r.id === rawId) : undefined;
+  const initial = !isNew ? rows.find((r) => r.id === rawId) : undefined;
   const firstKey = resource.fields[0].key;
   const title = isNew
     ? `Skapa ${resource.label.toLowerCase()}`
-    : String(initial?.[firstKey] ?? initial?.id ?? `Redigera ${resource.label.toLowerCase()}`);
+    : String(initial?.[firstKey] ?? rawId ?? `Redigera ${resource.label.toLowerCase()}`);
 
   return (
     <PocLayout
@@ -55,7 +56,9 @@ export default function PocResourceEdit() {
         </Button>
       }
     >
-      {!isNew && !initial ? (
+      {!isNew && loading ? (
+        <p className="text-muted-foreground">Hämtar…</p>
+      ) : !isNew && !initial ? (
         <p className="text-muted-foreground">Hittade ingen post med id {rawId}.</p>
       ) : (
         <ResourceForm resource={resource} initial={initial} isNew={isNew} />

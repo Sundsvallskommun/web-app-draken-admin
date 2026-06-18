@@ -27,10 +27,12 @@ import {
   SidebarRail,
 } from '@components/ui/sidebar';
 import { type PocResource, pocResources } from '@poc/poc-resources';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ChevronRight, ChevronsUpDown, ExternalLink, Flame, LogOut } from 'lucide-react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { toast } from 'sonner';
+import { useShallow } from 'zustand/react/shallow';
 import { ModeToggle } from './mode-toggle';
 
 interface NavItem {
@@ -47,6 +49,9 @@ function subItems(resource: PocResource): NavItem[] {
 
 export function AppSidebar() {
   const router = useRouter();
+  const [municipalityId, setMunicipalityId] = useLocalStorage(
+    useShallow((s) => [s.municipalityId, s.setMunicipalityId])
+  );
   const pathOnly = router.asPath.split('?')[0];
   const active = (name: string) => pathOnly === `/poc/${name}` || pathOnly.startsWith(`/poc/${name}/`);
 
@@ -102,7 +107,7 @@ export function AppSidebar() {
 
       <SidebarFooter className="gap-2">
         <div className="group-data-[collapsible=icon]:hidden">
-          <Select defaultValue="2281">
+          <Select value={String(municipalityId)} onValueChange={(v) => setMunicipalityId(Number(v))}>
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>

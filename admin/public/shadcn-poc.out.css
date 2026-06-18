@@ -26,6 +26,10 @@
   pointer-events: none;
 }
 
+.shadcn-poc .static {
+  position: static;
+}
+
 .shadcn-poc .fixed {
   position: fixed;
 }
@@ -514,6 +518,16 @@
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.shadcn-poc .animate-spin {
+  animation: spin 1s linear infinite;
+}
+
 .shadcn-poc .cursor-default {
   cursor: default;
 }
@@ -671,6 +685,11 @@
   border-top-width: 1px;
 }
 
+.shadcn-poc .border-amber-300 {
+  --tw-border-opacity: 1;
+  border-color: rgb(252 211 77 / var(--tw-border-opacity, 1));
+}
+
 .shadcn-poc .border-input {
   border-color: hsl(var(--input));
 }
@@ -681,6 +700,11 @@
 
 .shadcn-poc .border-transparent {
   border-color: transparent;
+}
+
+.shadcn-poc .bg-amber-50 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 251 235 / var(--tw-bg-opacity, 1));
 }
 
 .shadcn-poc .bg-background {
@@ -916,6 +940,11 @@
 
 .shadcn-poc .tracking-widest {
   letter-spacing: 0.1em;
+}
+
+.shadcn-poc .text-amber-900 {
+  --tw-text-opacity: 1;
+  color: rgb(120 53 15 / var(--tw-text-opacity, 1));
 }
 
 .shadcn-poc .text-card-foreground {
@@ -1908,6 +1937,21 @@
 
 .shadcn-poc :is(.peer\/menu-button[data-active="true"] ~ .peer-data-\[active\=true\]\/menu-button\:text-sidebar-accent-foreground) {
   color: hsl(var(--sidebar-accent-foreground));
+}
+
+.shadcn-poc .dark\:border-amber-800:is(.dark *) {
+  --tw-border-opacity: 1;
+  border-color: rgb(146 64 14 / var(--tw-border-opacity, 1));
+}
+
+.shadcn-poc .dark\:bg-amber-950:is(.dark *) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(69 26 3 / var(--tw-bg-opacity, 1));
+}
+
+.shadcn-poc .dark\:text-amber-200:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(253 230 138 / var(--tw-text-opacity, 1));
 }
 
 @media (min-width: 640px) {
