@@ -7,10 +7,10 @@ import { Label } from '@components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
-import { MonacoField } from '@poc/monaco-field';
-import { type PocRow } from '@poc/poc-resources';
-import { usePocNamespaces } from '@poc/use-poc-namespaces';
-import { createRow, updateRow } from '@poc/use-poc-rows';
+import { MonacoField } from '@admin/monaco-field';
+import { type ResourceRow } from '@admin/resource-config';
+import { useNamespaces } from '@admin/use-namespaces';
+import { createRow, updateRow } from '@admin/use-resource-data';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ChevronDown, Code2, Plus, Trash2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -50,10 +50,10 @@ function parseMeta(m: unknown): MetaEntry[] {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
 
-export function TemplateForm({ initial, isNew }: { initial?: PocRow; isNew: boolean }) {
+export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew: boolean }) {
   const router = useRouter();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
-  const namespaceOptions = usePocNamespaces();
+  const namespaceOptions = useNamespaces();
 
   const initialMeta = parseMeta(initial?.metadata);
   const metaVal = (k: string) => initialMeta.find((e) => e.key === k)?.value ?? '';
@@ -94,7 +94,7 @@ export function TemplateForm({ initial, isNew }: { initial?: PocRow; isNew: bool
     };
     try {
       if (isNew) await createRow('templates', municipalityId, data);
-      else await updateRow('templates', municipalityId, initial as PocRow, data);
+      else await updateRow('templates', municipalityId, initial as ResourceRow, data);
       toast.success(`${isNew ? 'Skapade' : 'Sparade'} mall "${name || identifier}".`);
       router.push('/templates');
     } catch (err) {

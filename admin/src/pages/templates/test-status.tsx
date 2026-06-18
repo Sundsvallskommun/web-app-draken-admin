@@ -1,7 +1,7 @@
 import { Badge } from '@components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
-import { PocLayout } from '@poc/poc-layout';
-import { usePocRows } from '@poc/use-poc-rows';
+import { AdminLayout } from '@admin/admin-layout';
+import { useResourceRows } from '@admin/use-resource-data';
 import type { GetServerSideProps } from 'next';
 
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
@@ -17,10 +17,10 @@ function isApproved(metadata: unknown): boolean {
 }
 
 export default function TemplateTestStatus() {
-  const { rows, loading } = usePocRows('templates');
+  const { rows, loading } = useResourceRows('templates');
 
   return (
-    <PocLayout title="Teststatus" breadcrumb="Mallar">
+    <AdminLayout title="Teststatus" breadcrumb="Mallar">
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -62,6 +62,6 @@ export default function TemplateTestStatus() {
           </TableBody>
         </Table>
       </div>
-    </PocLayout>
+    </AdminLayout>
   );
 }

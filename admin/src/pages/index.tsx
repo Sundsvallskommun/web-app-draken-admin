@@ -1,17 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card';
-import { PocLayout } from '@poc/poc-layout';
-import { pocResources } from '@poc/poc-resources';
+import { AdminLayout } from '@admin/admin-layout';
+import { resourceConfigs } from '@admin/resource-config';
 import { ArrowRight } from 'lucide-react';
 import NextLink from 'next/link';
 
-export default function PocStart() {
+export default function StartPage() {
   return (
-    <PocLayout title="Välkommen" breadcrumb="Draken Admin">
+    <AdminLayout title="Välkommen" breadcrumb="Draken Admin">
       <p className="mb-6 max-w-2xl text-muted-foreground">
         Välkommen till Draken Admin. Välj en resurs nedan för att administrera den.
       </p>
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {pocResources.map((resource) => {
+        {resourceConfigs.map((resource) => {
           const Icon = resource.icon;
           return (
             <li key={resource.name}>
@@ -40,6 +40,6 @@ export default function PocStart() {
           );
         })}
       </ul>
-    </PocLayout>
+    </AdminLayout>
   );
 }

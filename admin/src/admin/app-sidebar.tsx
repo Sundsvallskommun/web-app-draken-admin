@@ -25,8 +25,8 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from '@components/ui/sidebar';
-import { Logo } from '@poc/logo';
-import { type PocResource, pocResources } from '@poc/poc-resources';
+import { Logo } from '@admin/logo';
+import { type ResourceConfig, resourceConfigs } from '@admin/resource-config';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ChevronRight, ChevronsUpDown, ExternalLink, Flame, LogOut } from 'lucide-react';
 import NextLink from 'next/link';
@@ -39,7 +39,7 @@ interface NavItem {
   href: string;
 }
 
-function subItems(resource: PocResource): NavItem[] {
+function subItems(resource: ResourceConfig): NavItem[] {
   const items: NavItem[] = [{ label: 'Lista alla', href: `/${resource.name}` }];
   if (resource.canCreate) items.push({ label: 'Skapa ny', href: `/${resource.name}/new` });
   if (resource.extraNav) items.push(...resource.extraNav);
@@ -75,7 +75,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Resurser</SidebarGroupLabel>
           <SidebarMenu>
-            {pocResources.map((resource) => {
+            {resourceConfigs.map((resource) => {
               const Icon = resource.icon;
               const isActive = active(resource.name);
               return (

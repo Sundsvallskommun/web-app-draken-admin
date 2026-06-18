@@ -1,23 +1,23 @@
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { LabelTree, type LabelNode } from '@poc/label-tree';
-import { PocLayout } from '@poc/poc-layout';
-import { usePocNamespaces } from '@poc/use-poc-namespaces';
-import { usePocRows } from '@poc/use-poc-rows';
+import { LabelTree, type LabelNode } from '@admin/label-tree';
+import { AdminLayout } from '@admin/admin-layout';
+import { useNamespaces } from '@admin/use-namespaces';
+import { useResourceRows } from '@admin/use-resource-data';
 import { Loader2, Search, TriangleAlert } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import * as React from 'react';
 
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
-export default function PocLabels() {
+export default function LabelsPage() {
   const [namespace, setNamespace] = React.useState('');
   const [query, setQuery] = React.useState('');
-  const namespaceOptions = usePocNamespaces();
-  const { rows, loading, error } = usePocRows('labels', namespace || undefined);
+  const namespaceOptions = useNamespaces();
+  const { rows, loading, error } = useResourceRows('labels', namespace || undefined);
 
   return (
-    <PocLayout title="Etiketter" breadcrumb="Resurser">
+    <AdminLayout title="Etiketter" breadcrumb="Resurser">
       <div className="flex flex-col gap-4">
         {error && !loading && (
           <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -53,6 +53,6 @@ export default function PocLabels() {
 
         <LabelTree data={rows as unknown as LabelNode[]} query={query} />
       </div>
-    </PocLayout>
+    </AdminLayout>
   );
 }

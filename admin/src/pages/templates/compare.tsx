@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { PocLayout } from '@poc/poc-layout';
-import { usePocRecord, usePocRows } from '@poc/use-poc-rows';
+import { AdminLayout } from '@admin/admin-layout';
+import { useResourceRecord, useResourceRows } from '@admin/use-resource-data';
 import { Info } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import * as React from 'react';
@@ -9,13 +9,13 @@ import * as React from 'react';
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
 export default function TemplateCompare() {
-  const { rows } = usePocRows('templates');
+  const { rows } = useResourceRows('templates');
   const [selected, setSelected] = React.useState('');
   // Full content comes from getOne (the list omits it).
-  const { row, loading } = usePocRecord('templates', selected || undefined);
+  const { row, loading } = useResourceRecord('templates', selected || undefined);
 
   return (
-    <PocLayout title="Jämför miljöer" breadcrumb="Mallar">
+    <AdminLayout title="Jämför miljöer" breadcrumb="Mallar">
       <div className="flex flex-col gap-6">
         <Select value={selected} onValueChange={setSelected}>
           <SelectTrigger className="w-[24rem]" aria-label="Välj mall">
@@ -49,6 +49,6 @@ export default function TemplateCompare() {
           </Card>
         )}
       </div>
-    </PocLayout>
+    </AdminLayout>
   );
 }

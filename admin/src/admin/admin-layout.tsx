@@ -1,19 +1,19 @@
 import { Separator } from '@components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@components/ui/sidebar';
-import { AppSidebar } from '@poc/app-sidebar';
+import { AppSidebar } from '@admin/app-sidebar';
 import Head from 'next/head';
 import * as React from 'react';
 
 const appName = process.env.NEXT_PUBLIC_APP_NAME ?? 'Draken';
 
-interface PocLayoutProps {
+interface AdminLayoutProps {
   title: string;
   breadcrumb?: string;
   actions?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function PocLayout({ title, breadcrumb, actions, children }: PocLayoutProps) {
+export function AdminLayout({ title, breadcrumb, actions, children }: AdminLayoutProps) {
   return (
     <>
       <Head>

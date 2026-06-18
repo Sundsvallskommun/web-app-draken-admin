@@ -1,7 +1,7 @@
 import { Button } from '@components/ui/button';
-import { PocLayout } from '@poc/poc-layout';
-import { ResourceForm } from '@poc/resource-form';
-import { usePocRows } from '@poc/use-poc-rows';
+import { AdminLayout } from '@admin/admin-layout';
+import { ResourceForm } from '@admin/resource-form';
+import { useResourceRows } from '@admin/use-resource-data';
 import { ArrowLeft } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
@@ -10,7 +10,7 @@ import { useRouter } from 'next/router';
 // SSR so router.query (resource + id segments) is populated on first paint.
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
-export default function PocResourceEdit() {
+export default function ResourceEditPage() {
   const router = useRouter();
   const resourceName = Array.isArray(router.query.resource) ? router.query.resource[0] : router.query.resource;
   const idSegments = router.query.id;
@@ -18,21 +18,21 @@ export default function PocResourceEdit() {
   const rawId = Array.isArray(idSegments) ? idSegments.join('/') : idSegments;
   const isNew = rawId === 'new';
 
-  const { rows, loading, resource } = usePocRows(resourceName);
+  const { rows, loading, resource } = useResourceRows(resourceName);
 
   if (!router.isReady) {
     return (
-      <PocLayout title="Laddar…" breadcrumb="Resurser">
+      <AdminLayout title="Laddar…" breadcrumb="Resurser">
         {null}
-      </PocLayout>
+      </AdminLayout>
     );
   }
 
   if (!resource) {
     return (
-      <PocLayout title="Okänd resurs" breadcrumb="Resurser">
-        <p className="text-muted-foreground">Den här resursen finns inte i PoC:n.</p>
-      </PocLayout>
+      <AdminLayout title="Okänd resurs" breadcrumb="Resurser">
+        <p className="text-muted-foreground">Den här resursen finns inte.</p>
+      </AdminLayout>
     );
   }
 
@@ -43,7 +43,7 @@ export default function PocResourceEdit() {
     : String(initial?.[firstKey] ?? rawId ?? `Redigera ${resource.label.toLowerCase()}`);
 
   return (
-    <PocLayout
+    <AdminLayout
       title={title}
       breadcrumb={resource.label}
       actions={
@@ -62,6 +62,6 @@ export default function PocResourceEdit() {
       ) : (
         <ResourceForm resource={resource} initial={initial} isNew={isNew} />
       )}
-    </PocLayout>
+    </AdminLayout>
   );
 }

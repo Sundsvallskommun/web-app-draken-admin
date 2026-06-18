@@ -12,7 +12,7 @@ export interface NsOption {
  * (namespaceControllerGetNamespaces → all namespaces for the municipality).
  * Refetches when the municipality changes.
  */
-export function usePocNamespaces(): NsOption[] {
+export function useNamespaces(): NsOption[] {
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const [options, setOptions] = React.useState<NsOption[]>([]);
 

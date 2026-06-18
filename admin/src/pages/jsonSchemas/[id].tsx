@@ -2,10 +2,10 @@ import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
 import { Textarea } from '@components/ui/textarea';
-import { PocLayout } from '@poc/poc-layout';
-import { type PocRow } from '@poc/poc-resources';
-import { SchemaBuilder } from '@poc/schema-builder';
-import { createRow, updateRow, usePocRows } from '@poc/use-poc-rows';
+import { AdminLayout } from '@admin/admin-layout';
+import { type ResourceRow } from '@admin/resource-config';
+import { SchemaBuilder } from '@admin/schema-builder';
+import { createRow, updateRow, useResourceRows } from '@admin/use-resource-data';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ArrowLeft } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
@@ -19,7 +19,7 @@ export const getServerSideProps: GetServerSideProps = async () => ({ props: {} }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
 
-function Editor({ initial, isNew }: { initial?: PocRow; isNew: boolean }) {
+function Editor({ initial, isNew }: { initial?: ResourceRow; isNew: boolean }) {
   const router = useRouter();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const [name, setName] = React.useState(String(initial?.name ?? ''));
@@ -31,7 +31,7 @@ function Editor({ initial, isNew }: { initial?: PocRow; isNew: boolean }) {
     const data = { name, version, description, value };
     try {
       if (isNew) await createRow('jsonSchemas', municipalityId, data);
-      else await updateRow('jsonSchemas', municipalityId, initial as PocRow, data);
+      else await updateRow('jsonSchemas', municipalityId, initial as ResourceRow, data);
       toast.success(`${isNew ? 'Skapade' : 'Sparade'} schema "${name}".`);
       router.push('/jsonSchemas');
     } catch (err) {
@@ -68,17 +68,17 @@ function Editor({ initial, isNew }: { initial?: PocRow; isNew: boolean }) {
   );
 }
 
-export default function PocJsonSchemaEdit() {
+export default function JsonSchemaEditPage() {
   const router = useRouter();
   const rawId = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
   const isNew = rawId === 'new';
-  const { rows, loading } = usePocRows('jsonSchemas');
+  const { rows, loading } = useResourceRows('jsonSchemas');
 
   if (!router.isReady) {
     return (
-      <PocLayout title="Laddar…" breadcrumb="JSON-scheman">
+      <AdminLayout title="Laddar…" breadcrumb="JSON-scheman">
         {null}
-      </PocLayout>
+      </AdminLayout>
     );
   }
 
@@ -86,7 +86,7 @@ export default function PocJsonSchemaEdit() {
   const title = isNew ? 'Skapa JSON-schema' : String(initial?.name ?? rawId ?? 'Redigera JSON-schema');
 
   return (
-    <PocLayout
+    <AdminLayout
       title={title}
       breadcrumb="JSON-scheman"
       actions={
@@ -105,6 +105,6 @@ export default function PocJsonSchemaEdit() {
       ) : (
         <Editor initial={initial} isNew={isNew} />
       )}
-    </PocLayout>
+    </AdminLayout>
   );
 }

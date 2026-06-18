@@ -22,9 +22,9 @@ import {
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
-import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
-import { usePocNamespaces } from '@poc/use-poc-namespaces';
-import { removeRow, usePocRows } from '@poc/use-poc-rows';
+import { type FieldDef, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
+import { useNamespaces } from '@admin/use-namespaces';
+import { removeRow, useResourceRows } from '@admin/use-resource-data';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import {
   type ColumnDef,
@@ -74,15 +74,15 @@ function renderCell(field: FieldDef, value: unknown, emphasize: boolean) {
   return <span className="text-muted-foreground">{text}</span>;
 }
 
-export function ResourceTable({ resource }: { resource: PocResource }) {
+export function ResourceTable({ resource }: { resource: ResourceConfig }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [filter, setFilter] = React.useState('');
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [namespace, setNamespace] = React.useState('');
 
-  const { rows, loading, error, refresh } = usePocRows(resource.name, namespace || undefined);
+  const { rows, loading, error, refresh } = useResourceRows(resource.name, namespace || undefined);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
-  const nsOptions = usePocNamespaces();
+  const nsOptions = useNamespaces();
 
   // Keep delete handlers (created inside the columns memo) reading fresh values.
   const ctx = React.useRef({ municipalityId, refresh });
@@ -98,8 +98,8 @@ export function ResourceTable({ resource }: { resource: PocResource }) {
 
   const namespaceField = resource.fields.find((f) => f.key === 'namespace' && f.type === 'select');
 
-  const columns = React.useMemo<ColumnDef<PocRow>[]>(() => {
-    const cols: ColumnDef<PocRow>[] = tableFields.map((field, index) => ({
+  const columns = React.useMemo<ColumnDef<ResourceRow>[]>(() => {
+    const cols: ColumnDef<ResourceRow>[] = tableFields.map((field, index) => ({
       accessorKey: field.key,
       header: ({ column }) => <SortHeader column={column}>{field.label}</SortHeader>,
       cell: ({ row }) => renderCell(field, row.original[field.key], index === 0),

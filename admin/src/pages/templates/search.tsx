@@ -1,8 +1,8 @@
 import { Badge } from '@components/ui/badge';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
-import { PocLayout } from '@poc/poc-layout';
-import { usePocRows } from '@poc/use-poc-rows';
+import { AdminLayout } from '@admin/admin-layout';
+import { useResourceRows } from '@admin/use-resource-data';
 import { ArrowRight, Search } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
@@ -11,7 +11,7 @@ import * as React from 'react';
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
 export default function TemplateSearch() {
-  const { rows, loading } = usePocRows('templates');
+  const { rows, loading } = useResourceRows('templates');
   const [q, setQ] = React.useState('');
   const term = q.trim().toLowerCase();
   const results = term
@@ -19,7 +19,7 @@ export default function TemplateSearch() {
     : rows;
 
   return (
-    <PocLayout title="Sök efter mall" breadcrumb="Mallar">
+    <AdminLayout title="Sök efter mall" breadcrumb="Mallar">
       <div className="flex max-w-xl flex-col gap-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -53,6 +53,6 @@ export default function TemplateSearch() {
           ))}
         </ul>
       </div>
-    </PocLayout>
+    </AdminLayout>
   );
 }

@@ -1,7 +1,7 @@
 import { Button } from '@components/ui/button';
-import { PocLayout } from '@poc/poc-layout';
-import { getPocResource } from '@poc/poc-resources';
-import { ResourceTable } from '@poc/resource-table';
+import { AdminLayout } from '@admin/admin-layout';
+import { getResourceConfig } from '@admin/resource-config';
+import { ResourceTable } from '@admin/resource-table';
 import { Plus } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
@@ -11,28 +11,28 @@ import { useRouter } from 'next/router';
 // paint — avoids the "Laddar…" flash on direct loads.
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
-export default function PocResourceList() {
+export default function ResourceListPage() {
   const router = useRouter();
-  const resource = getPocResource(Array.isArray(router.query.resource) ? router.query.resource[0] : router.query.resource);
+  const resource = getResourceConfig(Array.isArray(router.query.resource) ? router.query.resource[0] : router.query.resource);
 
   if (!router.isReady) {
     return (
-      <PocLayout title="Laddar…" breadcrumb="Resurser">
+      <AdminLayout title="Laddar…" breadcrumb="Resurser">
         {null}
-      </PocLayout>
+      </AdminLayout>
     );
   }
 
   if (!resource) {
     return (
-      <PocLayout title="Okänd resurs" breadcrumb="Resurser">
-        <p className="text-muted-foreground">Den här resursen finns inte i PoC:n.</p>
-      </PocLayout>
+      <AdminLayout title="Okänd resurs" breadcrumb="Resurser">
+        <p className="text-muted-foreground">Den här resursen finns inte.</p>
+      </AdminLayout>
     );
   }
 
   return (
-    <PocLayout
+    <AdminLayout
       title={resource.label}
       breadcrumb="Resurser"
       actions={
@@ -47,9 +47,9 @@ export default function PocResourceList() {
       }
     >
       {resource.readOnly && (
-        <p className="mb-4 text-sm text-muted-foreground">Den här resursen är skrivskyddad i PoC:n (endast lista).</p>
+        <p className="mb-4 text-sm text-muted-foreground">Den här resursen är skrivskyddad (endast lista).</p>
       )}
       <ResourceTable resource={resource} />
-    </PocLayout>
+    </AdminLayout>
   );
 }

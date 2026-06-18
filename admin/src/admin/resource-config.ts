@@ -1,7 +1,7 @@
 /**
  * Resource registry: field metadata + which actions each resource supports.
  * Drives the generic list/edit pages. No data lives here — rows come from the
- * backend via `@config/resources` (see use-poc-rows.ts).
+ * backend via `@config/resources` (see use-resource-data.ts).
  */
 import {
   Boxes,
@@ -33,9 +33,9 @@ export interface FieldDef {
   inTable?: boolean;
 }
 
-export type PocRow = { id: string; __key?: string } & Record<string, unknown>;
+export type ResourceRow = { id: string; __key?: string } & Record<string, unknown>;
 
-export interface PocResource {
+export interface ResourceConfig {
   name: string;
   label: string;
   description: string;
@@ -61,7 +61,7 @@ const nsField = (): FieldDef => ({
 // Status values for the e-post-integration selects (a small config enum).
 const statusOptions = ['NEW', 'ONGOING', 'SOLVED', 'SUSPENDED'].map((s) => ({ value: s, label: s }));
 
-export const pocResources: PocResource[] = [
+export const resourceConfigs: ResourceConfig[] = [
   {
     name: 'featureFlags',
     label: 'Feature-flaggor',
@@ -221,6 +221,6 @@ export const pocResources: PocResource[] = [
   },
 ];
 
-export function getPocResource(name: string | undefined): PocResource | undefined {
-  return pocResources.find((r) => r.name === name);
+export function getResourceConfig(name: string | undefined): ResourceConfig | undefined {
+  return resourceConfigs.find((r) => r.name === name);
 }

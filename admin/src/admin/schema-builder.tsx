@@ -5,7 +5,7 @@ import { Label } from '@components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
-import { MonacoField } from '@poc/monaco-field';
+import { MonacoField } from '@admin/monaco-field';
 import { Plus, Trash2 } from 'lucide-react';
 import * as React from 'react';
 

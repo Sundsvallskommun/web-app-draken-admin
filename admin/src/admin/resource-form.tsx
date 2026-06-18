@@ -23,12 +23,12 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
-import { MonacoField } from '@poc/monaco-field';
-import { type FieldDef, type PocResource, type PocRow } from '@poc/poc-resources';
-import { usePocNamespaces } from '@poc/use-poc-namespaces';
-import { createRow, removeRow, updateRow } from '@poc/use-poc-rows';
+import { MonacoField } from '@admin/monaco-field';
+import { type FieldDef, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
+import { useNamespaces } from '@admin/use-namespaces';
+import { createRow, removeRow, updateRow } from '@admin/use-resource-data';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { Download, Eye, ShieldCheck, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -36,20 +36,19 @@ import { toast } from 'sonner';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
 
-function defaultFor(field: FieldDef, initial?: PocRow) {
+function defaultFor(field: FieldDef, initial?: ResourceRow) {
   const v = initial?.[field.key];
   if (v !== undefined) return v;
   return field.type === 'switch' ? false : field.type === 'number' ? '' : '';
 }
 
-export function ResourceForm({ resource, initial, isNew }: { resource: PocResource; initial?: PocRow; isNew: boolean }) {
+export function ResourceForm({ resource, initial, isNew }: { resource: ResourceConfig; initial?: ResourceRow; isNew: boolean }) {
   const router = useRouter();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
-  const namespaceOptions = usePocNamespaces();
+  const namespaceOptions = useNamespaces();
   const defaultValues = Object.fromEntries(resource.fields.map((f) => [f.key, defaultFor(f, initial)]));
   const form = useForm<Record<string, unknown>>({ defaultValues });
   const isDirty = form.formState.isDirty;
-  const isTemplate = resource.name === 'templates';
 
   const title = String(initial?.[resource.fields[0].key] ?? '');
 
@@ -57,7 +56,7 @@ export function ResourceForm({ resource, initial, isNew }: { resource: PocResour
     const name = String(values[resource.fields[0].key] ?? '');
     try {
       if (isNew) await createRow(resource.name, municipalityId, values);
-      else await updateRow(resource.name, municipalityId, initial as PocRow, values);
+      else await updateRow(resource.name, municipalityId, initial as ResourceRow, values);
       toast.success(`${isNew ? 'Skapade' : 'Sparade'} ${resource.label.toLowerCase()} "${name}".`);
       router.push(`/${resource.name}`);
     } catch (err) {
@@ -160,30 +159,6 @@ export function ResourceForm({ resource, initial, isNew }: { resource: PocResour
           <Button type="button" variant="outline" onClick={() => router.push(`/${resource.name}`)}>
             Avbryt
           </Button>
-
-          {isTemplate && (
-            <>
-              <Button type="button" variant="ghost" onClick={() => toast('Exporterar mall som JSON (PoC).')}>
-                <Download className="size-4" />
-                Exportera
-              </Button>
-              <Button type="button" variant="ghost" onClick={() => toast('Genererar PDF-förhandsvisning (PoC).')}>
-                <Eye className="size-4" />
-                Förhandsgranska
-              </Button>
-              {!isNew && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="text-emerald-600"
-                  onClick={() => toast.success('Mallen godkänd för produktion (PoC).')}
-                >
-                  <ShieldCheck className="size-4" />
-                  Godkänn för produktion
-                </Button>
-              )}
-            </>
-          )}
 
           {!isNew && resource.canRemove && (
             <AlertDialog>

@@ -27,7 +27,7 @@
       "@interfaces/*": ["src/interfaces/*"],
       "@contexts/*": ["src/contexts/*"],
       "@layouts/*": ["src/layouts/*"],
-      "@poc/*": ["src/poc/*"],
+      "@admin/*": ["src/admin/*"],
       "@styles/*": ["src/styles/*"],
       "@utils/*": ["src/utils/*"],
       "@pages/*": ["src/pages/*"],

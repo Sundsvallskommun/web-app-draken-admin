@@ -1,5 +1,5 @@
 import realResources from '@config/resources';
-import { getPocResource, type PocResource, type PocRow } from '@poc/poc-resources';
+import { getResourceConfig, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import * as React from 'react';
 
@@ -14,7 +14,7 @@ const svc = (name: string): any => (realResources as any)[name];
 
 // Stable per-row key used for edit routing (`${namespace}/${id}` for namespaced
 // resources). The real record fields are preserved untouched for writes.
-export function computeRowId(resource: PocResource, row: Record<string, unknown>): string {
+export function computeRowId(resource: ResourceConfig, row: Record<string, unknown>): string {
   const primary = resource.fields[0].key;
   if (primary === 'namespace') return String(row.namespace ?? '');
   if (resource.name === 'labels') return String(row.id ?? row[primary] ?? '');
@@ -24,7 +24,7 @@ export function computeRowId(resource: PocResource, row: Record<string, unknown>
 }
 
 // The identifier each resource's update/remove wrapper expects.
-export function apiEditId(resource: PocResource, row: PocRow): string | number {
+export function apiEditId(resource: ResourceConfig, row: ResourceRow): string | number {
   switch (resource.name) {
     case 'featureFlags':
     case 'jsonSchemas':
@@ -39,7 +39,7 @@ export function apiEditId(resource: PocResource, row: PocRow): string | number {
   }
 }
 
-const withKeys = (resource: PocResource, rows: Record<string, unknown>[]): PocRow[] =>
+const withKeys = (resource: ResourceConfig, rows: Record<string, unknown>[]): ResourceRow[] =>
   rows.map((r) => ({ ...r, id: (r.id as string) ?? computeRowId(resource, r), __key: computeRowId(resource, r) }));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,16 +48,16 @@ const errorCode = (e: any): string => {
   return status ? String(status) : 'network';
 };
 
-interface PocRowsState {
-  rows: PocRow[];
+interface RowsState {
+  rows: ResourceRow[];
   loading: boolean;
   error: string | null;
 }
 
-export function usePocRows(resourceName: string | undefined, namespace?: string) {
-  const resource = getPocResource(resourceName);
+export function useResourceRows(resourceName: string | undefined, namespace?: string) {
+  const resource = getResourceConfig(resourceName);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
-  const [state, setState] = React.useState<PocRowsState>({ rows: [], loading: true, error: null });
+  const [state, setState] = React.useState<RowsState>({ rows: [], loading: true, error: null });
 
   const fetchData = React.useCallback(async () => {
     if (!resource) {
@@ -91,10 +91,10 @@ export function usePocRows(resourceName: string | undefined, namespace?: string)
  * Fetch a SINGLE record via getOne — needed for resources whose list response
  * omits large fields (e.g. template `content`). `id` is the route id.
  */
-export function usePocRecord(resourceName: string | undefined, id: string | undefined) {
-  const resource = getPocResource(resourceName);
+export function useResourceRecord(resourceName: string | undefined, id: string | undefined) {
+  const resource = getResourceConfig(resourceName);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
-  const [state, setState] = React.useState<{ row?: PocRow; loading: boolean; error: string | null }>({
+  const [state, setState] = React.useState<{ row?: ResourceRow; loading: boolean; error: string | null }>({
     loading: true,
     error: null,
   });
@@ -116,7 +116,7 @@ export function usePocRecord(resourceName: string | undefined, id: string | unde
         const data: Record<string, unknown> | undefined = res?.data?.data ?? res?.data;
         if (!cancelled) {
           setState({
-            row: data ? ({ ...data, __key: computeRowId(resource, data) } as PocRow) : undefined,
+            row: data ? ({ ...data, __key: computeRowId(resource, data) } as ResourceRow) : undefined,
             loading: false,
             error: data ? null : 'not-found',
           });
@@ -141,15 +141,15 @@ export async function createRow(name: string, municipalityId: number, data: Reco
   return create(municipalityId, data);
 }
 
-export async function updateRow(name: string, municipalityId: number, row: PocRow, data: Record<string, unknown>) {
-  const resource = getPocResource(name)!;
+export async function updateRow(name: string, municipalityId: number, row: ResourceRow, data: Record<string, unknown>) {
+  const resource = getResourceConfig(name)!;
   const update = svc(name)?.update;
   if (!update) throw new Error(`update saknas för ${name}`);
   return update(municipalityId, apiEditId(resource, row), data);
 }
 
-export async function removeRow(name: string, municipalityId: number, row: PocRow) {
-  const resource = getPocResource(name)!;
+export async function removeRow(name: string, municipalityId: number, row: ResourceRow) {
+  const resource = getResourceConfig(name)!;
   const remove = svc(name)?.remove;
   if (!remove) throw new Error(`remove saknas för ${name}`);
   return remove(municipalityId, row.namespace, apiEditId(resource, row));

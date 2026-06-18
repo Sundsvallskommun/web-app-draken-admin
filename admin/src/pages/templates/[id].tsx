@@ -1,7 +1,7 @@
 import { Button } from '@components/ui/button';
-import { PocLayout } from '@poc/poc-layout';
-import { TemplateForm } from '@poc/template-form';
-import { usePocRecord } from '@poc/use-poc-rows';
+import { AdminLayout } from '@admin/admin-layout';
+import { TemplateForm } from '@admin/template-form';
+import { useResourceRecord } from '@admin/use-resource-data';
 import { ArrowLeft } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
@@ -9,25 +9,25 @@ import { useRouter } from 'next/router';
 
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
-export default function PocTemplateEdit() {
+export default function TemplateEditPage() {
   const router = useRouter();
   const rawId = Array.isArray(router.query.id) ? router.query.id[0] : router.query.id;
   const isNew = rawId === 'new';
   // Fetch the full template via getOne — the list response omits `content`.
-  const { row: initial, loading } = usePocRecord('templates', rawId);
+  const { row: initial, loading } = useResourceRecord('templates', rawId);
 
   if (!router.isReady) {
     return (
-      <PocLayout title="Laddar…" breadcrumb="Mallar">
+      <AdminLayout title="Laddar…" breadcrumb="Mallar">
         {null}
-      </PocLayout>
+      </AdminLayout>
     );
   }
 
   const title = isNew ? 'Skapa mall' : String(initial?.name ?? initial?.identifier ?? rawId ?? 'Redigera mall');
 
   return (
-    <PocLayout
+    <AdminLayout
       title={title}
       breadcrumb="Mallar"
       actions={
@@ -46,6 +46,6 @@ export default function PocTemplateEdit() {
       ) : (
         <TemplateForm initial={initial} isNew={isNew} />
       )}
-    </PocLayout>
+    </AdminLayout>
   );
 }

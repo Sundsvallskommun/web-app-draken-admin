@@ -1,6 +1,6 @@
 import { Toaster } from '@components/ui/sonner';
 import LoginGuard from '@components/login-guard/login-guard';
-import { ThemeProvider } from '@poc/theme-provider';
+import { ThemeProvider } from '@admin/theme-provider';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import 'dayjs/locale/sv';
 import type { AppProps } from 'next/app';
