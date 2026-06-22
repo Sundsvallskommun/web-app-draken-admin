@@ -13,7 +13,6 @@ import { AdminLayout } from '@admin/admin-layout';
 import { type ResourceRow } from '@admin/resource-config';
 import { fetchResourceRecord, updateRow, useResourceRows } from '@admin/use-resource-data';
 import { approveTemplateMetadata, getApprovalTimestamp, isTemplateApproved } from '@utils/template-metadata';
-import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import dayjs from 'dayjs';
 import { Loader2, ShieldCheck, SlidersHorizontal } from 'lucide-react';
@@ -54,7 +53,6 @@ function formatApprovedAt(value: string | undefined): string {
 export default function TemplateTestStatus() {
   const router = useRouter();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
-  const { showTestFeatures } = useIsProductionEnv();
   const { rows, loading, refresh } = useResourceRows('templates');
   const [approvingIdentifier, setApprovingIdentifier] = React.useState<string | null>(null);
   const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibility>(defaultColumnVisibility);
@@ -209,12 +207,14 @@ export default function TemplateTestStatus() {
                     )}
                     {columnVisibility.actions && (
                       <TableCell className="text-right">
-                        {showTestFeatures && !approved && (
+                        {!approved && (
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             disabled={approving}
+                            onKeyDown={(event) => event.stopPropagation()}
+                            onPointerDown={(event) => event.stopPropagation()}
                             onClick={(event) => approveTemplate(event, t)}
                           >
                             {approving ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
