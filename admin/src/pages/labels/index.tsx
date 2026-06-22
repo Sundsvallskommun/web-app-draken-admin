@@ -1,18 +1,24 @@
+import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import { LabelColumns } from '@admin/label-columns';
 import { LabelTree, type LabelNode } from '@admin/label-tree';
 import { AdminLayout } from '@admin/admin-layout';
 import { useNamespaces } from '@admin/use-namespaces';
 import { useResourceRows } from '@admin/use-resource-data';
-import { Loader2, Search, TriangleAlert } from 'lucide-react';
+import { cn } from '@utils/cn';
+import { Columns3, ListTree, Loader2, Search, Tags, TriangleAlert } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import * as React from 'react';
 
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
+type View = 'tree' | 'columns';
+
 export default function LabelsPage() {
   const [namespace, setNamespace] = React.useState('');
   const [query, setQuery] = React.useState('');
+  const [view, setView] = React.useState<View>('tree');
   const namespaceOptions = useNamespaces();
   const { rows, loading, error } = useResourceRows('labels', namespace || undefined);
 
@@ -34,6 +40,7 @@ export default function LabelsPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Sök i trädet…"
               className="pl-9"
+              disabled={!namespace}
             />
           </div>
           <Select value={namespace} onValueChange={setNamespace}>
@@ -48,10 +55,46 @@ export default function LabelsPage() {
               ))}
             </SelectContent>
           </Select>
+
+          {/* Visningsläge: träd eller macOS-liknande kolumnnavigering */}
+          <div className="flex items-center rounded-md border p-0.5">
+            <Button
+              type="button"
+              size="sm"
+              variant={view === 'tree' ? 'secondary' : 'ghost'}
+              className={cn('h-7 gap-1.5 px-2', view !== 'tree' && 'text-muted-foreground')}
+              onClick={() => setView('tree')}
+              aria-pressed={view === 'tree'}
+            >
+              <ListTree className="size-4" />
+              Träd
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={view === 'columns' ? 'secondary' : 'ghost'}
+              className={cn('h-7 gap-1.5 px-2', view !== 'columns' && 'text-muted-foreground')}
+              onClick={() => setView('columns')}
+              aria-pressed={view === 'columns'}
+            >
+              <Columns3 className="size-4" />
+              Kolumner
+            </Button>
+          </div>
+
           {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
         </div>
 
-        <LabelTree data={rows as unknown as LabelNode[]} query={query} />
+        {!namespace ? (
+          <div className="flex flex-col items-center gap-2 rounded-md border border-dashed py-12 text-center text-muted-foreground">
+            <Tags className="size-6" />
+            <p className="text-sm">Välj ett namespace för att visa etiketter.</p>
+          </div>
+        ) : view === 'tree' ? (
+          <LabelTree data={rows as unknown as LabelNode[]} query={query} />
+        ) : (
+          <LabelColumns data={rows as unknown as LabelNode[]} query={query} />
+        )}
       </div>
     </AdminLayout>
   );

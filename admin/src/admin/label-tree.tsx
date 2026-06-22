@@ -1,4 +1,5 @@
 import { Badge } from '@components/ui/badge';
+import { matchesSubtree } from '@admin/label-utils';
 import { cn } from '@utils/cn';
 import { ChevronDown, ChevronRight, FolderOpen, Tag } from 'lucide-react';
 import * as React from 'react';
@@ -12,14 +13,7 @@ export interface LabelNode {
   labels?: LabelNode[];
 }
 
-function matchesSubtree(node: LabelNode, query: string): boolean {
-  if (!query) return false;
-  const name = (node.displayName || node.classification).toLowerCase();
-  if (name.includes(query.toLowerCase())) return true;
-  return node.labels?.some((c) => matchesSubtree(c, query)) ?? false;
-}
-
-function Highlight({ text, query }: { text: string; query: string }) {
+export function Highlight({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
   const i = text.toLowerCase().indexOf(query.toLowerCase());
   if (i === -1) return <>{text}</>;

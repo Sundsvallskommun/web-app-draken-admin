@@ -1,5 +1,6 @@
 import { Button } from '@components/ui/button';
 import { AdminLayout } from '@admin/admin-layout';
+import { getResourceConfig } from '@admin/resource-config';
 import { ResourceForm } from '@admin/resource-form';
 import { useResourceRows } from '@admin/use-resource-data';
 import { ArrowLeft } from 'lucide-react';
@@ -18,7 +19,14 @@ export default function ResourceEditPage() {
   const rawId = Array.isArray(idSegments) ? idSegments.join('/') : idSegments;
   const isNew = rawId === 'new';
 
-  const { rows, loading, resource } = useResourceRows(resourceName);
+  // Resources whose list endpoint needs a namespace (e.g. emailIntegration) can't
+  // be found via the namespace-less list — their id's first segment IS the
+  // namespace, so fetch that namespace's records and locate the row in them.
+  const cfg = getResourceConfig(resourceName);
+  const firstSegment = Array.isArray(idSegments) ? idSegments[0] : idSegments;
+  const editNamespace = cfg?.requiresNamespace && !isNew ? firstSegment : undefined;
+
+  const { rows, loading, resource } = useResourceRows(resourceName, editNamespace);
 
   if (!router.isReady) {
     return (

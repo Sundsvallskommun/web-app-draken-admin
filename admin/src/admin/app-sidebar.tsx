@@ -26,9 +26,10 @@ import {
   SidebarRail,
 } from '@components/ui/sidebar';
 import { Logo } from '@admin/logo';
+import { LogoMark } from '@admin/logo-mark';
 import { type ResourceConfig, resourceConfigs } from '@admin/resource-config';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { ChevronRight, ChevronsUpDown, ExternalLink, Flame, LogOut } from 'lucide-react';
+import { ChevronRight, ChevronsUpDown, ExternalLink, LogOut } from 'lucide-react';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { useShallow } from 'zustand/react/shallow';
@@ -62,10 +63,8 @@ export function AppSidebar() {
           className="flex items-center overflow-hidden rounded-md p-1.5 hover:bg-sidebar-accent group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-1"
           aria-label="Draken – till startsidan"
         >
-          {/* Compact mark when collapsed to the icon rail */}
-          <div className="hidden aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground group-data-[collapsible=icon]:flex">
-            <Flame className="size-5" />
-          </div>
+          {/* Compact Sundsvall mark when collapsed to the icon rail */}
+          <LogoMark className="hidden h-8 w-auto shrink-0 text-sidebar-foreground group-data-[collapsible=icon]:block" />
           {/* Sundsvalls kommun logo when expanded */}
           <Logo className="h-8 w-auto shrink-0 text-sidebar-foreground group-data-[collapsible=icon]:hidden" />
         </NextLink>

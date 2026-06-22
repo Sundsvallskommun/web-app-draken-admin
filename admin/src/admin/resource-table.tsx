@@ -97,6 +97,9 @@ export function ResourceTable({ resource }: { resource: ResourceConfig }) {
   );
 
   const namespaceField = resource.fields.find((f) => f.key === 'namespace' && f.type === 'select');
+  // Resources whose endpoint needs a specific namespace show a prompt until one
+  // is picked, instead of fetching nothing and rendering an empty table.
+  const needsNamespace = !!resource.requiresNamespace && !namespace;
 
   const columns = React.useMemo<ColumnDef<ResourceRow>[]>(() => {
     const cols: ColumnDef<ResourceRow>[] = tableFields.map((field, index) => ({
@@ -194,12 +197,18 @@ export function ResourceTable({ resource }: { resource: ResourceConfig }) {
         <Input placeholder="Sök…" value={filter} onChange={(e) => setFilter(e.target.value)} className="max-w-xs" />
 
         {namespaceField && (
-          <Select value={namespace || 'all'} onValueChange={(v) => setNamespace(v === 'all' ? '' : v)}>
-            <SelectTrigger className="w-[16rem]" aria-label="Filtrera på namespace">
-              <SelectValue placeholder="Alla namespace" />
+          <Select
+            value={namespace || (resource.requiresNamespace ? '' : 'all')}
+            onValueChange={(v) => setNamespace(v === 'all' ? '' : v)}
+          >
+            <SelectTrigger
+              className="w-[16rem]"
+              aria-label={resource.requiresNamespace ? 'Namespace' : 'Filtrera på namespace'}
+            >
+              <SelectValue placeholder={resource.requiresNamespace ? 'Välj namespace' : 'Alla namespace'} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Alla namespace</SelectItem>
+              {!resource.requiresNamespace && <SelectItem value="all">Alla namespace</SelectItem>}
               {nsOptions.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -240,6 +249,13 @@ export function ResourceTable({ resource }: { resource: ResourceConfig }) {
         </div>
       </div>
 
+      {needsNamespace ? (
+        <div className="flex flex-col items-center gap-2 rounded-md border border-dashed py-12 text-center text-muted-foreground">
+          {React.createElement(resource.icon, { className: 'size-6' })}
+          <p className="text-sm">Välj ett namespace för att visa {resource.label.toLowerCase()}.</p>
+        </div>
+      ) : (
+        <>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -301,6 +317,8 @@ export function ResourceTable({ resource }: { resource: ResourceConfig }) {
           </Button>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }
