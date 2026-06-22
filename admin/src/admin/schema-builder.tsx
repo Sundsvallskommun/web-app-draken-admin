@@ -132,17 +132,26 @@ function FieldPreview({ field }: { field: BuilderField }) {
 
 export function SchemaBuilder({ value, onChange }: { value: unknown; onChange?: (schema: object) => void }) {
   const [fields, setFields] = React.useState<BuilderField[]>(() => parseSchema(value));
+  const touched = React.useRef(false);
 
-  const update = (id: string, patch: Partial<BuilderField>) =>
+  const update = (id: string, patch: Partial<BuilderField>) => {
+    touched.current = true;
     setFields((fs) => fs.map((f) => (f.id === id ? { ...f, ...patch } : f)));
-  const remove = (id: string) => setFields((fs) => fs.filter((f) => f.id !== id));
-  const add = () =>
+  };
+  const remove = (id: string) => {
+    touched.current = true;
+    setFields((fs) => fs.filter((f) => f.id !== id));
+  };
+  const add = () => {
+    touched.current = true;
     setFields((fs) => [...fs, { id: uid(), name: `field${fs.length + 1}`, title: '', type: 'text', required: false, options: '' }]);
+  };
 
   const schema = buildSchema(fields);
 
   // Lift the generated schema so the page can save it.
   React.useEffect(() => {
+    if (!touched.current) return;
     onChange?.(buildSchema(fields));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fields]);

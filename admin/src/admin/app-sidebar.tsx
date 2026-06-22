@@ -28,6 +28,7 @@ import {
 import { Logo } from '@admin/logo';
 import { LogoMark } from '@admin/logo-mark';
 import { type ResourceConfig, resourceConfigs } from '@admin/resource-config';
+import { useUserStore } from '@services/user-service/user-service';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ChevronRight, ChevronsUpDown, ExternalLink, LogOut } from 'lucide-react';
 import NextLink from 'next/link';
@@ -49,11 +50,19 @@ function subItems(resource: ResourceConfig): NavItem[] {
 
 export function AppSidebar() {
   const router = useRouter();
+  const user = useUserStore(useShallow((s) => s.user));
   const [municipalityId, setMunicipalityId] = useLocalStorage(
     useShallow((s) => [s.municipalityId, s.setMunicipalityId])
   );
   const pathOnly = router.asPath.split('?')[0];
   const active = (name: string) => pathOnly === `/${name}` || pathOnly.startsWith(`/${name}/`);
+  const displayName = user.name || user.username || 'Inloggad användare';
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
 
   return (
     <Sidebar collapsible="icon">
@@ -135,11 +144,11 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
                   <Avatar className="size-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg text-xs">ME</AvatarFallback>
+                    <AvatarFallback className="rounded-lg text-xs">{initials || 'DU'}</AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left leading-tight">
-                    <span className="truncate text-sm font-medium">Max Eriksson</span>
-                    <span className="truncate text-xs text-muted-foreground">max.z.eriksson@sundsvall.se</span>
+                    <span className="truncate text-sm font-medium">{displayName}</span>
+                    {user.username && <span className="truncate text-xs text-muted-foreground">{user.username}</span>}
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -147,8 +156,8 @@ export function AppSidebar() {
               <DropdownMenuContent side="top" align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium">Max Eriksson</span>
-                    <span className="text-xs text-muted-foreground">max.z.eriksson@sundsvall.se</span>
+                    <span className="text-sm font-medium">{displayName}</span>
+                    {user.username && <span className="text-xs text-muted-foreground">{user.username}</span>}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

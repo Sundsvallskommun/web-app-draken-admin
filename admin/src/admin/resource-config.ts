@@ -17,7 +17,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-export type FieldType = 'text' | 'textarea' | 'code' | 'number' | 'switch' | 'select';
+export type FieldType = 'text' | 'textarea' | 'code' | 'richtext' | 'number' | 'switch' | 'select';
 
 export interface FieldDef {
   key: string;
@@ -31,6 +31,13 @@ export interface FieldDef {
   help?: string;
   /** Show this field as a column in the list table. */
   inTable?: boolean;
+  /**
+   * Virtual form field that reads/writes one logical value across several API
+   * fields, e.g. email text + HTML template bodies that must stay in sync.
+   */
+  syncKeys?: string[];
+  /** Rich text editor output targets when plain text and markup have separate API fields. */
+  richTextTargets?: { plainText: string; markup: string };
 }
 
 export type ResourceRow = { id: string; __key?: string } & Record<string, unknown>;
@@ -167,11 +174,29 @@ export const resourceConfigs: ResourceConfig[] = [
       nsField(),
       { key: 'enabled', label: 'Aktiverad', type: 'switch', inTable: true },
       { key: 'errandNewEmailSender', label: 'Avsändare nytt ärende', type: 'text' },
+      {
+        key: 'errandNewEmailBody',
+        label: 'Textmall nytt ärende',
+        type: 'richtext',
+        richTextTargets: { plainText: 'errandNewEmailTemplate', markup: 'errandNewEmailHTMLTemplate' },
+        help: 'Sparar ren text till textparametern och HTML-markup till HTML-parametern.',
+      },
       { key: 'errandClosedEmailSender', label: 'Avsändare avslutat ärende', type: 'text' },
+      {
+        key: 'errandClosedEmailBody',
+        label: 'Textmall avslutat ärende',
+        type: 'richtext',
+        richTextTargets: { plainText: 'errandClosedEmailTemplate', markup: 'errandClosedEmailHTMLTemplate' },
+        help: 'Sparar ren text till textparametern och HTML-markup till HTML-parametern.',
+      },
       { key: 'statusForNew', label: 'Status för nya ärenden', type: 'select', options: statusOptions, inTable: true },
+      { key: 'triggerStatusChangeOn', label: 'Trigga statusändring vid', type: 'select', options: statusOptions },
+      { key: 'statusChangeTo', label: 'Byt status till', type: 'select', options: statusOptions },
       { key: 'inactiveStatus', label: 'Status vid inaktivitet', type: 'select', options: statusOptions },
       { key: 'daysOfInactivityBeforeReject', label: 'Dagar innan avvisning', type: 'number' },
       { key: 'addSenderAsStakeholder', label: 'Lägg till avsändare som intressent', type: 'switch' },
+      { key: 'stakeholderRole', label: 'Intressentroll', type: 'text' },
+      { key: 'errandChannel', label: 'Ärendekanal', type: 'text' },
       { key: 'ignoreAutoReply', label: 'Ignorera autosvar', type: 'switch' },
       { key: 'ignoreNoReply', label: 'Ignorera no-reply', type: 'switch' },
     ],

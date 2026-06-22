@@ -9,17 +9,37 @@ import * as React from 'react';
  * cookie). No mock/fallback data — on failure the caller shows an error state.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const svc = (name: string): any => (realResources as any)[name];
+type ResourceContract = {
+  defaultValues?: Record<string, unknown>;
+  requiredFields?: string[];
+  getMany?: (...args: unknown[]) => Promise<unknown>;
+  getOne?: (...args: unknown[]) => Promise<unknown>;
+  create?: (...args: unknown[]) => Promise<unknown>;
+  update?: (...args: unknown[]) => Promise<unknown>;
+  remove?: (...args: unknown[]) => Promise<unknown>;
+};
+
+const resourceMap = realResources as Record<string, ResourceContract>;
+const svc = (name: string): ResourceContract | undefined => resourceMap[name];
+
+export function getResourceDefaults(name: string): Record<string, unknown> {
+  return svc(name)?.defaultValues ?? {};
+}
+
+export function getResourceRequiredFields(name: string): string[] {
+  return svc(name)?.requiredFields ?? [];
+}
 
 // Stable per-row key used for edit routing (`${namespace}/${id}` for namespaced
 // resources). The real record fields are preserved untouched for writes.
 export function computeRowId(resource: ResourceConfig, row: Record<string, unknown>): string {
   const primary = resource.fields[0].key;
+  if (resource.name === 'featureFlags') return String(row.id ?? '');
+  if (resource.name === 'templates') return String(row.identifier ?? row.id ?? '');
   if (primary === 'namespace') return String(row.namespace ?? '');
   if (resource.name === 'labels') return String(row.id ?? row[primary] ?? '');
   const hasNamespace = resource.fields.some((f) => f.key === 'namespace' && f.type === 'select');
-  const key = row[primary] ?? row.id ?? '';
+  const key = row.id ?? row[primary] ?? '';
   return hasNamespace && row.namespace ? `${row.namespace}/${key}` : String(key);
 }
 
@@ -41,6 +61,8 @@ export function apiEditId(resource: ResourceConfig, row: ResourceRow): string | 
 
 const withKeys = (resource: ResourceConfig, rows: Record<string, unknown>[]): ResourceRow[] =>
   rows.map((r) => ({ ...r, id: (r.id as string) ?? computeRowId(resource, r), __key: computeRowId(resource, r) }));
+
+type DataResponse<T> = { data?: { data?: T; message?: string } } | { data?: T };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const errorCode = (e: any): string => {
@@ -71,8 +93,8 @@ export function useResourceRows(resourceName: string | undefined, namespace?: st
     }
     setState((s) => ({ ...s, loading: true }));
     try {
-      const res = await getMany(municipalityId, namespace ? { namespace } : undefined);
-      const raw: Record<string, unknown>[] = res?.data?.data ?? [];
+      const res = (await getMany(municipalityId, namespace ? { namespace } : undefined)) as DataResponse<Record<string, unknown>[]>;
+      const raw = ('data' in res && res.data && 'data' in res.data ? res.data.data : []) ?? [];
       setState({ rows: withKeys(resource, raw), loading: false, error: null });
     } catch (e) {
       setState({ rows: [], loading: false, error: errorCode(e) });
@@ -112,8 +134,8 @@ export function useResourceRecord(resourceName: string | undefined, id: string |
         return;
       }
       try {
-        const res = await getOne(municipalityId, id);
-        const data: Record<string, unknown> | undefined = res?.data?.data ?? res?.data;
+        const res = (await getOne(municipalityId, id)) as DataResponse<Record<string, unknown>>;
+        const data = ('data' in res && res.data && 'data' in res.data ? res.data.data : res.data) as Record<string, unknown> | undefined;
         if (!cancelled) {
           setState({
             row: data ? ({ ...data, __key: computeRowId(resource, data) } as ResourceRow) : undefined,

@@ -1,8 +1,7 @@
 import { Button } from '@components/ui/button';
 import { AdminLayout } from '@admin/admin-layout';
-import { getResourceConfig } from '@admin/resource-config';
 import { ResourceForm } from '@admin/resource-form';
-import { useResourceRows } from '@admin/use-resource-data';
+import { useResourceRecord } from '@admin/use-resource-data';
 import { ArrowLeft } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
@@ -19,14 +18,7 @@ export default function ResourceEditPage() {
   const rawId = Array.isArray(idSegments) ? idSegments.join('/') : idSegments;
   const isNew = rawId === 'new';
 
-  // Resources whose list endpoint needs a namespace (e.g. emailIntegration) can't
-  // be found via the namespace-less list — their id's first segment IS the
-  // namespace, so fetch that namespace's records and locate the row in them.
-  const cfg = getResourceConfig(resourceName);
-  const firstSegment = Array.isArray(idSegments) ? idSegments[0] : idSegments;
-  const editNamespace = cfg?.requiresNamespace && !isNew ? firstSegment : undefined;
-
-  const { rows, loading, resource } = useResourceRows(resourceName, editNamespace);
+  const { row: initial, loading, resource } = useResourceRecord(resourceName, rawId);
 
   if (!router.isReady) {
     return (
@@ -44,7 +36,6 @@ export default function ResourceEditPage() {
     );
   }
 
-  const initial = !isNew ? rows.find((r) => r.__key === rawId) : undefined;
   const firstKey = resource.fields[0].key;
   const title = isNew
     ? `Skapa ${resource.label.toLowerCase()}`
