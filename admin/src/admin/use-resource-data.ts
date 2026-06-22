@@ -70,6 +70,16 @@ const errorCode = (e: any): string => {
   return status ? String(status) : 'network';
 };
 
+export async function fetchResourceRecord(name: string, municipalityId: number, id: string): Promise<ResourceRow | undefined> {
+  const resource = getResourceConfig(name);
+  const getOne = svc(name)?.getOne;
+  if (!resource || !getOne) return undefined;
+
+  const res = (await getOne(municipalityId, id)) as DataResponse<Record<string, unknown>>;
+  const data = ('data' in res && res.data && 'data' in res.data ? res.data.data : res.data) as Record<string, unknown> | undefined;
+  return data ? ({ ...data, __key: computeRowId(resource, data) } as ResourceRow) : undefined;
+}
+
 interface RowsState {
   rows: ResourceRow[];
   loading: boolean;
@@ -128,19 +138,17 @@ export function useResourceRecord(resourceName: string | undefined, id: string |
         if (!cancelled) setState({ row: undefined, loading: false, error: null });
         return;
       }
-      const getOne = svc(resource.name)?.getOne;
-      if (!getOne) {
+      if (!svc(resource.name)?.getOne) {
         if (!cancelled) setState({ row: undefined, loading: false, error: 'no-endpoint' });
         return;
       }
       try {
-        const res = (await getOne(municipalityId, id)) as DataResponse<Record<string, unknown>>;
-        const data = ('data' in res && res.data && 'data' in res.data ? res.data.data : res.data) as Record<string, unknown> | undefined;
+        const row = await fetchResourceRecord(resource.name, municipalityId, id);
         if (!cancelled) {
           setState({
-            row: data ? ({ ...data, __key: computeRowId(resource, data) } as ResourceRow) : undefined,
+            row,
             loading: false,
-            error: data ? null : 'not-found',
+            error: row ? null : 'not-found',
           });
         }
       } catch (e) {

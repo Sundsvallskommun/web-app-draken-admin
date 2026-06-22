@@ -26,7 +26,15 @@ import { MonacoField } from '@admin/monaco-field';
 import { type ResourceRow } from '@admin/resource-config';
 import { useNamespaces } from '@admin/use-namespaces';
 import { createRow, updateRow } from '@admin/use-resource-data';
-import { getApprovalTimestamp, isTemplateApproved, TEST_APPROVED_AT_KEY, TEST_STATUS_APPROVED, TEST_STATUS_KEY } from '@utils/template-metadata';
+import {
+  approveTemplateMetadata,
+  getApprovalTimestamp,
+  isTemplateApproved,
+  replaceMetadataValue,
+  TEST_APPROVED_AT_KEY,
+  TEST_STATUS_APPROVED,
+  TEST_STATUS_KEY,
+} from '@utils/template-metadata';
 import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import type { TextEditorProps } from '@sk-web-gui/text-editor';
@@ -95,11 +103,6 @@ function templateKind(value: string): TemplateKind | null {
   return null;
 }
 
-function replaceMeta(entries: MetaEntry[], key: string, value: string): MetaEntry[] {
-  const filtered = entries.filter((entry) => entry.key !== key);
-  return value ? [...filtered, { key, value }] : filtered;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
 
@@ -158,7 +161,11 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
     ];
 
     if (approved) {
-      return replaceMeta(replaceMeta(entries, TEST_STATUS_KEY, TEST_STATUS_APPROVED), TEST_APPROVED_AT_KEY, approvedAt ?? '');
+      return replaceMetadataValue(
+        replaceMetadataValue(entries, TEST_STATUS_KEY, TEST_STATUS_APPROVED),
+        TEST_APPROVED_AT_KEY,
+        approvedAt ?? ''
+      );
     }
     return entries;
   }, [approved, approvedAt, capacity, decision, extra, isRich, kind, namespace, needsCapacity, needsDecision, process, templateType]);
@@ -224,7 +231,7 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
 
   const approve = () => {
     const now = new Date().toISOString();
-    save(replaceMeta(replaceMeta(generatedMetadata, TEST_STATUS_KEY, TEST_STATUS_APPROVED), TEST_APPROVED_AT_KEY, now));
+    save(approveTemplateMetadata(generatedMetadata, now));
   };
 
   const unapprove = () => {
