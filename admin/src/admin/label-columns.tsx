@@ -8,9 +8,14 @@ import * as React from 'react';
 
 const nodeName = (node: LabelNode) => node.displayName || node.classification;
 const nodeKey = (node: LabelNode, i: number) => node.id ?? `${node.classification}-${i}`;
+const DEFAULT_COLUMN_WIDTH = 352;
+const MIN_COLUMN_WIDTH = 256;
+const MAX_COLUMN_WIDTH = 640;
 
 const filterItems = (items: LabelNode[], query: string) =>
   query ? items.filter((n) => matchesSubtree(n, query)) : items;
+
+const clampColumnWidth = (width: number) => Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, width));
 
 function ColumnItem({
   node,
@@ -32,12 +37,14 @@ function ColumnItem({
         selected && 'bg-accent font-medium'
       )}
     >
-      <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 items-center gap-2 rounded-sm px-1 py-0.5 text-left">
-        {hasChildren ? (
+      <button
+        type="button"
+        onClick={onSelect}
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-sm px-1 py-0.5 text-left"
+      >
+        {hasChildren ?
           <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
-        ) : (
-          <Tag className="size-4 shrink-0 text-muted-foreground" />
-        )}
+        : <Tag className="size-4 shrink-0 text-muted-foreground" />}
         <span className="truncate">
           <Highlight text={nodeName(node)} query={query} />
         </span>
@@ -60,7 +67,9 @@ function ColumnItem({
  */
 export function LabelColumns({ data, query = '' }: { data: LabelNode[]; query?: string }) {
   const [path, setPath] = React.useState<LabelNode[]>([]);
+  const [columnWidths, setColumnWidths] = React.useState<Record<number, number>>({});
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const resizeRef = React.useRef<{ level: number; startX: number; startWidth: number } | null>(null);
 
   // Reset the drill-down when the underlying data changes (e.g. new namespace).
   React.useEffect(() => {
@@ -84,8 +93,50 @@ export function LabelColumns({ data, query = '' }: { data: LabelNode[]; query?: 
     if (el) el.scrollLeft = el.scrollWidth;
   }, [columns.length]);
 
-  const selectAt = (level: number, node: LabelNode) =>
-    setPath((prev) => [...prev.slice(0, level), node]);
+  const selectAt = (level: number, node: LabelNode) => setPath((prev) => [...prev.slice(0, level), node]);
+
+  const columnWidth = React.useCallback((level: number) => columnWidths[level] ?? DEFAULT_COLUMN_WIDTH, [columnWidths]);
+
+  const setColumnWidth = React.useCallback((level: number, width: number) => {
+    setColumnWidths((prev) => ({ ...prev, [level]: clampColumnWidth(width) }));
+  }, []);
+
+  const startResize = (event: React.PointerEvent<HTMLDivElement>, level: number) => {
+    event.preventDefault();
+    event.stopPropagation();
+    resizeRef.current = { level, startX: event.clientX, startWidth: columnWidth(level) };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const resizeColumn = (event: React.PointerEvent<HTMLDivElement>) => {
+    const resize = resizeRef.current;
+    if (!resize) return;
+    setColumnWidth(resize.level, resize.startWidth + event.clientX - resize.startX);
+  };
+
+  const stopResize = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!resizeRef.current) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    resizeRef.current = null;
+  };
+
+  const resizeWithKeyboard = (event: React.KeyboardEvent<HTMLDivElement>, level: number) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      setColumnWidth(level, columnWidth(level) - 24);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      setColumnWidth(level, columnWidth(level) + 24);
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      setColumnWidth(level, MIN_COLUMN_WIDTH);
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      setColumnWidth(level, MAX_COLUMN_WIDTH);
+    }
+  };
 
   if (!columns[0]?.length) {
     return <p className="py-8 text-center text-sm text-muted-foreground">Inga etiketter matchade.</p>;
@@ -99,7 +150,8 @@ export function LabelColumns({ data, query = '' }: { data: LabelNode[]; query?: 
         {columns.map((items, level) => (
           <div
             key={level}
-            className="max-h-[28rem] w-64 shrink-0 space-y-0.5 overflow-y-auto border-r p-1.5 last:border-r-0"
+            className="relative max-h-[28rem] shrink-0 space-y-0.5 overflow-y-auto border-r p-1.5 pr-3 last:border-r-0"
+            style={{ width: columnWidth(level) }}
           >
             {items.map((node, i) => (
               <ColumnItem
@@ -110,6 +162,21 @@ export function LabelColumns({ data, query = '' }: { data: LabelNode[]; query?: 
                 onSelect={() => selectAt(level, node)}
               />
             ))}
+            <div
+              role="separator"
+              aria-label="Ändra kolumnbredd"
+              aria-orientation="vertical"
+              aria-valuemin={MIN_COLUMN_WIDTH}
+              aria-valuemax={MAX_COLUMN_WIDTH}
+              aria-valuenow={columnWidth(level)}
+              tabIndex={0}
+              className="absolute right-0 top-0 h-full w-2 cursor-col-resize touch-none border-r border-transparent hover:border-primary/60 focus:border-primary focus:outline-none"
+              onPointerDown={(event) => startResize(event, level)}
+              onPointerMove={resizeColumn}
+              onPointerUp={stopResize}
+              onPointerCancel={stopResize}
+              onKeyDown={(event) => resizeWithKeyboard(event, level)}
+            />
           </div>
         ))}
       </div>
