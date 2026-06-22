@@ -86,12 +86,21 @@ interface RowsState {
   error: string | null;
 }
 
-export function useResourceRows(resourceName: string | undefined, namespace?: string) {
+interface UseResourceRowsOptions {
+  enabled?: boolean;
+}
+
+export function useResourceRows(resourceName: string | undefined, namespace?: string, options: UseResourceRowsOptions = {}) {
   const resource = getResourceConfig(resourceName);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
+  const enabled = options.enabled ?? true;
   const [state, setState] = React.useState<RowsState>({ rows: [], loading: true, error: null });
 
   const fetchData = React.useCallback(async () => {
+    if (!enabled) {
+      setState({ rows: [], loading: false, error: null });
+      return;
+    }
     if (!resource) {
       setState({ rows: [], loading: false, error: 'unknown-resource' });
       return;
@@ -110,7 +119,7 @@ export function useResourceRows(resourceName: string | undefined, namespace?: st
       setState({ rows: [], loading: false, error: errorCode(e) });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resource?.name, namespace, municipalityId]);
+  }, [enabled, resource?.name, namespace, municipalityId]);
 
   React.useEffect(() => {
     fetchData();

@@ -11,7 +11,7 @@ import { useNamespaces } from '@admin/use-namespaces';
 import { createRow } from '@admin/use-resource-data';
 import { type CompareItem, type CompareResult, checkCompareAvailable, fetchCompare } from '@services/compare-service';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { ArrowDownToLine, ChevronRight, Eye, Info, Loader2 } from 'lucide-react';
+import { ChevronRight, Eye, Info, Loader2, Send } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import * as React from 'react';
 import { toast } from 'sonner';
@@ -199,7 +199,7 @@ export default function TemplateCompare() {
                 setSyncItem(i);
               }}
             >
-              <ArrowDownToLine className="size-4" />
+              <Send className="size-4" />
             </Button>
           )}
           {i.detail && (
@@ -240,7 +240,7 @@ export default function TemplateCompare() {
                 setSyncItem(i);
               }}
             >
-              <ArrowDownToLine className="size-4" />
+              <Send className="size-4" />
             </Button>
           )}
           {i.detail && (

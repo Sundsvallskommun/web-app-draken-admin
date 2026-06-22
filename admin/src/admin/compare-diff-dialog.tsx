@@ -5,6 +5,7 @@ import type { CompareDetail } from '@services/compare-service';
 import * as React from 'react';
 
 type DiffTab = 'content' | 'metadata' | 'defaultValues';
+const DIFF_TABS: DiffTab[] = ['content', 'metadata', 'defaultValues'];
 
 const TAB_LABELS: Record<DiffTab, string> = {
   content: 'Innehåll',
@@ -25,14 +26,21 @@ export function CompareDiffDialog({
   detail: CompareDetail;
   differences: string[];
 }) {
-  const availableTabs = (['content', 'metadata', 'defaultValues'] as DiffTab[]).filter((t) => differences.includes(t));
-  const [activeTab, setActiveTab] = React.useState<DiffTab>(availableTabs[0] || 'content');
-
   const original = (tab: DiffTab) =>
     tab === 'content' ? detail.localContent : tab === 'metadata' ? detail.localMetadata : detail.localDefaultValues;
   const modified = (tab: DiffTab) =>
     tab === 'content' ? detail.compareContent : tab === 'metadata' ? detail.compareMetadata : detail.compareDefaultValues;
   const language = (tab: DiffTab) => (tab === 'content' ? 'html' : 'json');
+  const isDiffTab = (tab: string): tab is DiffTab => DIFF_TABS.includes(tab as DiffTab);
+  const availableTabs = DIFF_TABS.filter((tab) => original(tab) != null || modified(tab) != null);
+  const initialTab = differences.find(isDiffTab) ?? availableTabs[0] ?? 'content';
+  const [activeTab, setActiveTab] = React.useState<DiffTab>(initialTab);
+
+  React.useEffect(() => {
+    if (isOpen) setActiveTab(initialTab);
+  }, [identifier, initialTab, isOpen]);
+
+  const currentTab = availableTabs.includes(activeTab) ? activeTab : initialTab;
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
@@ -48,7 +56,7 @@ export function CompareDiffDialog({
                 <Button
                   key={tab}
                   size="sm"
-                  variant={activeTab === tab ? 'secondary' : 'ghost'}
+                  variant={currentTab === tab ? 'secondary' : 'ghost'}
                   onClick={() => setActiveTab(tab)}
                 >
                   {TAB_LABELS[tab]}
@@ -63,9 +71,9 @@ export function CompareDiffDialog({
           </div>
 
           <MonacoDiff
-            language={language(activeTab)}
-            original={original(activeTab) ?? ''}
-            modified={modified(activeTab) ?? ''}
+            language={language(currentTab)}
+            original={original(currentTab) ?? ''}
+            modified={modified(currentTab) ?? ''}
           />
         </div>
       </DialogContent>

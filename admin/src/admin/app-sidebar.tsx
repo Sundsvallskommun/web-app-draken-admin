@@ -27,8 +27,9 @@ import {
 } from '@components/ui/sidebar';
 import { Logo } from '@admin/logo';
 import { LogoMark } from '@admin/logo-mark';
-import { type ResourceConfig, resourceConfigs } from '@admin/resource-config';
+import { type ResourceConfig, type ResourceNavItem, resourceConfigs } from '@admin/resource-config';
 import { useUserStore } from '@services/user-service/user-service';
+import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ChevronRight, ChevronsUpDown, ExternalLink, LogOut } from 'lucide-react';
 import NextLink from 'next/link';
@@ -36,21 +37,17 @@ import { useRouter } from 'next/router';
 import { useShallow } from 'zustand/react/shallow';
 import { ModeToggle } from './mode-toggle';
 
-interface NavItem {
-  label: string;
-  href: string;
-}
-
-function subItems(resource: ResourceConfig): NavItem[] {
-  const items: NavItem[] = [{ label: 'Lista alla', href: `/${resource.name}` }];
+function subItems(resource: ResourceConfig, showTestFeatures: boolean): ResourceNavItem[] {
+  const items: ResourceNavItem[] = [{ label: 'Lista alla', href: `/${resource.name}` }];
   if (resource.canCreate) items.push({ label: 'Skapa ny', href: `/${resource.name}/new` });
-  if (resource.extraNav) items.push(...resource.extraNav);
+  if (resource.extraNav) items.push(...resource.extraNav.filter((item) => !item.testOnly || showTestFeatures));
   return items;
 }
 
 export function AppSidebar() {
   const router = useRouter();
   const user = useUserStore(useShallow((s) => s.user));
+  const { showTestFeatures } = useIsProductionEnv();
   const [municipalityId, setMunicipalityId] = useLocalStorage(
     useShallow((s) => [s.municipalityId, s.setMunicipalityId])
   );
@@ -98,7 +95,7 @@ export function AppSidebar() {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {subItems(resource).map((item) => (
+                        {subItems(resource, showTestFeatures).map((item) => (
                           <SidebarMenuSubItem key={item.href}>
                             <SidebarMenuSubButton asChild isActive={pathOnly === item.href}>
                               <NextLink href={item.href}>{item.label}</NextLink>

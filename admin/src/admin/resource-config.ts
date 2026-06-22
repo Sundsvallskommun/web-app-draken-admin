@@ -42,6 +42,13 @@ export interface FieldDef {
 
 export type ResourceRow = { id: string; __key?: string } & Record<string, unknown>;
 
+export interface ResourceNavItem {
+  label: string;
+  href: string;
+  /** Hidden unless test-only admin features are enabled for the current environment. */
+  testOnly?: boolean;
+}
+
 export interface ResourceConfig {
   name: string;
   label: string;
@@ -59,7 +66,7 @@ export interface ResourceConfig {
    */
   requiresNamespace?: boolean;
   /** Extra sidebar sub-links (e.g. templates: search / compare / test-status). */
-  extraNav?: { label: string; href: string }[];
+  extraNav?: ResourceNavItem[];
   fields: FieldDef[];
 }
 
@@ -226,7 +233,7 @@ export const resourceConfigs: ResourceConfig[] = [
     extraNav: [
       { label: 'Sök efter mall', href: '/templates/search' },
       { label: 'Jämför miljöer', href: '/templates/compare' },
-      { label: 'Teststatus', href: '/templates/test-status' },
+      { label: 'Teststatus', href: '/templates/test-status', testOnly: true },
     ],
     fields: [
       { key: 'identifier', label: 'Identifierare', type: 'text', required: true, lockedOnEdit: true, inTable: true },

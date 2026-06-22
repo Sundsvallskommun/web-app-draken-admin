@@ -1,6 +1,8 @@
 import { checkCompareAvailable } from '@services/compare-service';
 import { useEffect, useState } from 'react';
 
+const templateTestStatusEnabled = process.env.NEXT_PUBLIC_ENABLE_TEMPLATE_TEST_STATUS === 'true';
+
 // We treat "compare is configured" as the signal that we are running in the
 // production environment, since compare is only wired up there (pointing at test).
 // Approval-for-production is a test-environment concept and should not be exposed in prod.
@@ -33,5 +35,5 @@ export function useIsProductionEnv(): { isProduction: boolean; loaded: boolean; 
 
   // Test/approval features must stay hidden until we KNOW we are not in production,
   // otherwise they would flash visible on first render before the async check resolves.
-  return { isProduction, loaded, showTestFeatures: loaded && !isProduction };
+  return { isProduction, loaded, showTestFeatures: templateTestStatusEnabled && loaded && !isProduction };
 }

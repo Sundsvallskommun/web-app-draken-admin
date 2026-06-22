@@ -15,6 +15,7 @@ import { AdminLayout } from '@admin/admin-layout';
 import { type ResourceRow } from '@admin/resource-config';
 import { fetchResourceRecord, updateRow, useResourceRows } from '@admin/use-resource-data';
 import { approveTemplateMetadata, getApprovalTimestamp, isTemplateApproved } from '@utils/template-metadata';
+import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import dayjs from 'dayjs';
 import { Loader2, Search, ShieldCheck, SlidersHorizontal } from 'lucide-react';
@@ -66,7 +67,8 @@ function textValue(value: unknown): string {
 export default function TemplateTestStatus() {
   const router = useRouter();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
-  const { rows, loading, refresh } = useResourceRows('templates');
+  const { loaded: environmentLoaded, showTestFeatures } = useIsProductionEnv();
+  const { rows, loading, refresh } = useResourceRows('templates', undefined, { enabled: showTestFeatures });
   const [approvingIdentifier, setApprovingIdentifier] = React.useState<string | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
@@ -160,6 +162,11 @@ export default function TemplateTestStatus() {
 
   const approveTemplate = async (event: React.MouseEvent<HTMLButtonElement>, row: ResourceRow) => {
     event.stopPropagation();
+    if (!showTestFeatures) {
+      toast.error('Teststatus är inte aktiverad i denna miljö.');
+      return;
+    }
+
     const identifier = String(row.identifier ?? '');
     if (!identifier) {
       toast.error('Mallen saknar identifierare.');
@@ -190,6 +197,27 @@ export default function TemplateTestStatus() {
       setApprovingIdentifier(null);
     }
   };
+
+  if (!environmentLoaded) {
+    return (
+      <AdminLayout title="Teststatus" breadcrumb="Mallar">
+        <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+          <Loader2 className="mr-2 size-4 animate-spin" />
+          Kontrollerar miljö...
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!showTestFeatures) {
+    return (
+      <AdminLayout title="Teststatus" breadcrumb="Mallar">
+        <div className="rounded-md border bg-muted/40 p-4 text-sm text-muted-foreground">
+          Teststatus är inte aktiverad i denna miljö.
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Teststatus" breadcrumb="Mallar">
@@ -323,7 +351,7 @@ export default function TemplateTestStatus() {
                     )}
                     {columnVisibility.actions && (
                       <TableCell className="text-right">
-                        {!approved && (
+                        {!approved && showTestFeatures && (
                           <Button
                             type="button"
                             variant="outline"

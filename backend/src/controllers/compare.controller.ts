@@ -7,6 +7,7 @@ import { RequestWithUser } from '@/interfaces/auth.interface';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import ApiService from '@/services/api.service';
 import { getCompareApiService, isCompareConfigured } from '@/services/compare-api.service';
+import { normalizeTemplateMetadataForDiff } from '@/utils/template-metadata-diff';
 import authMiddleware from '@middlewares/auth.middleware';
 import { Controller, Get, Param, QueryParam, Req, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
@@ -59,7 +60,6 @@ import { OpenAPI } from 'routing-controllers-openapi';
 export class CompareController {
   private apiService = new ApiService();
   private TEMPLATING = apiServiceName('templating');
-  private TEST_APPROVAL_METADATA_KEYS = new Set(['testStatus', 'testApprovedAt']);
 
   @Get('/compare/available')
   @OpenAPI({ summary: 'Check if environment comparison is configured' })
@@ -240,7 +240,7 @@ export class CompareController {
   private sortMetadataForRuntimeDiff(
     metadata?: Array<{ key?: string; fieldName?: string; value?: unknown }>,
   ): Array<{ key?: string; fieldName?: string; value?: unknown }> {
-    return this.sortByKey(metadata).filter(m => !this.TEST_APPROVAL_METADATA_KEYS.has(m.key ?? ''));
+    return normalizeTemplateMetadataForDiff(metadata);
   }
 
   private sortByKey(arr?: any[]): any[] {
