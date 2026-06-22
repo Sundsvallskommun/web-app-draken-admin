@@ -240,29 +240,29 @@ export default function TemplateTestStatus() {
         </Select>
 
         <div className="ml-auto">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <SlidersHorizontal className="size-4" />
-              Kolumner
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Visa kolumner</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {columns.map((column) => (
-              <DropdownMenuCheckboxItem
-                key={column.key}
-                checked={columnVisibility[column.key]}
-                disabled={columnVisibility[column.key] && visibleColumns.length === 1}
-                onCheckedChange={(value) => toggleColumn(column.key, !!value)}
-                onSelect={(event) => event.preventDefault()}
-              >
-                {column.label}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <SlidersHorizontal className="size-4" />
+                Kolumner
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Visa kolumner</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {columns.map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.key}
+                  checked={columnVisibility[column.key]}
+                  disabled={columnVisibility[column.key] && visibleColumns.length === 1}
+                  onCheckedChange={(value) => toggleColumn(column.key, !!value)}
+                  onSelect={(event) => event.preventDefault()}
+                >
+                  {column.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
