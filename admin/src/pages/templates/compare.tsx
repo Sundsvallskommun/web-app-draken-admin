@@ -10,7 +10,6 @@ import { CompareViewDialog } from '@admin/compare-view-dialog';
 import { useNamespaces } from '@admin/use-namespaces';
 import { createRow } from '@admin/use-resource-data';
 import { type CompareItem, type CompareResult, checkCompareAvailable, fetchCompare } from '@services/compare-service';
-import { TEST_STATUS_APPROVED, TEST_STATUS_KEY, getMetadataValue } from '@utils/template-metadata';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ArrowDownToLine, ChevronRight, Eye, Info, Loader2 } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
@@ -145,8 +144,7 @@ export default function TemplateCompare() {
     }
   };
 
-  const isApproved = (item: CompareItem) =>
-    getMetadataValue(item.detail?.compareMetadata, TEST_STATUS_KEY) === TEST_STATUS_APPROVED;
+  const isApproved = (item: CompareItem) => item.testApproved === true;
 
   const byType = React.useCallback(
     (items: CompareItem[]) => (selectedType ? items.filter((i) => i.templateType === selectedType) : items),

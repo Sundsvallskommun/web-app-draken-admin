@@ -293,15 +293,23 @@ const labels: Resource<LabelNode> = {
 const emailIntegration: Resource<EmailIntegration, EmailIntegrationDto, EmailIntegrationDto> = {
   name: 'emailIntegration',
   getMany: async (municipalityId: number, query?: { namespace?: string }) => {
-    if (!query?.namespace) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { data: { data: [], message: 'no namespace' } } as any;
+    if (query?.namespace) {
+      const res = await apiService.emailIntegrationControllerGetEmailIntegration(municipalityId, query.namespace);
+      const data = res.data?.data ? [{ ...res.data.data, namespace: query.namespace }] : [];
+      return { ...res, data: { data, message: res.data?.message } };
     }
-    const res = await apiService.emailIntegrationControllerGetEmailIntegration(municipalityId, query.namespace);
-    // Wrap single result in array for getMany compatibility
-    const data = res.data?.data ? [res.data.data] : [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return { ...res, data: { data, message: res.data?.message } } as any;
+
+    const namespaceRes = await apiService.namespaceControllerGetSupportManagementNamespaces(municipalityId);
+    const namespaceRows = namespaceRes.data?.data ?? [];
+    const integrations = await Promise.allSettled(
+      namespaceRows.map(async ({ namespace }) => {
+        const res = await apiService.emailIntegrationControllerGetEmailIntegration(municipalityId, namespace);
+        return res.data?.data ? { ...res.data.data, namespace } : undefined;
+      })
+    );
+    const data = integrations.flatMap((result) => (result.status === 'fulfilled' && result.value ? [result.value] : []));
+
+    return { ...namespaceRes, data: { data, message: namespaceRes.data?.message } };
   },
   getOne: (municipalityId, id) => {
     return apiService.emailIntegrationControllerGetEmailIntegration(municipalityId, id as string);

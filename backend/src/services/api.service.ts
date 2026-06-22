@@ -16,11 +16,7 @@ class ApiService {
 
   constructor(baseUrl?: string, clientKey?: string, clientSecret?: string) {
     this.customBaseUrl = baseUrl;
-    this.apiTokenService = ApiTokenService.getInstance(
-      baseUrl || API_BASE_URL,
-      clientKey || CLIENT_KEY,
-      clientSecret || CLIENT_SECRET,
-    );
+    this.apiTokenService = ApiTokenService.getInstance(baseUrl || API_BASE_URL, clientKey || CLIENT_KEY, clientSecret || CLIENT_SECRET);
   }
 
   private buildUrl(path: string): string {
@@ -37,7 +33,7 @@ class ApiService {
     const defaultHeaders = {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      'X-Sent-By': [`type=adAccount; ${user.username}`]
+      'X-Sent-By': [`type=adAccount; ${user.username}`],
     };
     const defaultParams = {};
 

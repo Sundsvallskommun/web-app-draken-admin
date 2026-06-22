@@ -25,16 +25,13 @@ export class EmailIntegrationController {
       errandNewEmailSender: data.errandNewEmailSender,
       errandNewEmailTemplate: data.errandNewEmailTemplate,
       errandNewEmailHTMLTemplate: data.errandNewEmailHTMLTemplate,
-      daysOfInactivityBeforeReject: typeof data.daysOfInactivityBeforeReject === 'string'
-        ? parseInt(data.daysOfInactivityBeforeReject, 10)
-        : data.daysOfInactivityBeforeReject,
+      daysOfInactivityBeforeReject:
+        typeof data.daysOfInactivityBeforeReject === 'string' ? parseInt(data.daysOfInactivityBeforeReject, 10) : data.daysOfInactivityBeforeReject,
       statusForNew: data.statusForNew,
       triggerStatusChangeOn: data.triggerStatusChangeOn,
       statusChangeTo: data.statusChangeTo,
       inactiveStatus: data.inactiveStatus,
-      addSenderAsStakeholder: typeof data.addSenderAsStakeholder === 'string'
-        ? data.addSenderAsStakeholder === 'true'
-        : data.addSenderAsStakeholder,
+      addSenderAsStakeholder: typeof data.addSenderAsStakeholder === 'string' ? data.addSenderAsStakeholder === 'true' : data.addSenderAsStakeholder,
       stakeholderRole: data.stakeholderRole,
       errandChannel: data.errandChannel,
       ignoreAutoReply: data.ignoreAutoReply,

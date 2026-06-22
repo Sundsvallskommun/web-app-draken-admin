@@ -11,11 +11,7 @@ export interface CompareFieldConfig {
   serialize?: (value: unknown) => string;
 }
 
-export function diffResources<T extends Identifiable>(
-  localItems: T[],
-  compareItems: T[],
-  fieldsToCompare: CompareFieldConfig[],
-): CompareResult {
+export function diffResources<T extends Identifiable>(localItems: T[], compareItems: T[], fieldsToCompare: CompareFieldConfig[]): CompareResult {
   const localMap = new Map(localItems.map(item => [item.identifier, item]));
   const compareMap = new Map(compareItems.map(item => [item.identifier, item]));
 

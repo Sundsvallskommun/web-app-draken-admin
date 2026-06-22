@@ -25,7 +25,7 @@ function mapLabel(label: SupportManagementLabel): Label {
 
 function sortLabels(labels: Label[]): Label[] {
   return labels
-    .map((label) => ({
+    .map(label => ({
       ...label,
       labels: label.labels ? sortLabels(label.labels) : [],
     }))

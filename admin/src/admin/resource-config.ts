@@ -52,8 +52,8 @@ export interface ResourceConfig {
   /** List only, no create/edit (e.g. labels). */
   readOnly?: boolean;
   /**
-   * The backend endpoint has no "all namespaces" variant — it needs a specific
-   * namespace (e.g. emailIntegration → GET /email-integration/{mun}/{namespace}).
+   * The data wrapper has no "all namespaces" variant — it needs a specific
+   * namespace from the UI before fetching.
    * The list shows a "välj namespace"-prompt until one is picked instead of
    * fetching nothing.
    */
@@ -169,7 +169,6 @@ export const resourceConfigs: ResourceConfig[] = [
     icon: Mail,
     canCreate: false,
     canRemove: false,
-    requiresNamespace: true,
     fields: [
       nsField(),
       { key: 'enabled', label: 'Aktiverad', type: 'switch', inTable: true },

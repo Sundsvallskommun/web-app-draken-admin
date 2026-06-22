@@ -1,17 +1,12 @@
 import { Badge } from '@components/ui/badge';
 import { matchesSubtree } from '@admin/label-utils';
+import { LabelCopyValue } from '@admin/label-copy-value';
+import type { LabelNode } from '@interfaces/label';
 import { cn } from '@utils/cn';
 import { ChevronDown, ChevronRight, FolderOpen, Tag } from 'lucide-react';
 import * as React from 'react';
 
-export interface LabelNode {
-  id?: string;
-  classification: string;
-  displayName?: string;
-  resourceName?: string;
-  isLeaf?: boolean;
-  labels?: LabelNode[];
-}
+export type { LabelNode };
 
 export function Highlight({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
@@ -80,6 +75,7 @@ function TreeNode({ node, depth, query }: { node: LabelNode; depth: number; quer
           </Badge>
         )}
         <span className="ml-2 text-xs text-muted-foreground">{node.classification}</span>
+        <LabelCopyValue value={node.resourceName} className="ml-1" />
       </div>
 
       {hasChildren && expanded && (

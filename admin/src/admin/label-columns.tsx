@@ -1,5 +1,6 @@
 import { Badge } from '@components/ui/badge';
 import { Highlight, type LabelNode } from '@admin/label-tree';
+import { LabelCopyValue } from '@admin/label-copy-value';
 import { matchesSubtree } from '@admin/label-utils';
 import { cn } from '@utils/cn';
 import { ChevronRight, FolderOpen, Tag } from 'lucide-react';
@@ -24,30 +25,31 @@ function ColumnItem({
 }) {
   const hasChildren = (node.labels?.length ?? 0) > 0;
   return (
-    <button
-      type="button"
-      onClick={onSelect}
+    <div
       aria-current={selected ? 'true' : undefined}
       className={cn(
-        'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent',
+        'group flex w-full items-center gap-1 rounded-md px-1 py-1 text-sm hover:bg-accent',
         selected && 'bg-accent font-medium'
       )}
     >
-      {hasChildren ? (
-        <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
-      ) : (
-        <Tag className="size-4 shrink-0 text-muted-foreground" />
-      )}
-      <span className="truncate">
-        <Highlight text={nodeName(node)} query={query} />
-      </span>
-      {hasChildren && (
-        <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-xs">
-          {node.labels!.length}
-        </Badge>
-      )}
-      {hasChildren && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />}
-    </button>
+      <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 items-center gap-2 rounded-sm px-1 py-0.5 text-left">
+        {hasChildren ? (
+          <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+        ) : (
+          <Tag className="size-4 shrink-0 text-muted-foreground" />
+        )}
+        <span className="truncate">
+          <Highlight text={nodeName(node)} query={query} />
+        </span>
+        {hasChildren && (
+          <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-xs">
+            {node.labels!.length}
+          </Badge>
+        )}
+        {hasChildren && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />}
+      </button>
+      <LabelCopyValue value={node.resourceName} iconOnly className="opacity-80 group-hover:opacity-100" />
+    </div>
   );
 }
 
@@ -122,7 +124,10 @@ export function LabelColumns({ data, query = '' }: { data: LabelNode[]; query?: 
               </React.Fragment>
             ))}
           </div>
-          <span className="text-xs text-muted-foreground">{leaf.classification}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">{leaf.classification}</span>
+            <LabelCopyValue value={leaf.resourceName} />
+          </div>
         </div>
       )}
     </div>

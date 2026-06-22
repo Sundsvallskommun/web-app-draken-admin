@@ -7,7 +7,6 @@ import { RequestWithUser } from '@/interfaces/auth.interface';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
 import ApiService from '@/services/api.service';
 import { getCompareApiService, isCompareConfigured } from '@/services/compare-api.service';
-import { diffResources } from '@/utils/compare';
 import authMiddleware from '@middlewares/auth.middleware';
 import { Controller, Get, Param, QueryParam, Req, UseBefore } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
@@ -60,6 +59,7 @@ import { OpenAPI } from 'routing-controllers-openapi';
 export class CompareController {
   private apiService = new ApiService();
   private TEMPLATING = apiServiceName('templating');
+  private TEST_APPROVAL_METADATA_KEYS = new Set(['testStatus', 'testApprovedAt']);
 
   @Get('/compare/available')
   @OpenAPI({ summary: 'Check if environment comparison is configured' })
@@ -96,7 +96,13 @@ export class CompareController {
 
     for (const [id, t] of compareMap) {
       if (!localMap.has(id)) {
-        missingLocally.push({ identifier: id, name: t.name, compareVersion: t.version, templateType: this.getTemplateType(t) });
+        missingLocally.push({
+          identifier: id,
+          name: t.name,
+          compareVersion: t.version,
+          templateType: this.getTemplateType(t),
+          testApproved: this.isTestApproved(t.metadata),
+        });
       }
     }
 
@@ -115,7 +121,7 @@ export class CompareController {
       const batch = sharedIdentifiers.slice(i, i + BATCH_SIZE);
 
       const detailResults = await Promise.all(
-        batch.map(async (identifier) => {
+        batch.map(async identifier => {
           try {
             const [local, compare] = await Promise.all([
               this.fetchTemplateDetail(this.apiService, municipalityId, identifier, req),
@@ -141,8 +147,8 @@ export class CompareController {
 
         const localContent = this.decodeContent(local.content);
         const compareContent = this.decodeContent(compare.content);
-        const localMetaSorted = this.sortByKey(local.metadata);
-        const compareMetaSorted = this.sortByKey(compare.metadata);
+        const localMetaSorted = this.sortMetadataForRuntimeDiff(local.metadata);
+        const compareMetaSorted = this.sortMetadataForRuntimeDiff(compare.metadata);
         const localDefaultsSorted = this.sortByKey(local.defaultValues);
         const compareDefaultsSorted = this.sortByKey(compare.defaultValues);
         const localMeta = JSON.stringify(localMetaSorted, null, 2);
@@ -173,6 +179,7 @@ export class CompareController {
             differences,
             detail,
             templateType: this.getTemplateType(localMap.get(identifier)),
+            testApproved: this.isTestApproved(compare.metadata),
           });
         }
       }
@@ -183,14 +190,15 @@ export class CompareController {
       const batch = missingLocally.slice(i, i + BATCH_SIZE);
 
       await Promise.all(
-        batch.map(async (item) => {
+        batch.map(async item => {
           try {
             const detail = await this.fetchTemplateDetail(compareApiService, municipalityId, item.identifier, req);
             item.detail = {
               compareContent: this.decodeContent(detail.content),
-              compareMetadata: JSON.stringify(this.sortByKey(detail.metadata), null, 2),
+              compareMetadata: JSON.stringify(this.sortMetadataForRuntimeDiff(detail.metadata), null, 2),
               compareDefaultValues: JSON.stringify(this.sortByKey(detail.defaultValues), null, 2),
             };
+            item.testApproved = this.isTestApproved(detail.metadata);
           } catch (e) {
             logger.error(`Failed to fetch detail for missing template ${item.identifier}: ${e}`);
           }
@@ -215,10 +223,7 @@ export class CompareController {
       filters.push({ or: [{ eq: { namespace } }] });
     }
 
-    const res = await service.post<TemplateResponse[]>(
-      { url, data: { and: filters } },
-      req.user,
-    );
+    const res = await service.post<TemplateResponse[]>({ url, data: { and: filters } }, req.user);
 
     return res.data;
   }
@@ -228,7 +233,16 @@ export class CompareController {
     return entry?.value?.toLowerCase() ?? '';
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private isTestApproved(metadata?: Array<{ key?: string; value?: string }>): boolean {
+    return metadata?.some(m => m.key === 'testStatus' && m.value === 'approved') ?? false;
+  }
+
+  private sortMetadataForRuntimeDiff(
+    metadata?: Array<{ key?: string; fieldName?: string; value?: unknown }>,
+  ): Array<{ key?: string; fieldName?: string; value?: unknown }> {
+    return this.sortByKey(metadata).filter(m => !this.TEST_APPROVAL_METADATA_KEYS.has(m.key ?? ''));
+  }
+
   private sortByKey(arr?: any[]): any[] {
     if (!arr) return [];
     return [...arr].sort((a, b) => (a.key ?? a.fieldName ?? '').localeCompare(b.key ?? b.fieldName ?? ''));
