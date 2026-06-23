@@ -10,6 +10,11 @@ export interface LabelParentOption {
   depth: number;
 }
 
+export interface LabelPathEntry {
+  node: LabelNode;
+  pathValue: string;
+}
+
 const pathFromValue = (value: string): number[] =>
   value
     .split('.')
@@ -67,6 +72,42 @@ export function canCreateLabelBelow(labels: LabelNode[], parentValue: string): b
   }
 
   return true;
+}
+
+const labelMatches = (candidate: LabelNode, current: LabelNode): boolean => {
+  if (candidate.id && current.id) return candidate.id === current.id;
+  return (
+    candidate.resourceName === current.resourceName &&
+    candidate.classification === current.classification &&
+    candidate.displayName === current.displayName
+  );
+};
+
+const entryForIndex = (items: LabelNode[], index: number, parentPath: string): LabelPathEntry => ({
+  node: items[index],
+  pathValue: parentPath ? `${parentPath}.${index}` : String(index),
+});
+
+export function rehydrateLabelPath(labels: LabelNode[], currentPath: LabelPathEntry[]): LabelPathEntry[] {
+  if (currentPath.length === 0) return currentPath;
+
+  const nextPath: LabelPathEntry[] = [];
+  let items = labels;
+  let parentPath = '';
+
+  for (const currentEntry of currentPath) {
+    const idIndex = currentEntry.node.id ? items.findIndex((item) => item.id === currentEntry.node.id) : -1;
+    const matchIndex = idIndex >= 0 ? idIndex : items.findIndex((item) => labelMatches(item, currentEntry.node));
+
+    if (matchIndex < 0) break;
+
+    const nextEntry = entryForIndex(items, matchIndex, parentPath);
+    nextPath.push(nextEntry);
+    items = nextEntry.node.labels ?? [];
+    parentPath = nextEntry.pathValue;
+  }
+
+  return nextPath;
 }
 
 export function appendLabel(labels: LabelNode[], parentValue: string, label: LabelNode): LabelNode[] {

@@ -1,4 +1,4 @@
-import { canCreateLabelBelow, ROOT_PARENT_VALUE } from '@admin/label-editor';
+import { canCreateLabelBelow, rehydrateLabelPath, ROOT_PARENT_VALUE, type LabelPathEntry } from '@admin/label-editor';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Highlight, type LabelNode } from '@admin/label-tree';
@@ -21,7 +21,7 @@ interface ColumnEntry {
   pathValue: string;
 }
 
-type PathEntry = ColumnEntry;
+type PathEntry = LabelPathEntry;
 
 const columnEntries = (items: LabelNode[], parentPath: string, query: string): ColumnEntry[] =>
   items
@@ -134,12 +134,14 @@ function ColumnItem({
 export function LabelColumns({
   data,
   query = '',
+  resetKey,
   onAdd,
   onDeprecatedChange,
   onRemove,
 }: {
   data: LabelNode[];
   query?: string;
+  resetKey?: string;
   onAdd?: (parentValue: string) => void;
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
@@ -149,9 +151,13 @@ export function LabelColumns({
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const resizeRef = React.useRef<{ level: number; startX: number; startWidth: number } | null>(null);
 
-  // Reset the drill-down when the underlying data changes (e.g. new namespace).
+  // Reset when the namespace changes, but keep the current drill-down after saves/refetches.
   React.useEffect(() => {
     setPath([]);
+  }, [resetKey]);
+
+  React.useEffect(() => {
+    setPath((currentPath) => rehydrateLabelPath(data, currentPath));
   }, [data]);
 
   // Columns: roots first, then the children of each selected node that has any.

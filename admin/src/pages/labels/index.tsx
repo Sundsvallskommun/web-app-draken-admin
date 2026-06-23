@@ -198,6 +198,7 @@ export default function LabelsPage() {
           <LabelColumns
             data={labelRows}
             query={query}
+            resetKey={namespace}
             onAdd={openCreateDialog}
             onDeprecatedChange={(label, labelValue, deprecated) =>
               setDeprecatedTarget({ label, labelValue, deprecated })

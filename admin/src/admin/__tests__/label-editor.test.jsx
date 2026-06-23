@@ -4,6 +4,7 @@ import {
   defaultClassificationForDepth,
   flattenLabelParents,
   labelsForSave,
+  rehydrateLabelPath,
   removeLabel,
   resourceNameFromDisplayName,
   ROOT_PARENT_VALUE,
@@ -111,6 +112,64 @@ describe('label-editor', () => {
 
     expect(next).toBe(labels);
     expect(next[0].labels).toEqual([]);
+  });
+
+  it('rehydrates the selected label path after refetching labels', () => {
+    const labels = [
+      {
+        id: 'root-id',
+        classification: 'CATEGORY',
+        displayName: 'Boende',
+        resourceName: 'BOENDE',
+        labels: [
+          {
+            id: 'type-id',
+            classification: 'TYPE',
+            displayName: 'Hyra',
+            resourceName: 'HYRA',
+            labels: [],
+          },
+        ],
+      },
+    ];
+    const currentPath = [
+      { node: labels[0], pathValue: '0' },
+      { node: labels[0].labels[0], pathValue: '0.0' },
+    ];
+    const refreshedLabels = [
+      {
+        id: 'other-root-id',
+        classification: 'CATEGORY',
+        displayName: 'Omsorg',
+        resourceName: 'OMSORG',
+        labels: [],
+      },
+      {
+        id: 'root-id',
+        classification: 'CATEGORY',
+        displayName: 'Boende',
+        resourceName: 'BOENDE',
+        deprecated: true,
+        labels: [
+          {
+            id: 'type-id',
+            classification: 'TYPE',
+            displayName: 'Hyra',
+            resourceName: 'HYRA',
+            deprecated: true,
+            labels: [],
+          },
+        ],
+      },
+    ];
+
+    const nextPath = rehydrateLabelPath(refreshedLabels, currentPath);
+
+    expect(nextPath.map((entry) => entry.pathValue)).toEqual(['1', '1.0']);
+    expect(nextPath[0].node).toBe(refreshedLabels[1]);
+    expect(nextPath[0].node.deprecated).toBe(true);
+    expect(nextPath[1].node).toBe(refreshedLabels[1].labels[0]);
+    expect(nextPath[1].node.deprecated).toBe(true);
   });
 
   it('removes derived list-only state before save', () => {
