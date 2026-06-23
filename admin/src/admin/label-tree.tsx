@@ -1,10 +1,9 @@
 import { Badge } from '@components/ui/badge';
-import { Button } from '@components/ui/button';
 import { matchesSubtree } from '@admin/label-utils';
 import { LabelCopyValue } from '@admin/label-copy-value';
 import type { LabelNode } from '@interfaces/label';
 import { cn } from '@utils/cn';
-import { ChevronDown, ChevronRight, FolderOpen, Tag, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, FolderOpen, Tag } from 'lucide-react';
 import * as React from 'react';
 
 export type { LabelNode };
@@ -24,19 +23,7 @@ export function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
-function TreeNode({
-  node,
-  depth,
-  pathValue,
-  query,
-  onRemove,
-}: {
-  node: LabelNode;
-  depth: number;
-  pathValue: string;
-  query: string;
-  onRemove?: (label: LabelNode, labelValue: string) => void;
-}) {
+function TreeNode({ node, depth, query }: { node: LabelNode; depth: number; query: string }) {
   const name = node.displayName || node.classification;
   const children = node.labels ?? [];
   const hasChildren = children.length > 0;
@@ -60,25 +47,23 @@ function TreeNode({
           onClick={() => hasChildren && setExpanded((e) => !e)}
           className={cn('flex size-5 shrink-0 items-center justify-center rounded', hasChildren && 'hover:bg-muted')}
           aria-expanded={hasChildren ? expanded : undefined}
-          aria-label={
-            hasChildren ?
-              expanded ?
-                'Fäll ihop'
-              : 'Expandera'
-            : undefined
-          }
+          aria-label={hasChildren ? (expanded ? 'Fäll ihop' : 'Expandera') : undefined}
           tabIndex={hasChildren ? 0 : -1}
         >
-          {hasChildren ?
-            expanded ?
+          {hasChildren ? (
+            expanded ? (
               <ChevronDown className="size-3.5 text-muted-foreground" />
-            : <ChevronRight className="size-3.5 text-muted-foreground" />
-          : null}
+            ) : (
+              <ChevronRight className="size-3.5 text-muted-foreground" />
+            )
+          ) : null}
         </button>
 
-        {hasChildren ?
+        {hasChildren ? (
           <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
-        : <Tag className="size-4 shrink-0 text-muted-foreground" />}
+        ) : (
+          <Tag className="size-4 shrink-0 text-muted-foreground" />
+        )}
 
         <span className={cn('truncate', isMatch && 'font-semibold')}>
           <Highlight text={name} query={query} />
@@ -91,67 +76,28 @@ function TreeNode({
         )}
         <span className="ml-2 text-xs text-muted-foreground">{node.classification}</span>
         <LabelCopyValue value={node.resourceName} className="ml-1" />
-        {onRemove && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="ml-1 size-7 text-muted-foreground hover:text-destructive"
-            aria-label={`Ta bort ${name}`}
-            onClick={() => onRemove(node, pathValue)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        )}
       </div>
 
       {hasChildren && expanded && (
         <div>
-          {children.map((child, i) => {
-            const childPath = `${pathValue}.${i}`;
-            return (
-              <TreeNode
-                key={child.id ?? `${child.classification}-${i}`}
-                node={child}
-                depth={depth + 1}
-                pathValue={childPath}
-                query={query}
-                onRemove={onRemove}
-              />
-            );
-          })}
+          {children.map((child, i) => (
+            <TreeNode key={child.id ?? `${child.classification}-${i}`} node={child} depth={depth + 1} query={query} />
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-export function LabelTree({
-  data,
-  query = '',
-  onRemove,
-}: {
-  data: LabelNode[];
-  query?: string;
-  onRemove?: (label: LabelNode, labelValue: string) => void;
-}) {
-  const visible = data
-    .map((node, index) => ({ node, pathValue: String(index) }))
-    .filter(({ node }) => !query || matchesSubtree(node, query));
+export function LabelTree({ data, query = '' }: { data: LabelNode[]; query?: string }) {
+  const visible = query ? data.filter((n) => matchesSubtree(n, query)) : data;
   if (!visible.length) {
     return <p className="py-8 text-center text-sm text-muted-foreground">Inga etiketter matchade.</p>;
   }
   return (
     <div className="rounded-md border bg-card p-3">
-      {visible.map(({ node, pathValue }, i) => (
-        <TreeNode
-          key={node.id ?? `${node.classification}-${i}`}
-          node={node}
-          depth={0}
-          pathValue={pathValue}
-          query={query}
-          onRemove={onRemove}
-        />
+      {visible.map((node, i) => (
+        <TreeNode key={node.id ?? `${node.classification}-${i}`} node={node} depth={0} query={query} />
       ))}
     </div>
   );

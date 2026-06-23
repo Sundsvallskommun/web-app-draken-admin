@@ -64,25 +64,6 @@ export function appendLabel(labels: LabelNode[], parentValue: string, label: Lab
   return appendAtPath(labels, 0);
 }
 
-export function removeLabel(labels: LabelNode[], labelValue: string): LabelNode[] {
-  const labelPath = labelValue
-    .split('.')
-    .map((part) => Number(part))
-    .filter((part) => Number.isInteger(part));
-
-  if (labelPath.length === 0) return labels;
-
-  const removeAtPath = (items: LabelNode[], depth: number): LabelNode[] => {
-    const indexAtDepth = labelPath[depth];
-    if (depth === labelPath.length - 1) return items.filter((_, index) => index !== indexAtDepth);
-    return items.map((item, index) =>
-      index === indexAtDepth ? { ...item, labels: removeAtPath(item.labels ?? [], depth + 1) } : item
-    );
-  };
-
-  return removeAtPath(labels, 0);
-}
-
 export function labelsForSave(labels: LabelNode[]): LabelNode[] {
   return labels.map(({ labels: children, ...label }) => {
     const saveLabel = { ...label, labels: children ? labelsForSave(children) : [] };

@@ -2,7 +2,6 @@ import {
   appendLabel,
   defaultClassificationForDepth,
   labelsForSave,
-  removeLabel,
   resourceNameFromDisplayName,
   ROOT_PARENT_VALUE,
 } from '../label-editor';
@@ -72,31 +71,5 @@ describe('label-editor', () => {
         labels: [{ classification: 'TYPE', resourceName: 'HYRA', labels: [] }],
       },
     ]);
-  });
-
-  it('removes the selected label subtree by path', () => {
-    const labels = [
-      {
-        classification: 'CATEGORY',
-        displayName: 'Boende',
-        resourceName: 'BOENDE',
-        labels: [
-          { classification: 'TYPE', displayName: 'Hyra', resourceName: 'HYRA', labels: [] },
-          { classification: 'TYPE', displayName: 'Kö', resourceName: 'KO', labels: [] },
-        ],
-      },
-      {
-        classification: 'CATEGORY',
-        displayName: 'Omsorg',
-        resourceName: 'OMSORG',
-        labels: [],
-      },
-    ];
-
-    const next = removeLabel(labels, '0.0');
-
-    expect(next[0].labels).toEqual([{ classification: 'TYPE', displayName: 'Kö', resourceName: 'KO', labels: [] }]);
-    expect(next[1]).toBe(labels[1]);
-    expect(labels[0].labels).toHaveLength(2);
   });
 });

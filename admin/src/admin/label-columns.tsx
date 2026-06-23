@@ -5,7 +5,7 @@ import { Highlight, type LabelNode } from '@admin/label-tree';
 import { LabelCopyValue } from '@admin/label-copy-value';
 import { matchesSubtree } from '@admin/label-utils';
 import { cn } from '@utils/cn';
-import { ChevronRight, FolderOpen, Plus, Tag, Trash2 } from 'lucide-react';
+import { ChevronRight, FolderOpen, Plus, Tag } from 'lucide-react';
 import * as React from 'react';
 
 const nodeName = (node: LabelNode) => node.displayName || node.classification;
@@ -33,13 +33,11 @@ function ColumnItem({
   selected,
   query,
   onSelect,
-  onRemove,
 }: {
   node: LabelNode;
   selected: boolean;
   query: string;
   onSelect: () => void;
-  onRemove?: () => void;
 }) {
   const hasChildren = (node.labels?.length ?? 0) > 0;
   return (
@@ -69,18 +67,6 @@ function ColumnItem({
         {hasChildren && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />}
       </button>
       <LabelCopyValue value={node.resourceName} iconOnly className="opacity-80 group-hover:opacity-100" />
-      {onRemove && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7 text-muted-foreground opacity-80 hover:text-destructive group-hover:opacity-100"
-          aria-label={`Ta bort ${nodeName(node)}`}
-          onClick={onRemove}
-        >
-          <Trash2 className="size-4" />
-        </Button>
-      )}
     </div>
   );
 }
@@ -94,12 +80,10 @@ export function LabelColumns({
   data,
   query = '',
   onAdd,
-  onRemove,
 }: {
   data: LabelNode[];
   query?: string;
   onAdd?: (parentValue: string) => void;
-  onRemove?: (label: LabelNode, labelValue: string) => void;
 }) {
   const [path, setPath] = React.useState<PathEntry[]>([]);
   const [columnWidths, setColumnWidths] = React.useState<Record<number, number>>({});
@@ -198,7 +182,6 @@ export function LabelColumns({
                     query={query}
                     selected={path[level]?.pathValue === entry.pathValue}
                     onSelect={() => selectAt(level, entry)}
-                    onRemove={onRemove ? () => onRemove(entry.node, entry.pathValue) : undefined}
                   />
                 ))
               : <p className="px-2 py-3 text-sm text-muted-foreground">Inga etiketter på den här nivån.</p>}
