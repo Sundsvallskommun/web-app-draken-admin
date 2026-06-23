@@ -2,6 +2,7 @@ import {
   appendLabel,
   defaultClassificationForDepth,
   flattenLabelParents,
+  LABEL_CLASSIFICATION_OPTIONS,
   resourceNameFromDisplayName,
   ROOT_PARENT_VALUE,
 } from '@admin/label-editor';
@@ -13,8 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { LabelNode } from '@interfaces/label';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
-
-const CLASSIFICATION_OPTIONS = ['CATEGORY', 'TYPE', 'SUBTYPE'];
 
 interface LabelCreateDialogProps {
   data: LabelNode[];
@@ -135,7 +134,7 @@ export function LabelCreateDialog({
               disabled={saving}
             />
             <datalist id={classificationListId}>
-              {CLASSIFICATION_OPTIONS.map((option) => (
+              {LABEL_CLASSIFICATION_OPTIONS.map((option) => (
                 <option key={option} value={option} />
               ))}
             </datalist>

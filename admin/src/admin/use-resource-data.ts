@@ -70,13 +70,19 @@ const errorCode = (e: any): string => {
   return status ? String(status) : 'network';
 };
 
-export async function fetchResourceRecord(name: string, municipalityId: number, id: string): Promise<ResourceRow | undefined> {
+export async function fetchResourceRecord(
+  name: string,
+  municipalityId: number,
+  id: string
+): Promise<ResourceRow | undefined> {
   const resource = getResourceConfig(name);
   const getOne = svc(name)?.getOne;
   if (!resource || !getOne) return undefined;
 
   const res = (await getOne(municipalityId, id)) as DataResponse<Record<string, unknown>>;
-  const data = ('data' in res && res.data && 'data' in res.data ? res.data.data : res.data) as Record<string, unknown> | undefined;
+  const data = ('data' in res && res.data && 'data' in res.data ? res.data.data : res.data) as
+    | Record<string, unknown>
+    | undefined;
   return data ? ({ ...data, __key: computeRowId(resource, data) } as ResourceRow) : undefined;
 }
 
@@ -90,7 +96,11 @@ interface UseResourceRowsOptions {
   enabled?: boolean;
 }
 
-export function useResourceRows(resourceName: string | undefined, namespace?: string, options: UseResourceRowsOptions = {}) {
+export function useResourceRows(
+  resourceName: string | undefined,
+  namespace?: string,
+  options: UseResourceRowsOptions = {}
+) {
   const resource = getResourceConfig(resourceName);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const enabled = options.enabled ?? true;
@@ -99,24 +109,29 @@ export function useResourceRows(resourceName: string | undefined, namespace?: st
   const fetchData = React.useCallback(async () => {
     if (!enabled) {
       setState({ rows: [], loading: false, error: null });
-      return;
+      return [];
     }
     if (!resource) {
       setState({ rows: [], loading: false, error: 'unknown-resource' });
-      return;
+      return [];
     }
     const getMany = svc(resource.name)?.getMany;
     if (!getMany) {
       setState({ rows: [], loading: false, error: 'no-endpoint' });
-      return;
+      return [];
     }
     setState((s) => ({ ...s, loading: true }));
     try {
-      const res = (await getMany(municipalityId, namespace ? { namespace } : undefined)) as DataResponse<Record<string, unknown>[]>;
+      const res = (await getMany(municipalityId, namespace ? { namespace } : undefined)) as DataResponse<
+        Record<string, unknown>[]
+      >;
       const raw = ('data' in res && res.data && 'data' in res.data ? res.data.data : []) ?? [];
-      setState({ rows: withKeys(resource, raw), loading: false, error: null });
+      const rows = withKeys(resource, raw);
+      setState({ rows, loading: false, error: null });
+      return rows;
     } catch (e) {
       setState({ rows: [], loading: false, error: errorCode(e) });
+      return [];
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, resource?.name, namespace, municipalityId]);

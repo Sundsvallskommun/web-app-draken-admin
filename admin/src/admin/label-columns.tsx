@@ -1,11 +1,18 @@
-import { ROOT_PARENT_VALUE } from '@admin/label-editor';
+import {
+  parentValueForLabelValue,
+  rehydrateLabelPath,
+  ROOT_PARENT_VALUE,
+  type LabelPathEntry,
+} from '@admin/label-editor';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, useDraggable, useDroppable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Highlight, type LabelNode } from '@admin/label-tree';
 import { LabelCopyValue } from '@admin/label-copy-value';
 import { matchesSubtree } from '@admin/label-utils';
 import { cn } from '@utils/cn';
-import { ChevronRight, FolderOpen, Plus, Tag, Trash2 } from 'lucide-react';
+import { ChevronRight, FolderOpen, GripVertical, Plus, Tag, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 const nodeName = (node: LabelNode) => node.displayName || node.classification;
@@ -21,35 +28,109 @@ interface ColumnEntry {
   pathValue: string;
 }
 
-type PathEntry = ColumnEntry;
+interface DragSource extends ColumnEntry {
+  level: number;
+  parentValue: string;
+}
+
+interface DropTarget {
+  parentValue: string;
+  level: number;
+}
 
 const columnEntries = (items: LabelNode[], parentPath: string, query: string): ColumnEntry[] =>
   items
     .map((node, index) => ({ node, pathValue: parentPath ? `${parentPath}.${index}` : String(index) }))
     .filter(({ node }) => !query || matchesSubtree(node, query));
 
+const dragId = (pathValue: string) => `label-drag:${pathValue}`;
+const columnDropId = (level: number, parentValue: string) => `label-drop:column:${level}:${parentValue}`;
+const rowDropId = (pathValue: string) => `label-drop:row:${pathValue}`;
+
+const dragSource = (event: DragStartEvent | DragEndEvent): DragSource | undefined =>
+  (event.active.data.current as { source?: DragSource } | undefined)?.source;
+
+const dropTarget = (event: DragEndEvent): DropTarget | undefined =>
+  (event.over?.data.current as { target?: DropTarget } | undefined)?.target;
+
 function ColumnItem({
   node,
+  pathValue,
+  level,
   selected,
   query,
+  dndEnabled,
+  activeLevel,
+  activeParentValue,
   onSelect,
   onRemove,
 }: {
   node: LabelNode;
+  pathValue: string;
+  level: number;
   selected: boolean;
   query: string;
+  dndEnabled: boolean;
+  activeLevel: number | null;
+  activeParentValue: string | null;
   onSelect: () => void;
   onRemove?: () => void;
 }) {
   const hasChildren = (node.labels?.length ?? 0) > 0;
+  const draggableEnabled = dndEnabled && level > 0;
+  const dropLevel = level + 1;
+  const dropEnabled = dndEnabled && activeLevel !== null && dropLevel <= activeLevel && activeParentValue !== pathValue;
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: dragId(pathValue),
+    data: { source: { node, pathValue, level, parentValue: parentValueForLabelValue(pathValue) } satisfies DragSource },
+    disabled: !draggableEnabled,
+  });
+  const { isOver, setNodeRef: setDroppableNodeRef } = useDroppable({
+    id: rowDropId(pathValue),
+    data: { target: { parentValue: pathValue, level: dropLevel } satisfies DropTarget },
+    disabled: !dropEnabled,
+  });
+  const setNodeRef = React.useCallback(
+    (element: HTMLDivElement | null) => {
+      setDraggableNodeRef(element);
+      setDroppableNodeRef(element);
+    },
+    [setDraggableNodeRef, setDroppableNodeRef]
+  );
+  const style: React.CSSProperties = {
+    opacity: isDragging ? 0.35 : undefined,
+    transform: transform ? CSS.Transform.toString(transform) : undefined,
+  };
+
   return (
     <div
+      ref={setNodeRef}
       aria-current={selected ? 'true' : undefined}
+      style={style}
       className={cn(
-        'group flex w-full items-center gap-1 rounded-md px-1 py-1 text-sm hover:bg-accent',
-        selected && 'bg-accent font-medium'
+        'group flex w-full items-center gap-1 rounded-md border border-transparent px-1 py-1 text-sm hover:bg-accent',
+        selected && 'bg-accent font-medium',
+        dropEnabled && 'border-primary/40 bg-primary/5',
+        isOver && 'border-primary bg-primary/10 ring-1 ring-primary/30'
       )}
     >
+      {draggableEnabled && (
+        <button
+          type="button"
+          className="flex size-6 shrink-0 cursor-grab items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing"
+          aria-label={`Flytta ${nodeName(node)}`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="size-4" />
+        </button>
+      )}
       <button
         type="button"
         onClick={onSelect}
@@ -85,6 +166,66 @@ function ColumnItem({
   );
 }
 
+function ColumnFooter({
+  level,
+  parentValue,
+  activeLevel,
+  activeParentValue,
+  dndEnabled,
+  onAdd,
+}: {
+  level: number;
+  parentValue: string;
+  activeLevel: number | null;
+  activeParentValue: string | null;
+  dndEnabled: boolean;
+  onAdd?: (parentValue: string) => void;
+}) {
+  const rootDropBlocked = dndEnabled && activeLevel !== null && level === 0;
+  const dropEnabled =
+    dndEnabled && activeLevel !== null && level > 0 && level <= activeLevel && activeParentValue !== parentValue;
+  const { isOver, setNodeRef } = useDroppable({
+    id: columnDropId(level, parentValue),
+    data: { target: { parentValue, level } satisfies DropTarget },
+    disabled: !dropEnabled,
+  });
+
+  if (!onAdd && !dndEnabled) return null;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'mt-2 rounded-md border border-dashed p-1',
+        dropEnabled && 'border-primary/50 bg-primary/5',
+        isOver && 'border-primary bg-primary/10'
+      )}
+    >
+      {onAdd && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start gap-1.5 text-muted-foreground hover:text-foreground"
+          onClick={() => onAdd(parentValue)}
+        >
+          <Plus className="size-4" />
+          {level === 0 ? 'Lägg till på rotnivå' : 'Lägg till här'}
+        </Button>
+      )}
+      {activeLevel !== null && (
+        <p className={cn('px-2 pb-1 text-xs', dropEnabled ? 'text-primary' : 'text-muted-foreground')}>
+          {dropEnabled ?
+            'Släpp här för att flytta hit'
+          : rootDropBlocked ?
+            'Rootflytt stöds inte säkert av API:t'
+          : 'Endast samma eller tidigare nivå kan ta emot flytt'}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /**
  * macOS Finder-style "Miller columns": klicka dig vidare nivå för nivå.
  * Varje vald nod med barn öppnar en ny kolumn till höger — lättare att tolka
@@ -95,20 +236,33 @@ export function LabelColumns({
   query = '',
   onAdd,
   onRemove,
+  onMove,
+  resetKey,
 }: {
   data: LabelNode[];
   query?: string;
   onAdd?: (parentValue: string) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
+  onMove?: (label: LabelNode, sourceValue: string, targetParentValue: string, targetLevel: number) => void;
+  resetKey?: string;
 }) {
-  const [path, setPath] = React.useState<PathEntry[]>([]);
+  const [path, setPath] = React.useState<LabelPathEntry[]>([]);
   const [columnWidths, setColumnWidths] = React.useState<Record<number, number>>({});
+  const [activeDrag, setActiveDrag] = React.useState<DragSource | null>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const resizeRef = React.useRef<{ level: number; startX: number; startWidth: number } | null>(null);
+  const dndEnabled = Boolean(onMove && !query.trim());
 
-  // Reset the drill-down when the underlying data changes (e.g. new namespace).
+  // Reset the drill-down when the caller changes context, e.g. namespace.
   React.useEffect(() => {
     setPath([]);
+  }, [resetKey]);
+
+  // Keep the current drill-down after save/refresh by rebinding selected labels
+  // to the new response objects. If a moved/removed branch no longer exists at
+  // that parent, keep the nearest valid ancestor visible.
+  React.useEffect(() => {
+    setPath((previous) => rehydrateLabelPath(data, previous));
   }, [data]);
 
   // Columns: roots first, then the children of each selected node that has any.
@@ -130,6 +284,20 @@ export function LabelColumns({
   const selectAt = (level: number, entry: ColumnEntry) => setPath((prev) => [...prev.slice(0, level), entry]);
 
   const parentValueForColumn = (level: number) => (level === 0 ? ROOT_PARENT_VALUE : path[level - 1]?.pathValue);
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDrag(dragSource(event) ?? null);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const source = dragSource(event);
+    const target = dropTarget(event);
+    setActiveDrag(null);
+    if (!source || !target || !onMove || target.level > source.level || target.parentValue === source.parentValue) {
+      return;
+    }
+    onMove(source.node, source.pathValue, target.parentValue, target.level);
+  };
 
   const columnWidth = React.useCallback((level: number) => columnWidths[level] ?? DEFAULT_COLUMN_WIDTH, [columnWidths]);
 
@@ -182,57 +350,76 @@ export function LabelColumns({
 
   return (
     <div className="flex flex-col gap-3">
-      <div ref={scrollRef} className="flex overflow-x-auto rounded-md border bg-card">
-        {columns.map((items, level) => (
-          <div
-            key={level}
-            className="relative flex max-h-[28rem] shrink-0 flex-col border-r p-1.5 pr-3 last:border-r-0"
-            style={{ width: columnWidth(level) }}
-          >
-            <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">
-              {items.length > 0 ?
-                items.map((entry, i) => (
-                  <ColumnItem
-                    key={nodeKey(entry.node, i)}
-                    node={entry.node}
-                    query={query}
-                    selected={path[level]?.pathValue === entry.pathValue}
-                    onSelect={() => selectAt(level, entry)}
-                    onRemove={onRemove ? () => onRemove(entry.node, entry.pathValue) : undefined}
-                  />
-                ))
-              : <p className="px-2 py-3 text-sm text-muted-foreground">Inga etiketter på den här nivån.</p>}
-            </div>
-            {onAdd && parentValueForColumn(level) && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="mt-2 w-full justify-start gap-1.5 border border-dashed text-muted-foreground hover:text-foreground"
-                onClick={() => onAdd(parentValueForColumn(level)!)}
+      <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveDrag(null)}>
+        <div ref={scrollRef} className="flex overflow-x-auto rounded-md border bg-card">
+          {columns.map((items, level) => {
+            const parentValue = parentValueForColumn(level);
+            return (
+              <div
+                key={level}
+                className="relative flex max-h-[28rem] shrink-0 flex-col border-r p-1.5 pr-3 last:border-r-0"
+                style={{ width: columnWidth(level) }}
               >
-                <Plus className="size-4" />
-                {level === 0 ? 'Lägg till på rotnivå' : 'Lägg till här'}
-              </Button>
-            )}
-            <div
-              role="separator"
-              aria-label="Ändra kolumnbredd"
-              aria-orientation="vertical"
-              aria-valuemin={MIN_COLUMN_WIDTH}
-              aria-valuemax={MAX_COLUMN_WIDTH}
-              aria-valuenow={columnWidth(level)}
-              tabIndex={0}
-              className="absolute right-0 top-0 h-full w-2 cursor-col-resize touch-none border-r border-transparent hover:border-primary/60 focus:border-primary focus:outline-none"
-              onPointerDown={(event) => startResize(event, level)}
-              onPointerMove={resizeColumn}
-              onPointerUp={stopResize}
-              onPointerCancel={stopResize}
-              onKeyDown={(event) => resizeWithKeyboard(event, level)}
-            />
-          </div>
-        ))}
-      </div>
+                <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+                  {items.length > 0 ?
+                    items.map((entry, i) => (
+                      <ColumnItem
+                        key={nodeKey(entry.node, i)}
+                        node={entry.node}
+                        pathValue={entry.pathValue}
+                        level={level}
+                        dndEnabled={dndEnabled}
+                        activeLevel={activeDrag?.level ?? null}
+                        activeParentValue={activeDrag?.parentValue ?? null}
+                        query={query}
+                        selected={path[level]?.pathValue === entry.pathValue}
+                        onSelect={() => selectAt(level, entry)}
+                        onRemove={onRemove ? () => onRemove(entry.node, entry.pathValue) : undefined}
+                      />
+                    ))
+                  : <p className="px-2 py-3 text-sm text-muted-foreground">Inga etiketter på den här nivån.</p>}
+                </div>
+                {parentValue && (
+                  <ColumnFooter
+                    level={level}
+                    parentValue={parentValue}
+                    activeLevel={activeDrag?.level ?? null}
+                    activeParentValue={activeDrag?.parentValue ?? null}
+                    dndEnabled={dndEnabled}
+                    onAdd={onAdd}
+                  />
+                )}
+                <div
+                  role="separator"
+                  aria-label="Ändra kolumnbredd"
+                  aria-orientation="vertical"
+                  aria-valuemin={MIN_COLUMN_WIDTH}
+                  aria-valuemax={MAX_COLUMN_WIDTH}
+                  aria-valuenow={columnWidth(level)}
+                  tabIndex={0}
+                  className="absolute right-0 top-0 h-full w-2 cursor-col-resize touch-none border-r border-transparent hover:border-primary/60 focus:border-primary focus:outline-none"
+                  onPointerDown={(event) => startResize(event, level)}
+                  onPointerMove={resizeColumn}
+                  onPointerUp={stopResize}
+                  onPointerCancel={stopResize}
+                  onKeyDown={(event) => resizeWithKeyboard(event, level)}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <DragOverlay>
+          {activeDrag && (
+            <div className="rounded-md border bg-card px-3 py-2 text-sm font-medium shadow-lg">
+              {nodeName(activeDrag.node)}
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+
+      {onMove && query.trim() && (
+        <p className="text-xs text-muted-foreground">Drag and drop är avstängt när sökningen filtrerar etiketter.</p>
+      )}
 
       {leaf && (
         <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">

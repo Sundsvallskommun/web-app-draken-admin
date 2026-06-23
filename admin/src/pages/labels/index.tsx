@@ -3,8 +3,18 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { LabelCreateDialog } from '@admin/label-create-dialog';
 import { LabelColumns } from '@admin/label-columns';
+import { labelListFromApiResponse, logLabelMoveValidation, syncLabelDebugFlagFromUrl } from '@admin/label-debug';
 import { LabelDeleteDialog } from '@admin/label-delete-dialog';
-import { labelsForSave, removeLabel, ROOT_PARENT_VALUE } from '@admin/label-editor';
+import { LabelMovePreviewDialog } from '@admin/label-move-preview-dialog';
+import {
+  buildLabelMovePreview,
+  defaultClassificationForDepth,
+  labelsForSave,
+  removeLabel,
+  ROOT_PARENT_VALUE,
+  type LabelMoveError,
+  type LabelMovePreview,
+} from '@admin/label-editor';
 import { LabelTree, type LabelNode } from '@admin/label-tree';
 import { AdminLayout } from '@admin/admin-layout';
 import { useNamespaces } from '@admin/use-namespaces';
@@ -31,6 +41,27 @@ const saveErrorMessage = (error: unknown) => {
   return 'fel';
 };
 
+const labelDisplayName = (label: LabelNode) => label.displayName || label.resourceName || label.classification;
+
+const moveErrorMessage = (reason: LabelMoveError, label: LabelNode) => {
+  if (reason === 'root-target-unsupported') {
+    return `"${labelDisplayName(label)}" kan inte flyttas till rotnivå utan att riskera nytt id.`;
+  }
+  if (reason === 'deeper-level') {
+    return 'Etiketter kan inte flyttas till en djupare nivå.';
+  }
+  if (reason === 'same-parent') {
+    return 'Etiketten ligger redan under den valda nivån.';
+  }
+  if (reason === 'missing-target') {
+    return 'Målet finns inte längre. Uppdatera vyn och försök igen.';
+  }
+  if (reason === 'missing-classification') {
+    return 'Flytten saknar klassificering.';
+  }
+  return 'Etiketten finns inte längre. Uppdatera vyn och försök igen.';
+};
+
 export default function LabelsPage() {
   const [namespace, setNamespace] = React.useState('');
   const [query, setQuery] = React.useState('');
@@ -38,11 +69,16 @@ export default function LabelsPage() {
   const [createOpen, setCreateOpen] = React.useState(false);
   const [createParentValue, setCreateParentValue] = React.useState(ROOT_PARENT_VALUE);
   const [removeTarget, setRemoveTarget] = React.useState<RemoveTarget | null>(null);
+  const [movePreview, setMovePreview] = React.useState<LabelMovePreview | null>(null);
   const [saving, setSaving] = React.useState(false);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const namespaceOptions = useNamespaces();
   const { rows, loading, error, refresh } = useResourceRows('labels', namespace || undefined);
   const labelRows = rows as unknown as LabelNode[];
+
+  React.useEffect(() => {
+    syncLabelDebugFlagFromUrl();
+  }, []);
 
   const createLabel = async (nextLabels: LabelNode[]) => {
     if (!namespace) return;
@@ -78,6 +114,46 @@ export default function LabelsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const confirmMovedLabel = async () => {
+    if (!namespace || !movePreview) return;
+    const preview = movePreview;
+    const putPayload = labelsForSave(preview.after);
+    setSaving(true);
+    try {
+      const putResponse = await saveLabels(municipalityId, namespace, putPayload, false);
+      toast.success('Etiketten flyttades.');
+      setMovePreview(null);
+      const getResponse = await refresh();
+      logLabelMoveValidation({
+        namespace,
+        municipalityId,
+        preview,
+        putPayload,
+        putResponse: labelListFromApiResponse(putResponse.data),
+        getResponse: labelListFromApiResponse(getResponse),
+      });
+    } catch (err) {
+      toast.error(`Kunde inte flytta etikett: ${saveErrorMessage(err)}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const previewMovedLabel = (label: LabelNode, sourceValue: string, targetParentValue: string, targetLevel: number) => {
+    const preview = buildLabelMovePreview(labelRows, {
+      sourceValue,
+      targetParentValue,
+      classification: defaultClassificationForDepth(targetLevel),
+    });
+
+    if (!preview.ok) {
+      toast.error(moveErrorMessage(preview.reason, label));
+      return;
+    }
+
+    setMovePreview(preview.preview);
   };
 
   return (
@@ -162,13 +238,20 @@ export default function LabelsPage() {
           <LabelColumns
             data={labelRows}
             query={query}
+            resetKey={namespace}
             onAdd={openCreateDialog}
             onRemove={(label, labelValue) => setRemoveTarget({ label, labelValue })}
+            onMove={(label, sourceValue, targetParentValue, targetLevel) =>
+              previewMovedLabel(label, sourceValue, targetParentValue, targetLevel)
+            }
           />
         : <LabelTree
             data={labelRows}
             query={query}
             onRemove={(label, labelValue) => setRemoveTarget({ label, labelValue })}
+            onMove={(label, sourceValue, targetParentValue, targetLevel) =>
+              previewMovedLabel(label, sourceValue, targetParentValue, targetLevel)
+            }
           />
         }
       </div>
@@ -187,6 +270,13 @@ export default function LabelsPage() {
         saving={saving}
         onOpenChange={(open) => !open && setRemoveTarget(null)}
         onDelete={removeSelectedLabel}
+      />
+      <LabelMovePreviewDialog
+        preview={movePreview}
+        open={Boolean(movePreview)}
+        saving={saving}
+        onOpenChange={(open) => !open && setMovePreview(null)}
+        onConfirm={confirmMovedLabel}
       />
     </AdminLayout>
   );
