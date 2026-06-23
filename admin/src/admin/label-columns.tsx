@@ -5,7 +5,7 @@ import { Highlight, type LabelNode } from '@admin/label-tree';
 import { LabelCopyValue } from '@admin/label-copy-value';
 import { matchesSubtree } from '@admin/label-utils';
 import { cn } from '@utils/cn';
-import { ChevronRight, FolderOpen, Plus, Tag } from 'lucide-react';
+import { Ban, ChevronRight, FolderOpen, Plus, RotateCcw, Tag, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 const nodeName = (node: LabelNode) => node.displayName || node.classification;
@@ -30,22 +30,30 @@ const columnEntries = (items: LabelNode[], parentPath: string, query: string): C
 
 function ColumnItem({
   node,
+  pathValue,
   selected,
   query,
   onSelect,
+  onDeprecatedChange,
+  onRemove,
 }: {
   node: LabelNode;
+  pathValue: string;
   selected: boolean;
   query: string;
   onSelect: () => void;
+  onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
+  onRemove?: (label: LabelNode, labelValue: string) => void;
 }) {
   const hasChildren = (node.labels?.length ?? 0) > 0;
+  const isDeprecated = node.deprecated === true;
   return (
     <div
       aria-current={selected ? 'true' : undefined}
       className={cn(
         'group flex w-full items-center gap-1 rounded-md px-1 py-1 text-sm hover:bg-accent',
-        selected && 'bg-accent font-medium'
+        selected && 'bg-accent font-medium',
+        isDeprecated && 'text-muted-foreground'
       )}
     >
       <button
@@ -59,6 +67,11 @@ function ColumnItem({
         <span className="truncate">
           <Highlight text={nodeName(node)} query={query} />
         </span>
+        {isDeprecated && (
+          <Badge variant="secondary" className="h-5 shrink-0 px-1.5 text-xs">
+            Deprecated
+          </Badge>
+        )}
         {hasChildren && (
           <Badge variant="secondary" className="ml-auto h-5 px-1.5 text-xs">
             {node.labels!.length}
@@ -67,6 +80,32 @@ function ColumnItem({
         {hasChildren && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />}
       </button>
       <LabelCopyValue value={node.resourceName} iconOnly className="opacity-80 group-hover:opacity-100" />
+      {onDeprecatedChange && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 text-muted-foreground opacity-80 hover:text-foreground group-hover:opacity-100"
+          aria-label={`${isDeprecated ? 'Återaktivera' : 'Avveckla'} ${nodeName(node)}`}
+          onClick={() => onDeprecatedChange(node, pathValue, !isDeprecated)}
+        >
+          {isDeprecated ?
+            <RotateCcw className="size-4" />
+          : <Ban className="size-4" />}
+        </Button>
+      )}
+      {onRemove && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 text-muted-foreground opacity-70 hover:text-destructive group-hover:opacity-100"
+          aria-label={`Ta bort ${nodeName(node)} permanent`}
+          onClick={() => onRemove(node, pathValue)}
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      )}
     </div>
   );
 }
@@ -80,10 +119,14 @@ export function LabelColumns({
   data,
   query = '',
   onAdd,
+  onDeprecatedChange,
+  onRemove,
 }: {
   data: LabelNode[];
   query?: string;
   onAdd?: (parentValue: string) => void;
+  onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
+  onRemove?: (label: LabelNode, labelValue: string) => void;
 }) {
   const [path, setPath] = React.useState<PathEntry[]>([]);
   const [columnWidths, setColumnWidths] = React.useState<Record<number, number>>({});
@@ -179,9 +222,12 @@ export function LabelColumns({
                   <ColumnItem
                     key={nodeKey(entry.node, i)}
                     node={entry.node}
+                    pathValue={entry.pathValue}
                     query={query}
                     selected={path[level]?.pathValue === entry.pathValue}
                     onSelect={() => selectAt(level, entry)}
+                    onDeprecatedChange={onDeprecatedChange}
+                    onRemove={onRemove}
                   />
                 ))
               : <p className="px-2 py-3 text-sm text-muted-foreground">Inga etiketter på den här nivån.</p>}

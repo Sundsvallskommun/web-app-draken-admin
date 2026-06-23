@@ -2,8 +2,10 @@ import {
   appendLabel,
   defaultClassificationForDepth,
   labelsForSave,
+  removeLabel,
   resourceNameFromDisplayName,
   ROOT_PARENT_VALUE,
+  setLabelDeprecated,
 } from '../label-editor';
 
 describe('label-editor', () => {
@@ -57,19 +59,67 @@ describe('label-editor', () => {
   it('removes derived list-only state before save', () => {
     const labels = labelsForSave([
       {
+        id: 'category-id',
         classification: 'CATEGORY',
         resourceName: 'BOENDE',
+        resourcePath: 'BOENDE',
         isLeaf: false,
-        labels: [{ classification: 'TYPE', resourceName: 'HYRA', isLeaf: true }],
+        deprecated: true,
+        __key: 'category-id',
+        labels: [{ id: 'type-id', classification: 'TYPE', resourceName: 'HYRA', isLeaf: true, deprecated: true }],
       },
     ]);
 
     expect(labels).toEqual([
       {
+        id: 'category-id',
         classification: 'CATEGORY',
         resourceName: 'BOENDE',
-        labels: [{ classification: 'TYPE', resourceName: 'HYRA', labels: [] }],
+        deprecated: true,
+        labels: [{ id: 'type-id', classification: 'TYPE', resourceName: 'HYRA', deprecated: true, labels: [] }],
       },
     ]);
+  });
+
+  it('sets deprecated recursively for a selected label subtree', () => {
+    const labels = [
+      {
+        classification: 'CATEGORY',
+        resourceName: 'BOENDE',
+        labels: [
+          {
+            classification: 'TYPE',
+            resourceName: 'HYRA',
+            labels: [{ classification: 'SUBTYPE', resourceName: 'AUTOGIRO', labels: [] }],
+          },
+        ],
+      },
+      { classification: 'CATEGORY', resourceName: 'OMSORG', labels: [] },
+    ];
+
+    const next = setLabelDeprecated(labels, '0.0', true);
+
+    expect(next[0].deprecated).toBeUndefined();
+    expect(next[0].labels?.[0].deprecated).toBe(true);
+    expect(next[0].labels?.[0].labels?.[0].deprecated).toBe(true);
+    expect(next[1]).toBe(labels[1]);
+  });
+
+  it('removes the selected label subtree by path', () => {
+    const labels = [
+      {
+        classification: 'CATEGORY',
+        resourceName: 'BOENDE',
+        labels: [
+          { classification: 'TYPE', resourceName: 'HYRA', labels: [] },
+          { classification: 'TYPE', resourceName: 'KO', labels: [] },
+        ],
+      },
+    ];
+
+    const next = removeLabel(labels, '0.0');
+
+    expect(next[0].labels).toEqual([{ classification: 'TYPE', resourceName: 'KO', labels: [] }]);
+    expect(labels[0].labels).toHaveLength(2);
   });
 });

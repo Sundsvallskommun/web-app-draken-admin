@@ -10,6 +10,7 @@ export interface LabelNode {
   resourceName: string;
   resourcePath?: string;
   isLeaf?: boolean;
+  deprecated?: boolean;
   labels?: LabelNode[];
   attributes?: LabelAttribute[];
 }

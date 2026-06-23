@@ -3,13 +3,16 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { LabelCreateDialog } from '@admin/label-create-dialog';
 import { LabelColumns } from '@admin/label-columns';
-import { labelsForSave, ROOT_PARENT_VALUE } from '@admin/label-editor';
+import { LabelDeleteDialog } from '@admin/label-delete-dialog';
+import { LabelDeprecatedDialog } from '@admin/label-deprecated-dialog';
+import { labelsForSave, removeLabel, ROOT_PARENT_VALUE, setLabelDeprecated } from '@admin/label-editor';
 import { LabelTree, type LabelNode } from '@admin/label-tree';
 import { AdminLayout } from '@admin/admin-layout';
 import { useNamespaces } from '@admin/use-namespaces';
 import { useResourceRows } from '@admin/use-resource-data';
 import { saveLabels } from '@services/label-service';
 import { cn } from '@utils/cn';
+import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { Columns3, ListTree, Loader2, Plus, Search, Tags, TriangleAlert } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
@@ -21,6 +24,8 @@ export const getServerSideProps: GetServerSideProps = async () => ({ props: {} }
 type View = 'tree' | 'columns';
 
 type SaveError = { response?: { data?: { message?: unknown } }; message?: unknown };
+type DeprecatedTarget = { label: LabelNode; labelValue: string; deprecated: boolean };
+type RemoveTarget = { label: LabelNode; labelValue: string };
 
 const saveErrorMessage = (error: unknown) => {
   const err = error as SaveError;
@@ -35,11 +40,15 @@ export default function LabelsPage() {
   const [view, setView] = React.useState<View>('columns');
   const [createOpen, setCreateOpen] = React.useState(false);
   const [createParentValue, setCreateParentValue] = React.useState(ROOT_PARENT_VALUE);
+  const [deprecatedTarget, setDeprecatedTarget] = React.useState<DeprecatedTarget | null>(null);
+  const [removeTarget, setRemoveTarget] = React.useState<RemoveTarget | null>(null);
   const [saving, setSaving] = React.useState(false);
+  const { isProduction, loaded: productionLoaded } = useIsProductionEnv();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const namespaceOptions = useNamespaces();
   const { rows, loading, error, refresh } = useResourceRows('labels', namespace || undefined);
   const labelRows = rows as unknown as LabelNode[];
+  const canDeleteLabels = productionLoaded && !isProduction;
 
   const createLabel = async (nextLabels: LabelNode[]) => {
     if (!namespace) return;
@@ -59,6 +68,42 @@ export default function LabelsPage() {
   const openCreateDialog = (parentValue = ROOT_PARENT_VALUE) => {
     setCreateParentValue(parentValue);
     setCreateOpen(true);
+  };
+
+  const saveDeprecatedState = async () => {
+    if (!namespace || !deprecatedTarget) return;
+    setSaving(true);
+    try {
+      const nextLabels = setLabelDeprecated(labelRows, deprecatedTarget.labelValue, deprecatedTarget.deprecated);
+      await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      toast.success(deprecatedTarget.deprecated ? 'Etiketten avvecklades.' : 'Etiketten återaktiverades.');
+      setDeprecatedTarget(null);
+      await refresh();
+    } catch (err) {
+      toast.error(`Kunde inte uppdatera etikett: ${saveErrorMessage(err)}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeSelectedLabel = async () => {
+    if (!namespace || !removeTarget) return;
+    if (!canDeleteLabels) {
+      toast.error('Permanent borttagning är blockerad i produktion. Använd deprecated i stället.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const nextLabels = removeLabel(labelRows, removeTarget.labelValue);
+      await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      toast.success('Etiketten togs bort permanent.');
+      setRemoveTarget(null);
+      await refresh();
+    } catch (err) {
+      toast.error(`Kunde inte ta bort etikett: ${saveErrorMessage(err)}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -140,8 +185,24 @@ export default function LabelsPage() {
             <p className="text-sm">Välj ett namespace för att visa etiketter.</p>
           </div>
         : view === 'columns' ?
-          <LabelColumns data={labelRows} query={query} onAdd={openCreateDialog} />
-        : <LabelTree data={labelRows} query={query} />}
+          <LabelColumns
+            data={labelRows}
+            query={query}
+            onAdd={openCreateDialog}
+            onDeprecatedChange={(label, labelValue, deprecated) =>
+              setDeprecatedTarget({ label, labelValue, deprecated })
+            }
+            onRemove={canDeleteLabels ? (label, labelValue) => setRemoveTarget({ label, labelValue }) : undefined}
+          />
+        : <LabelTree
+            data={labelRows}
+            query={query}
+            onDeprecatedChange={(label, labelValue, deprecated) =>
+              setDeprecatedTarget({ label, labelValue, deprecated })
+            }
+            onRemove={canDeleteLabels ? (label, labelValue) => setRemoveTarget({ label, labelValue }) : undefined}
+          />
+        }
       </div>
 
       <LabelCreateDialog
@@ -151,6 +212,21 @@ export default function LabelsPage() {
         initialParentValue={createParentValue}
         onOpenChange={setCreateOpen}
         onCreate={createLabel}
+      />
+      <LabelDeprecatedDialog
+        target={deprecatedTarget}
+        open={Boolean(deprecatedTarget)}
+        saving={saving}
+        onOpenChange={(open) => !open && setDeprecatedTarget(null)}
+        onConfirm={saveDeprecatedState}
+      />
+      <LabelDeleteDialog
+        label={removeTarget?.label ?? null}
+        open={Boolean(removeTarget)}
+        saving={saving}
+        productionBlocked={!canDeleteLabels}
+        onOpenChange={(open) => !open && setRemoveTarget(null)}
+        onDelete={removeSelectedLabel}
       />
     </AdminLayout>
   );
