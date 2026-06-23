@@ -56,8 +56,9 @@ function TreeNode({
     <div>
       <div
         className={cn(
-          'flex items-center gap-1 rounded-md py-1 hover:bg-accent',
-          isDeprecated && 'text-muted-foreground'
+          'flex items-center gap-1 rounded-md border border-transparent py-1 hover:bg-accent',
+          isDeprecated &&
+            'border-amber-300/70 bg-amber-50 text-muted-foreground hover:bg-amber-50 dark:border-amber-500/40 dark:bg-amber-950/20 dark:hover:bg-amber-950/20'
         )}
         style={{ paddingLeft: `${depth * 1.25}rem` }}
       >
@@ -83,15 +84,36 @@ function TreeNode({
         </button>
 
         {hasChildren ?
-          <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
-        : <Tag className="size-4 shrink-0 text-muted-foreground" />}
+          <FolderOpen
+            className={cn(
+              'size-4 shrink-0',
+              isDeprecated ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'
+            )}
+          />
+        : <Tag
+            className={cn(
+              'size-4 shrink-0',
+              isDeprecated ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'
+            )}
+          />
+        }
 
-        <span className={cn('truncate', isMatch && 'font-semibold')}>
+        <span
+          className={cn(
+            'truncate',
+            isMatch && 'font-semibold',
+            isDeprecated && 'line-through decoration-2 decoration-amber-600/70'
+          )}
+        >
           <Highlight text={name} query={query} />
         </span>
 
         {isDeprecated && (
-          <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+          <Badge
+            variant="outline"
+            className="ml-1 h-5 border-amber-500/50 bg-amber-100 px-1.5 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            <Ban className="mr-1 size-3" />
             Deprecated
           </Badge>
         )}

@@ -51,9 +51,10 @@ function ColumnItem({
     <div
       aria-current={selected ? 'true' : undefined}
       className={cn(
-        'group flex w-full items-center gap-1 rounded-md px-1 py-1 text-sm hover:bg-accent',
-        selected && 'bg-accent font-medium',
-        isDeprecated && 'text-muted-foreground'
+        'group flex w-full items-center gap-1 rounded-md border border-transparent px-1 py-1 text-sm hover:bg-accent',
+        selected && !isDeprecated && 'bg-accent font-medium',
+        isDeprecated &&
+          'border-amber-300/70 bg-amber-50 text-muted-foreground hover:bg-amber-50 dark:border-amber-500/40 dark:bg-amber-950/20 dark:hover:bg-amber-950/20'
       )}
     >
       <button
@@ -62,13 +63,28 @@ function ColumnItem({
         className="flex min-w-0 flex-1 items-center gap-2 rounded-sm px-1 py-0.5 text-left"
       >
         {hasChildren ?
-          <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
-        : <Tag className="size-4 shrink-0 text-muted-foreground" />}
-        <span className="truncate">
+          <FolderOpen
+            className={cn(
+              'size-4 shrink-0',
+              isDeprecated ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'
+            )}
+          />
+        : <Tag
+            className={cn(
+              'size-4 shrink-0',
+              isDeprecated ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground'
+            )}
+          />
+        }
+        <span className={cn('truncate', isDeprecated && 'line-through decoration-2 decoration-amber-600/70')}>
           <Highlight text={nodeName(node)} query={query} />
         </span>
         {isDeprecated && (
-          <Badge variant="secondary" className="h-5 shrink-0 px-1.5 text-xs">
+          <Badge
+            variant="outline"
+            className="h-5 shrink-0 border-amber-500/50 bg-amber-100 px-1.5 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            <Ban className="mr-1 size-3" />
             Deprecated
           </Badge>
         )}
@@ -206,6 +222,7 @@ export function LabelColumns({
   }
 
   const leaf = path[path.length - 1];
+  const leafDeprecated = leaf?.node.deprecated === true;
 
   return (
     <div className="flex flex-col gap-3">
@@ -264,12 +281,24 @@ export function LabelColumns({
       </div>
 
       {leaf && (
-        <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
+        <div
+          className={cn(
+            'rounded-md border bg-muted/40 px-3 py-2 text-sm',
+            leafDeprecated &&
+              'border-amber-300/70 bg-amber-50 text-muted-foreground dark:border-amber-500/40 dark:bg-amber-950/20'
+          )}
+        >
           <div className="mb-1 flex flex-wrap items-center gap-1 text-muted-foreground">
             {path.map((entry, i) => (
               <React.Fragment key={nodeKey(entry.node, i)}>
                 {i > 0 && <ChevronRight className="size-3.5" />}
-                <span className={cn(i === path.length - 1 && 'font-medium text-foreground')}>
+                <span
+                  className={cn(
+                    i === path.length - 1 && 'font-medium text-foreground',
+                    entry.node.deprecated === true &&
+                      'text-muted-foreground line-through decoration-2 decoration-amber-600/70'
+                  )}
+                >
                   {nodeName(entry.node)}
                 </span>
               </React.Fragment>
@@ -277,6 +306,15 @@ export function LabelColumns({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-muted-foreground">{leaf.node.classification}</span>
+            {leafDeprecated && (
+              <Badge
+                variant="outline"
+                className="h-5 border-amber-500/50 bg-amber-100 px-1.5 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+              >
+                <Ban className="mr-1 size-3" />
+                Deprecated
+              </Badge>
+            )}
             <LabelCopyValue value={leaf.node.resourceName} />
           </div>
         </div>
