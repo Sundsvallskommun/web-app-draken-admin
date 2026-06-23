@@ -25,11 +25,13 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from '@components/ui/sidebar';
+import { EnvironmentIndicator } from '@admin/environment-indicator';
 import { Logo } from '@admin/logo';
 import { LogoMark } from '@admin/logo-mark';
 import { type ResourceConfig, type ResourceNavItem, resourceConfigs } from '@admin/resource-config';
 import { useUserStore } from '@services/user-service/user-service';
-import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
+import { cn } from '@utils/cn';
+import { useAdminEnvironment } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ChevronRight, ChevronsUpDown, ExternalLink, LogOut } from 'lucide-react';
 import NextLink from 'next/link';
@@ -47,7 +49,7 @@ function subItems(resource: ResourceConfig, showTestFeatures: boolean): Resource
 export function AppSidebar() {
   const router = useRouter();
   const user = useUserStore(useShallow((s) => s.user));
-  const { showTestFeatures } = useIsProductionEnv();
+  const { environment, showTestFeatures } = useAdminEnvironment();
   const [municipalityId, setMunicipalityId] = useLocalStorage(
     useShallow((s) => [s.municipalityId, s.setMunicipalityId])
   );
@@ -62,7 +64,7 @@ export function AppSidebar() {
     .join('');
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className={cn('border-l-4', environment.sidebarAccentClassName)}>
       <SidebarHeader>
         <NextLink
           href="/"
@@ -74,6 +76,10 @@ export function AppSidebar() {
           {/* Sundsvalls kommun logo when expanded */}
           <Logo className="h-8 w-auto shrink-0 text-sidebar-foreground group-data-[collapsible=icon]:hidden" />
         </NextLink>
+        <EnvironmentIndicator
+          environment={environment}
+          className="mx-1.5 justify-center group-data-[collapsible=icon]:hidden"
+        />
       </SidebarHeader>
 
       <SidebarContent>
