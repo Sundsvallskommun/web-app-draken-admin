@@ -1,4 +1,4 @@
-import { ROOT_PARENT_VALUE } from '@admin/label-editor';
+import { canCreateLabelBelow, ROOT_PARENT_VALUE } from '@admin/label-editor';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Highlight, type LabelNode } from '@admin/label-tree';
@@ -227,57 +227,62 @@ export function LabelColumns({
   return (
     <div className="flex flex-col gap-3">
       <div ref={scrollRef} className="flex overflow-x-auto rounded-md border bg-card">
-        {columns.map((items, level) => (
-          <div
-            key={level}
-            className="relative flex max-h-[28rem] shrink-0 flex-col border-r p-1.5 pr-3 last:border-r-0"
-            style={{ width: columnWidth(level) }}
-          >
-            <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">
-              {items.length > 0 ?
-                items.map((entry, i) => (
-                  <ColumnItem
-                    key={nodeKey(entry.node, i)}
-                    node={entry.node}
-                    pathValue={entry.pathValue}
-                    query={query}
-                    selected={path[level]?.pathValue === entry.pathValue}
-                    onSelect={() => selectAt(level, entry)}
-                    onDeprecatedChange={onDeprecatedChange}
-                    onRemove={onRemove}
-                  />
-                ))
-              : <p className="px-2 py-3 text-sm text-muted-foreground">Inga etiketter på den här nivån.</p>}
-            </div>
-            {onAdd && parentValueForColumn(level) && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="mt-2 w-full justify-start gap-1.5 border border-dashed text-muted-foreground hover:text-foreground"
-                onClick={() => onAdd(parentValueForColumn(level)!)}
-              >
-                <Plus className="size-4" />
-                {level === 0 ? 'Lägg till på rotnivå' : 'Lägg till här'}
-              </Button>
-            )}
+        {columns.map((items, level) => {
+          const addParentValue = parentValueForColumn(level);
+          const canAddToColumnParent = Boolean(addParentValue && canCreateLabelBelow(data, addParentValue));
+
+          return (
             <div
-              role="separator"
-              aria-label="Ändra kolumnbredd"
-              aria-orientation="vertical"
-              aria-valuemin={MIN_COLUMN_WIDTH}
-              aria-valuemax={MAX_COLUMN_WIDTH}
-              aria-valuenow={columnWidth(level)}
-              tabIndex={0}
-              className="absolute right-0 top-0 h-full w-2 cursor-col-resize touch-none border-r border-transparent hover:border-primary/60 focus:border-primary focus:outline-none"
-              onPointerDown={(event) => startResize(event, level)}
-              onPointerMove={resizeColumn}
-              onPointerUp={stopResize}
-              onPointerCancel={stopResize}
-              onKeyDown={(event) => resizeWithKeyboard(event, level)}
-            />
-          </div>
-        ))}
+              key={level}
+              className="relative flex max-h-[28rem] shrink-0 flex-col border-r p-1.5 pr-3 last:border-r-0"
+              style={{ width: columnWidth(level) }}
+            >
+              <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+                {items.length > 0 ?
+                  items.map((entry, i) => (
+                    <ColumnItem
+                      key={nodeKey(entry.node, i)}
+                      node={entry.node}
+                      pathValue={entry.pathValue}
+                      query={query}
+                      selected={path[level]?.pathValue === entry.pathValue}
+                      onSelect={() => selectAt(level, entry)}
+                      onDeprecatedChange={onDeprecatedChange}
+                      onRemove={onRemove}
+                    />
+                  ))
+                : <p className="px-2 py-3 text-sm text-muted-foreground">Inga etiketter på den här nivån.</p>}
+              </div>
+              {onAdd && addParentValue && canAddToColumnParent && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 w-full justify-start gap-1.5 border border-dashed text-muted-foreground hover:text-foreground"
+                  onClick={() => onAdd(addParentValue)}
+                >
+                  <Plus className="size-4" />
+                  {level === 0 ? 'Lägg till på rotnivå' : 'Lägg till här'}
+                </Button>
+              )}
+              <div
+                role="separator"
+                aria-label="Ändra kolumnbredd"
+                aria-orientation="vertical"
+                aria-valuemin={MIN_COLUMN_WIDTH}
+                aria-valuemax={MAX_COLUMN_WIDTH}
+                aria-valuenow={columnWidth(level)}
+                tabIndex={0}
+                className="absolute right-0 top-0 h-full w-2 cursor-col-resize touch-none border-r border-transparent hover:border-primary/60 focus:border-primary focus:outline-none"
+                onPointerDown={(event) => startResize(event, level)}
+                onPointerMove={resizeColumn}
+                onPointerUp={stopResize}
+                onPointerCancel={stopResize}
+                onKeyDown={(event) => resizeWithKeyboard(event, level)}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {leaf && (

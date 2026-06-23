@@ -1,5 +1,6 @@
 import {
   appendLabel,
+  canCreateLabelBelow,
   defaultClassificationForDepth,
   flattenLabelParents,
   resourceNameFromDisplayName,
@@ -87,6 +88,10 @@ export function LabelCreateDialog({
     }
     if (!/^[A-Z0-9_]+$/.test(nextResourceName)) {
       setError('Resursnamn får bara innehålla A-Z, 0-9 och _.');
+      return;
+    }
+    if (!canCreateLabelBelow(data, selectedParent.value)) {
+      setError('Det går inte att lägga till etiketter under en deprecated etikett.');
       return;
     }
 

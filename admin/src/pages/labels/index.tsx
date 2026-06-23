@@ -5,7 +5,13 @@ import { LabelCreateDialog } from '@admin/label-create-dialog';
 import { LabelColumns } from '@admin/label-columns';
 import { LabelDeleteDialog } from '@admin/label-delete-dialog';
 import { LabelDeprecatedDialog } from '@admin/label-deprecated-dialog';
-import { labelsForSave, removeLabel, ROOT_PARENT_VALUE, setLabelDeprecated } from '@admin/label-editor';
+import {
+  canCreateLabelBelow,
+  labelsForSave,
+  removeLabel,
+  ROOT_PARENT_VALUE,
+  setLabelDeprecated,
+} from '@admin/label-editor';
 import { LabelTree, type LabelNode } from '@admin/label-tree';
 import { AdminLayout } from '@admin/admin-layout';
 import { useNamespaces } from '@admin/use-namespaces';
@@ -66,6 +72,10 @@ export default function LabelsPage() {
   };
 
   const openCreateDialog = (parentValue = ROOT_PARENT_VALUE) => {
+    if (!canCreateLabelBelow(labelRows, parentValue)) {
+      toast.error('Det går inte att lägga till etiketter under en deprecated etikett.');
+      return;
+    }
     setCreateParentValue(parentValue);
     setCreateOpen(true);
   };

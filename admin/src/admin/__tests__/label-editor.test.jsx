@@ -1,6 +1,8 @@
 import {
   appendLabel,
+  canCreateLabelBelow,
   defaultClassificationForDepth,
+  flattenLabelParents,
   labelsForSave,
   removeLabel,
   resourceNameFromDisplayName,
@@ -54,6 +56,61 @@ describe('label-editor', () => {
       resourceName: 'AUTOGIRO',
     });
     expect(labels[0].labels?.[0].labels).toEqual([]);
+  });
+
+  it('excludes deprecated branches as possible label parents', () => {
+    const labels = [
+      {
+        classification: 'CATEGORY',
+        displayName: 'Boende',
+        resourceName: 'BOENDE',
+        deprecated: true,
+        labels: [
+          {
+            classification: 'TYPE',
+            displayName: 'Hyra',
+            resourceName: 'HYRA',
+            labels: [],
+          },
+        ],
+      },
+      {
+        classification: 'CATEGORY',
+        displayName: 'Omsorg',
+        resourceName: 'OMSORG',
+        labels: [],
+      },
+    ];
+
+    expect(flattenLabelParents(labels)).toEqual([
+      { value: ROOT_PARENT_VALUE, label: 'Rotnivå', depth: -1 },
+      { value: '1', label: 'Omsorg', depth: 0 },
+    ]);
+    expect(canCreateLabelBelow(labels, ROOT_PARENT_VALUE)).toBe(true);
+    expect(canCreateLabelBelow(labels, '0')).toBe(false);
+    expect(canCreateLabelBelow(labels, '0.0')).toBe(false);
+    expect(canCreateLabelBelow(labels, '1')).toBe(true);
+  });
+
+  it('does not append labels below a deprecated parent', () => {
+    const labels = [
+      {
+        classification: 'CATEGORY',
+        displayName: 'Boende',
+        resourceName: 'BOENDE',
+        deprecated: true,
+        labels: [],
+      },
+    ];
+
+    const next = appendLabel(labels, '0', {
+      classification: 'TYPE',
+      displayName: 'Hyra',
+      resourceName: 'HYRA',
+    });
+
+    expect(next).toBe(labels);
+    expect(next[0].labels).toEqual([]);
   });
 
   it('removes derived list-only state before save', () => {

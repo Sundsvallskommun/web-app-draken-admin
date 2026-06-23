@@ -32,26 +32,46 @@ export function resourceNameFromDisplayName(displayName: string): string {
 export function flattenLabelParents(labels: LabelNode[]): LabelParentOption[] {
   const options: LabelParentOption[] = [{ value: ROOT_PARENT_VALUE, label: 'Rotnivå', depth: -1 }];
 
-  const visit = (items: LabelNode[], path: number[], names: string[]) => {
+  const visit = (items: LabelNode[], path: number[], names: string[], blockedByDeprecated: boolean) => {
     items.forEach((item, index) => {
       const nextPath = [...path, index];
       const name = item.displayName || item.resourceName || item.classification;
       const nextNames = [...names, name];
+      const nextBlockedByDeprecated = blockedByDeprecated || item.deprecated === true;
+      if (nextBlockedByDeprecated) return;
+
       options.push({
         value: nextPath.join('.'),
         label: nextNames.join(' / '),
         depth: nextPath.length - 1,
       });
-      visit(item.labels ?? [], nextPath, nextNames);
+      visit(item.labels ?? [], nextPath, nextNames, nextBlockedByDeprecated);
     });
   };
 
-  visit(labels, [], []);
+  visit(labels, [], [], false);
   return options;
+}
+
+export function canCreateLabelBelow(labels: LabelNode[], parentValue: string): boolean {
+  if (parentValue === ROOT_PARENT_VALUE) return true;
+
+  const parentPath = pathFromValue(parentValue);
+  if (parentPath.length === 0) return false;
+
+  let items = labels;
+  for (const index of parentPath) {
+    const item = items[index];
+    if (!item || item.deprecated === true) return false;
+    items = item.labels ?? [];
+  }
+
+  return true;
 }
 
 export function appendLabel(labels: LabelNode[], parentValue: string, label: LabelNode): LabelNode[] {
   if (parentValue === ROOT_PARENT_VALUE) return [...labels, label];
+  if (!canCreateLabelBelow(labels, parentValue)) return labels;
 
   const parentPath = pathFromValue(parentValue);
 
