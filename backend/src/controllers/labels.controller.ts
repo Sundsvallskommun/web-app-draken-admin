@@ -10,13 +10,14 @@ import { Response } from 'express';
 import { Body, Controller, Get, Param, Post, Put, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
-function mapLabel(label: SupportManagementLabel): Label {
+export function mapLabel(label: SupportManagementLabel): Label {
   return {
     id: label.id,
     classification: label.classification,
     displayName: label.displayName,
     resourceName: label.resourceName,
     resourcePath: label.resourcePath,
+    deprecated: label.deprecated,
     isLeaf: !label.labels || label.labels.length === 0,
     labels: label.labels?.map(mapLabel) ?? [],
     attributes: label.attributes ?? [],

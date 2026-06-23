@@ -25,6 +25,9 @@ export class Label {
   resourcePath?: string;
   @IsBoolean()
   @IsOptional()
+  deprecated?: boolean;
+  @IsBoolean()
+  @IsOptional()
   isLeaf?: boolean;
   @IsArray()
   @ValidateNested({ each: true })
