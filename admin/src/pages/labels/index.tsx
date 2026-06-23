@@ -1,26 +1,65 @@
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import { LabelCreateDialog } from '@admin/label-create-dialog';
 import { LabelColumns } from '@admin/label-columns';
+import { labelsForSave, ROOT_PARENT_VALUE } from '@admin/label-editor';
 import { LabelTree, type LabelNode } from '@admin/label-tree';
 import { AdminLayout } from '@admin/admin-layout';
 import { useNamespaces } from '@admin/use-namespaces';
 import { useResourceRows } from '@admin/use-resource-data';
+import { saveLabels } from '@services/label-service';
 import { cn } from '@utils/cn';
-import { Columns3, ListTree, Loader2, Search, Tags, TriangleAlert } from 'lucide-react';
+import { useLocalStorage } from '@utils/use-localstorage.hook';
+import { Columns3, ListTree, Loader2, Plus, Search, Tags, TriangleAlert } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import * as React from 'react';
+import { toast } from 'sonner';
 
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
 type View = 'tree' | 'columns';
 
+type SaveError = { response?: { data?: { message?: unknown } }; message?: unknown };
+
+const saveErrorMessage = (error: unknown) => {
+  const err = error as SaveError;
+  if (typeof err.response?.data?.message === 'string') return err.response.data.message;
+  if (typeof err.message === 'string') return err.message;
+  return 'fel';
+};
+
 export default function LabelsPage() {
   const [namespace, setNamespace] = React.useState('');
   const [query, setQuery] = React.useState('');
-  const [view, setView] = React.useState<View>('tree');
+  const [view, setView] = React.useState<View>('columns');
+  const [createOpen, setCreateOpen] = React.useState(false);
+  const [createParentValue, setCreateParentValue] = React.useState(ROOT_PARENT_VALUE);
+  const [saving, setSaving] = React.useState(false);
+  const municipalityId = useLocalStorage((s) => s.municipalityId);
   const namespaceOptions = useNamespaces();
-  const { rows, loading, error } = useResourceRows('labels', namespace || undefined);
+  const { rows, loading, error, refresh } = useResourceRows('labels', namespace || undefined);
+  const labelRows = rows as unknown as LabelNode[];
+
+  const createLabel = async (nextLabels: LabelNode[]) => {
+    if (!namespace) return;
+    setSaving(true);
+    try {
+      await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), labelRows.length === 0);
+      toast.success('Etiketten skapades.');
+      setCreateOpen(false);
+      await refresh();
+    } catch (err) {
+      toast.error(`Kunde inte skapa etikett: ${saveErrorMessage(err)}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openCreateDialog = (parentValue = ROOT_PARENT_VALUE) => {
+    setCreateParentValue(parentValue);
+    setCreateOpen(true);
+  };
 
   return (
     <AdminLayout title="Etiketter" breadcrumb="Resurser">
@@ -38,7 +77,7 @@ export default function LabelsPage() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Sök i trädet…"
+              placeholder="Sök bland etiketter…"
               className="pl-9"
               disabled={!namespace}
             />
@@ -56,19 +95,8 @@ export default function LabelsPage() {
             </SelectContent>
           </Select>
 
-          {/* Visningsläge: träd eller macOS-liknande kolumnnavigering */}
+          {/* Visningsläge: macOS-liknande kolumnnavigering eller träd */}
           <div className="flex items-center rounded-md border p-0.5">
-            <Button
-              type="button"
-              size="sm"
-              variant={view === 'tree' ? 'secondary' : 'ghost'}
-              className={cn('h-7 gap-1.5 px-2', view !== 'tree' && 'text-muted-foreground')}
-              onClick={() => setView('tree')}
-              aria-pressed={view === 'tree'}
-            >
-              <ListTree className="size-4" />
-              Träd
-            </Button>
             <Button
               type="button"
               size="sm"
@@ -80,22 +108,50 @@ export default function LabelsPage() {
               <Columns3 className="size-4" />
               Kolumner
             </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={view === 'tree' ? 'secondary' : 'ghost'}
+              className={cn('h-7 gap-1.5 px-2', view !== 'tree' && 'text-muted-foreground')}
+              onClick={() => setView('tree')}
+              aria-pressed={view === 'tree'}
+            >
+              <ListTree className="size-4" />
+              Träd
+            </Button>
           </div>
 
           {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+
+          <Button
+            type="button"
+            className="ml-auto gap-1.5"
+            disabled={!namespace || loading}
+            onClick={() => openCreateDialog()}
+          >
+            <Plus className="size-4" />
+            Lägg till etikett
+          </Button>
         </div>
 
-        {!namespace ? (
+        {!namespace ?
           <div className="flex flex-col items-center gap-2 rounded-md border border-dashed py-12 text-center text-muted-foreground">
             <Tags className="size-6" />
             <p className="text-sm">Välj ett namespace för att visa etiketter.</p>
           </div>
-        ) : view === 'tree' ? (
-          <LabelTree data={rows as unknown as LabelNode[]} query={query} />
-        ) : (
-          <LabelColumns data={rows as unknown as LabelNode[]} query={query} />
-        )}
+        : view === 'columns' ?
+          <LabelColumns data={labelRows} query={query} onAdd={openCreateDialog} />
+        : <LabelTree data={labelRows} query={query} />}
       </div>
+
+      <LabelCreateDialog
+        data={labelRows}
+        open={createOpen}
+        saving={saving}
+        initialParentValue={createParentValue}
+        onOpenChange={setCreateOpen}
+        onCreate={createLabel}
+      />
     </AdminLayout>
   );
 }

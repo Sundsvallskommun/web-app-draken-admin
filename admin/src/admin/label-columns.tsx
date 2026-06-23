@@ -1,9 +1,11 @@
+import { ROOT_PARENT_VALUE } from '@admin/label-editor';
 import { Badge } from '@components/ui/badge';
+import { Button } from '@components/ui/button';
 import { Highlight, type LabelNode } from '@admin/label-tree';
 import { LabelCopyValue } from '@admin/label-copy-value';
 import { matchesSubtree } from '@admin/label-utils';
 import { cn } from '@utils/cn';
-import { ChevronRight, FolderOpen, Tag } from 'lucide-react';
+import { ChevronRight, FolderOpen, Plus, Tag } from 'lucide-react';
 import * as React from 'react';
 
 const nodeName = (node: LabelNode) => node.displayName || node.classification;
@@ -12,10 +14,19 @@ const DEFAULT_COLUMN_WIDTH = 352;
 const MIN_COLUMN_WIDTH = 256;
 const MAX_COLUMN_WIDTH = 640;
 
-const filterItems = (items: LabelNode[], query: string) =>
-  query ? items.filter((n) => matchesSubtree(n, query)) : items;
-
 const clampColumnWidth = (width: number) => Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, width));
+
+interface ColumnEntry {
+  node: LabelNode;
+  pathValue: string;
+}
+
+type PathEntry = ColumnEntry;
+
+const columnEntries = (items: LabelNode[], parentPath: string, query: string): ColumnEntry[] =>
+  items
+    .map((node, index) => ({ node, pathValue: parentPath ? `${parentPath}.${index}` : String(index) }))
+    .filter(({ node }) => !query || matchesSubtree(node, query));
 
 function ColumnItem({
   node,
@@ -65,8 +76,16 @@ function ColumnItem({
  * Varje vald nod med barn öppnar en ny kolumn till höger — lättare att tolka
  * djupa hierarkier än den hopfällbara trädvyn.
  */
-export function LabelColumns({ data, query = '' }: { data: LabelNode[]; query?: string }) {
-  const [path, setPath] = React.useState<LabelNode[]>([]);
+export function LabelColumns({
+  data,
+  query = '',
+  onAdd,
+}: {
+  data: LabelNode[];
+  query?: string;
+  onAdd?: (parentValue: string) => void;
+}) {
+  const [path, setPath] = React.useState<PathEntry[]>([]);
   const [columnWidths, setColumnWidths] = React.useState<Record<number, number>>({});
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const resizeRef = React.useRef<{ level: number; startX: number; startWidth: number } | null>(null);
@@ -78,10 +97,9 @@ export function LabelColumns({ data, query = '' }: { data: LabelNode[]; query?: 
 
   // Columns: roots first, then the children of each selected node that has any.
   const columns = React.useMemo(() => {
-    const cols: LabelNode[][] = [filterItems(data, query)];
-    for (const node of path) {
-      const children = filterItems(node.labels ?? [], query);
-      if (children.length === 0) break;
+    const cols: ColumnEntry[][] = [columnEntries(data, '', query)];
+    for (const entry of path) {
+      const children = columnEntries(entry.node.labels ?? [], entry.pathValue, query);
       cols.push(children);
     }
     return cols;
@@ -93,7 +111,9 @@ export function LabelColumns({ data, query = '' }: { data: LabelNode[]; query?: 
     if (el) el.scrollLeft = el.scrollWidth;
   }, [columns.length]);
 
-  const selectAt = (level: number, node: LabelNode) => setPath((prev) => [...prev.slice(0, level), node]);
+  const selectAt = (level: number, entry: ColumnEntry) => setPath((prev) => [...prev.slice(0, level), entry]);
+
+  const parentValueForColumn = (level: number) => (level === 0 ? ROOT_PARENT_VALUE : path[level - 1]?.pathValue);
 
   const columnWidth = React.useCallback((level: number) => columnWidths[level] ?? DEFAULT_COLUMN_WIDTH, [columnWidths]);
 
@@ -150,18 +170,34 @@ export function LabelColumns({ data, query = '' }: { data: LabelNode[]; query?: 
         {columns.map((items, level) => (
           <div
             key={level}
-            className="relative max-h-[28rem] shrink-0 space-y-0.5 overflow-y-auto border-r p-1.5 pr-3 last:border-r-0"
+            className="relative flex max-h-[28rem] shrink-0 flex-col border-r p-1.5 pr-3 last:border-r-0"
             style={{ width: columnWidth(level) }}
           >
-            {items.map((node, i) => (
-              <ColumnItem
-                key={nodeKey(node, i)}
-                node={node}
-                query={query}
-                selected={path[level] === node}
-                onSelect={() => selectAt(level, node)}
-              />
-            ))}
+            <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+              {items.length > 0 ?
+                items.map((entry, i) => (
+                  <ColumnItem
+                    key={nodeKey(entry.node, i)}
+                    node={entry.node}
+                    query={query}
+                    selected={path[level]?.pathValue === entry.pathValue}
+                    onSelect={() => selectAt(level, entry)}
+                  />
+                ))
+              : <p className="px-2 py-3 text-sm text-muted-foreground">Inga etiketter på den här nivån.</p>}
+            </div>
+            {onAdd && parentValueForColumn(level) && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-2 w-full justify-start gap-1.5 border border-dashed text-muted-foreground hover:text-foreground"
+                onClick={() => onAdd(parentValueForColumn(level)!)}
+              >
+                <Plus className="size-4" />
+                {level === 0 ? 'Lägg till på rotnivå' : 'Lägg till här'}
+              </Button>
+            )}
             <div
               role="separator"
               aria-label="Ändra kolumnbredd"
@@ -184,16 +220,18 @@ export function LabelColumns({ data, query = '' }: { data: LabelNode[]; query?: 
       {leaf && (
         <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
           <div className="mb-1 flex flex-wrap items-center gap-1 text-muted-foreground">
-            {path.map((node, i) => (
-              <React.Fragment key={nodeKey(node, i)}>
+            {path.map((entry, i) => (
+              <React.Fragment key={nodeKey(entry.node, i)}>
                 {i > 0 && <ChevronRight className="size-3.5" />}
-                <span className={cn(i === path.length - 1 && 'font-medium text-foreground')}>{nodeName(node)}</span>
+                <span className={cn(i === path.length - 1 && 'font-medium text-foreground')}>
+                  {nodeName(entry.node)}
+                </span>
               </React.Fragment>
             ))}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">{leaf.classification}</span>
-            <LabelCopyValue value={leaf.resourceName} />
+            <span className="text-xs text-muted-foreground">{leaf.node.classification}</span>
+            <LabelCopyValue value={leaf.node.resourceName} />
           </div>
         </div>
       )}
