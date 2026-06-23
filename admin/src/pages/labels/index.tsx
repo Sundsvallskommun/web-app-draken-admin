@@ -3,7 +3,8 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { LabelCreateDialog } from '@admin/label-create-dialog';
 import { LabelColumns } from '@admin/label-columns';
-import { labelsForSave, ROOT_PARENT_VALUE } from '@admin/label-editor';
+import { LabelDeleteDialog } from '@admin/label-delete-dialog';
+import { labelsForSave, removeLabel, ROOT_PARENT_VALUE } from '@admin/label-editor';
 import { LabelTree, type LabelNode } from '@admin/label-tree';
 import { AdminLayout } from '@admin/admin-layout';
 import { useNamespaces } from '@admin/use-namespaces';
@@ -21,6 +22,7 @@ export const getServerSideProps: GetServerSideProps = async () => ({ props: {} }
 type View = 'tree' | 'columns';
 
 type SaveError = { response?: { data?: { message?: unknown } }; message?: unknown };
+type RemoveTarget = { label: LabelNode; labelValue: string };
 
 const saveErrorMessage = (error: unknown) => {
   const err = error as SaveError;
@@ -35,6 +37,7 @@ export default function LabelsPage() {
   const [view, setView] = React.useState<View>('columns');
   const [createOpen, setCreateOpen] = React.useState(false);
   const [createParentValue, setCreateParentValue] = React.useState(ROOT_PARENT_VALUE);
+  const [removeTarget, setRemoveTarget] = React.useState<RemoveTarget | null>(null);
   const [saving, setSaving] = React.useState(false);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const namespaceOptions = useNamespaces();
@@ -59,6 +62,22 @@ export default function LabelsPage() {
   const openCreateDialog = (parentValue = ROOT_PARENT_VALUE) => {
     setCreateParentValue(parentValue);
     setCreateOpen(true);
+  };
+
+  const removeSelectedLabel = async () => {
+    if (!namespace || !removeTarget) return;
+    setSaving(true);
+    try {
+      const nextLabels = removeLabel(labelRows, removeTarget.labelValue);
+      await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      toast.success('Etiketten togs bort.');
+      setRemoveTarget(null);
+      await refresh();
+    } catch (err) {
+      toast.error(`Kunde inte ta bort etikett: ${saveErrorMessage(err)}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -140,8 +159,18 @@ export default function LabelsPage() {
             <p className="text-sm">Välj ett namespace för att visa etiketter.</p>
           </div>
         : view === 'columns' ?
-          <LabelColumns data={labelRows} query={query} onAdd={openCreateDialog} />
-        : <LabelTree data={labelRows} query={query} />}
+          <LabelColumns
+            data={labelRows}
+            query={query}
+            onAdd={openCreateDialog}
+            onRemove={(label, labelValue) => setRemoveTarget({ label, labelValue })}
+          />
+        : <LabelTree
+            data={labelRows}
+            query={query}
+            onRemove={(label, labelValue) => setRemoveTarget({ label, labelValue })}
+          />
+        }
       </div>
 
       <LabelCreateDialog
@@ -151,6 +180,13 @@ export default function LabelsPage() {
         initialParentValue={createParentValue}
         onOpenChange={setCreateOpen}
         onCreate={createLabel}
+      />
+      <LabelDeleteDialog
+        label={removeTarget?.label ?? null}
+        open={Boolean(removeTarget)}
+        saving={saving}
+        onOpenChange={(open) => !open && setRemoveTarget(null)}
+        onDelete={removeSelectedLabel}
       />
     </AdminLayout>
   );
