@@ -25,6 +25,7 @@ import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
 import { MonacoField } from '@admin/monaco-field';
 import { type FieldDef, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
+import { requiredRuleFor } from '@admin/resource-form-validation';
 import { useNamespaces } from '@admin/use-namespaces';
 import { createRow, getResourceDefaults, getResourceRequiredFields, removeRow, updateRow } from '@admin/use-resource-data';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
@@ -32,11 +33,26 @@ import type { TextEditorProps } from '@sk-web-gui/text-editor';
 import { Trash2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { useForm } from 'react-hook-form';
+import { type FieldErrors, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+
+const stringValue = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
+
+const errMsg = (error: unknown) => {
+  if (!isRecord(error)) return 'fel';
+  const response = isRecord(error.response) ? error.response : undefined;
+  const data = isRecord(response?.data) ? response.data : undefined;
+  return stringValue(data?.message) ?? stringValue(error.message) ?? 'fel';
+};
+
+const fieldErrorMessage = (errors: FieldErrors<Record<string, unknown>>): string | undefined => {
+  for (const error of Object.values(errors)) {
+    if (isRecord(error) && typeof error.message === 'string') return error.message;
+  }
+  return undefined;
+};
 
 const TextEditor = dynamic<TextEditorProps>(() => import('@sk-web-gui/text-editor').then((mod) => mod.TextEditor), {
   ssr: false,
@@ -130,6 +146,10 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
     }
   };
 
+  const onInvalid = (errors: FieldErrors<Record<string, unknown>>) => {
+    toast.error(fieldErrorMessage(errors) ?? 'Kontrollera markerade fält innan du sparar.');
+  };
+
   const onDelete = async () => {
     if (!initial) return;
     try {
@@ -143,7 +163,7 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex max-w-xl flex-col gap-6">
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="flex max-w-xl flex-col gap-6">
         {resource.fields.map((field) => {
           const disabled = !isNew && field.lockedOnEdit;
           const required = field.required || requiredFields.includes(field.key);
@@ -152,18 +172,21 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
               key={field.key}
               control={form.control}
               name={field.key}
-              rules={required ? { required: `${field.label} är obligatoriskt` } : undefined}
+              rules={requiredRuleFor(field, required)}
               render={({ field: rhf }) => {
                 if (field.type === 'switch') {
                   return (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>{field.label}</FormLabel>
-                        {field.help && <FormDescription>{field.help}</FormDescription>}
+                    <FormItem className="rounded-lg border p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="space-y-0.5">
+                          <FormLabel>{field.label}</FormLabel>
+                          {field.help && <FormDescription>{field.help}</FormDescription>}
+                        </div>
+                        <FormControl>
+                          <Switch checked={Boolean(rhf.value)} onCheckedChange={rhf.onChange} disabled={disabled} />
+                        </FormControl>
                       </div>
-                      <FormControl>
-                        <Switch checked={Boolean(rhf.value)} onCheckedChange={rhf.onChange} disabled={disabled} />
-                      </FormControl>
+                      <FormMessage />
                     </FormItem>
                   );
                 }
