@@ -1,37 +1,61 @@
-import { checkCompareAvailable } from '@services/compare-service';
+import { fetchAdminEnvironment } from '@services/admin-environment-service';
+import {
+  adminEnvironmentFromKind,
+  checkingAdminEnvironment,
+  shouldTreatAsProduction,
+  type AdminEnvironmentState,
+} from '@utils/admin-environment';
 import { useEffect, useState } from 'react';
 
-// We treat "compare is configured" as the signal that we are running in the
-// production environment, since compare is only wired up there (pointing at test).
-// Approval-for-production is a test-environment concept and should not be exposed in prod.
-//
+const templateTestStatusEnabled = process.env.NEXT_PUBLIC_ENABLE_TEMPLATE_TEST_STATUS === 'true';
+
 // The lookup is cached at module level so the consumers share a single
-// /compare/available request per session instead of each firing their own.
-let cachedAvailability: Promise<boolean> | null = null;
-const getCompareAvailable = (): Promise<boolean> => {
-  if (!cachedAvailability) {
-    cachedAvailability = checkCompareAvailable();
+// /admin/environment request per session instead of each firing their own.
+let cachedEnvironment: Promise<AdminEnvironmentState> | null = null;
+const getAdminEnvironment = (): Promise<AdminEnvironmentState> => {
+  if (!cachedEnvironment) {
+    cachedEnvironment = fetchAdminEnvironment().then(adminEnvironmentFromKind);
   }
-  return cachedAvailability;
+  return cachedEnvironment;
 };
 
-export function useIsProductionEnv(): { isProduction: boolean; loaded: boolean; showTestFeatures: boolean } {
-  const [isProduction, setIsProduction] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+export function useAdminEnvironment(): {
+  environment: AdminEnvironmentState;
+  isProduction: boolean;
+  loaded: boolean;
+  showTestFeatures: boolean;
+} {
+  const [environment, setEnvironment] = useState<AdminEnvironmentState>(checkingAdminEnvironment());
 
   useEffect(() => {
     let cancelled = false;
-    getCompareAvailable().then((available) => {
+    getAdminEnvironment().then((nextEnvironment) => {
       if (cancelled) return;
-      setIsProduction(available);
-      setLoaded(true);
+      setEnvironment(nextEnvironment);
     });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Test/approval features must stay hidden until we KNOW we are not in production,
+  const isProduction = shouldTreatAsProduction(environment);
+  const loaded = environment.status !== 'checking';
+
+  // Test/approval features must stay hidden until we KNOW we are in test,
   // otherwise they would flash visible on first render before the async check resolves.
-  return { isProduction, loaded, showTestFeatures: loaded && !isProduction };
+  return {
+    environment,
+    isProduction,
+    loaded,
+    showTestFeatures: templateTestStatusEnabled && environment.kind === 'test',
+  };
+}
+
+export function useIsProductionEnv(): {
+  environment: AdminEnvironmentState;
+  isProduction: boolean;
+  loaded: boolean;
+  showTestFeatures: boolean;
+} {
+  return useAdminEnvironment();
 }

@@ -12,6 +12,7 @@ import { CategoriesController } from './controllers/categories.controller';
 import { CompareController } from './controllers/compare.controller';
 import { ContactReasonsController } from './controllers/contact-reasons.controller';
 import { EmailIntegrationController } from './controllers/email-integration.controller';
+import { EnvironmentController } from './controllers/environment.controller';
 import { TemplateController } from './controllers/templates.controller';
 import { UserController } from './controllers/user.controller';
 
@@ -30,6 +31,7 @@ const app = new App([
   ContactReasonsController,
   CategoriesController,
   EmailIntegrationController,
+  EnvironmentController,
   JsonSchemaController,
   LabelsController,
 ]);

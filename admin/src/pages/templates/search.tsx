@@ -1,93 +1,58 @@
-import resources from '@config/resources';
-import ListLayout from '@layouts/list-layout/list-layout.component';
-import { Template } from '@services/templating/templating-service';
-import { AutoTable, AutoTableHeader, Button, FormErrorMessage, FormLabel, Icon, Input } from '@sk-web-gui/react';
-import { getFormattedFields } from '@utils/formatted-field';
-import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { Pencil } from 'lucide-react';
-import { GetServerSideProps } from 'next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { Badge } from '@components/ui/badge';
+import { Card } from '@components/ui/card';
+import { Input } from '@components/ui/input';
+import { AdminLayout } from '@admin/admin-layout';
+import { useResourceRows } from '@admin/use-resource-data';
+import { ArrowRight, Search } from 'lucide-react';
+import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
-import { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import * as React from 'react';
 
-export const TemplateSearch: React.FC = () => {
-  const { t } = useTranslation();
-  const [identifier, setIdentifier] = useState<string>('');
-  const [fetchedTemplate, setFetchedTemplate] = useState<Template>();
-  const [error, setError] = useState<boolean>(false);
+export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
-  const resource = 'templates';
-  const properties = ['identifier', 'name', 'description', 'version'];
-
-  const { municipalityId } = useLocalStorage();
-
-  const { getOne } = resources[resource];
-
-  const getTemplate = (identifier: string) => {
-    setFetchedTemplate(undefined);
-    if (getOne) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      getOne(municipalityId, identifier as any)
-        .then((res) => {
-          if (!res.data.data) {
-            setError(true);
-            return;
-          }
-          setFetchedTemplate(res.data.data as Template);
-          setError(false);
-        })
-        .catch(() => setError(true));
-    }
-  };
-
-  const editHeader: AutoTableHeader = {
-    label: 'edit',
-    property: 'identifier',
-    isColumnSortable: false,
-    screenReaderOnly: true,
-    sticky: true,
-    renderColumn: (value) => (
-      <div className="text-right w-full">
-        <NextLink href={`/${resource}/${value}`} aria-label="Redigera">
-          <Icon.Padded icon={<Pencil />} variant="tertiary" className="link-btn" />
-        </NextLink>
-      </div>
-    ),
-  };
-
-  const translatedHeaders: AutoTableHeader[] =
-    properties?.map((header) => ({
-      label: t(`${resource}:properties.${header}`, { defaultValue: header }),
-      property: header,
-    })) || [];
-
-  const autoHeaders = [...translatedHeaders, editHeader];
-
-  const formattedFetchedTemplate = useMemo(
-    () => (fetchedTemplate ? [getFormattedFields(fetchedTemplate)] : []),
-    [fetchedTemplate]
-  );
+export default function TemplateSearch() {
+  const { rows, loading } = useResourceRows('templates');
+  const [q, setQ] = React.useState('');
+  const term = q.trim().toLowerCase();
+  const results = term
+    ? rows.filter((t) => [t.identifier, t.name, t.description].some((v) => String(v ?? '').toLowerCase().includes(term)))
+    : rows;
 
   return (
-    resource && (
-      <ListLayout resource={resource} properties={properties}>
-        <FormLabel>Sök efter mall med identifierare</FormLabel>
-        <div className="flex flex-row gap-8 my-16">
-          <Input onChange={(e) => setIdentifier(e.target.value)} className="w-[40rem]" />
-          <Button onClick={() => getTemplate(identifier)}>Sök</Button>
+    <AdminLayout title="Sök efter mall" breadcrumb="Mallar">
+      <div className="flex max-w-xl flex-col gap-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            autoFocus
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Sök på identifierare, namn eller beskrivning…"
+            className="pl-9"
+          />
         </div>
-        {!!error && <FormErrorMessage>Ingen mall hittades</FormErrorMessage>}
-        {!!fetchedTemplate && <AutoTable pageSize={1} autodata={formattedFetchedTemplate} autoheaders={autoHeaders} />}
-      </ListLayout>
-    )
+
+        <p className="text-sm text-muted-foreground">{loading ? 'Hämtar…' : `${results.length} mallar`}</p>
+
+        <ul className="flex flex-col gap-2">
+          {results.map((t) => (
+            <li key={t.__key}>
+              <NextLink href={`/templates/${t.__key}`}>
+                <Card className="flex items-center justify-between p-4 transition-colors hover:border-primary">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{String(t.name ?? t.identifier)}</span>
+                    <span className="text-sm text-muted-foreground">{String(t.identifier)}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {t.version != null && <Badge variant="secondary">v{String(t.version)}</Badge>}
+                    <ArrowRight className="size-4 text-muted-foreground" />
+                  </div>
+                </Card>
+              </NextLink>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </AdminLayout>
   );
-};
-
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
-  props: {
-    ...(await serverSideTranslations(locale, ['common', 'layout', 'crud', ...Object.keys(resources)])),
-  },
-});
-
-export default TemplateSearch;
+}

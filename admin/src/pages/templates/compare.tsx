@@ -1,20 +1,22 @@
-import { CompareDiffDialog } from '@components/compare-diff-dialog/compare-diff-dialog';
-import { CompareViewDialog } from '@components/compare-diff-dialog/compare-view-dialog';
-import { CompareSyncDialog, SyncData, SyncType } from '@components/compare-sync-dialog/compare-sync-dialog';
-import resources from '@config/resources';
-import DefaultLayout from '@layouts/default-layout/default-layout.component';
-import { Header } from '@layouts/header/header.component';
-import Main from '@layouts/main/main.component';
-import { CompareItem, CompareResult, checkCompareAvailable, fetchCompare } from '@services/compare-service';
-import { getMetadataValue, TEST_STATUS_KEY, TEST_STATUS_APPROVED } from '@utils/template-metadata';
-import { useCrudHelper } from '@utils/use-crud-helpers';
-import { AutoTable, AutoTableHeader, Badge, Button, Disclosure, FormControl, FormLabel, Icon, Select, Spinner } from '@sk-web-gui/react';
+import { Badge } from '@components/ui/badge';
+import { Button } from '@components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@components/ui/collapsible';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
+import { AdminLayout } from '@admin/admin-layout';
+import { CompareDiffDialog } from '@admin/compare-diff-dialog';
+import { CompareSyncDialog, type SyncData, type SyncType } from '@admin/compare-sync-dialog';
+import { CompareViewDialog } from '@admin/compare-view-dialog';
+import { useNamespaces } from '@admin/use-namespaces';
+import { createRow } from '@admin/use-resource-data';
+import { type CompareItem, type CompareResult, checkCompareAvailable, fetchCompare } from '@services/compare-service';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { ArrowDownToLine, Eye } from 'lucide-react';
-import { GetServerSideProps } from 'next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { capitalize } from 'underscore.string';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ChevronRight, Eye, Info, Loader2, Send } from 'lucide-react';
+import type { GetServerSideProps } from 'next';
+import * as React from 'react';
+import { toast } from 'sonner';
+
+export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
 const DIFF_FIELD_LABELS: Record<string, string> = {
   content: 'Innehåll',
@@ -22,328 +24,331 @@ const DIFF_FIELD_LABELS: Record<string, string> = {
   defaultValues: 'Standardvärden',
 };
 
-const CompareSection: React.FC<{
-  title: string;
-  items: CompareItem[];
-  variant: 'warning' | 'error' | 'tertiary';
-  headers: AutoTableHeader[];
-}> = ({ title, items, variant, headers }) => {
-  if (items.length === 0) return null;
+type Row = CompareItem & { diffLabel?: string };
+interface Col {
+  header: string;
+  align?: 'right';
+  cell: (item: Row) => React.ReactNode;
+}
 
-  const colorMap = {
-    tertiary: 'text-tertiary',
-    warning: 'text-warning',
-    error: 'text-error',
-  };
-
+function CompareTable({ items, columns }: { items: Row[]; columns: Col[] }) {
   return (
-    <Disclosure initalOpen>
-      <Disclosure.Header>
-        <Disclosure.Title>
-          <span className="flex items-center gap-8">
-            <span className={colorMap[variant]}>{title}</span>
-            <Badge color={variant} rounded>{items.length}</Badge>
-          </span>
-        </Disclosure.Title>
-      </Disclosure.Header>
-      <Disclosure.Content>
-        <AutoTable
-          dense
-          pageSize={100}
-          autodata={items}
-          autoheaders={headers}
-        />
-      </Disclosure.Content>
-    </Disclosure>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          {columns.map((c, i) => (
+            <TableHead key={i} className={c.align === 'right' ? 'text-right' : undefined}>
+              {c.header}
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {items.map((item) => (
+          <TableRow key={item.identifier}>
+            {columns.map((c, i) => (
+              <TableCell key={i} className={c.align === 'right' ? 'text-right' : undefined}>
+                {c.cell(item)}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
-};
+}
 
-export const TemplateCompare: React.FC = () => {
-  const { municipalityId, selectedNamespace } = useLocalStorage();
+function Section({
+  title,
+  count,
+  countVariant,
+  children,
+}: {
+  title: string;
+  count: number;
+  countVariant: 'default' | 'secondary' | 'destructive';
+  children: React.ReactNode;
+}) {
+  if (count === 0) return null;
+  return (
+    <Collapsible defaultOpen className="rounded-md border">
+      <CollapsibleTrigger className="group flex w-full items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-accent">
+        <ChevronRight className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+        <span className="font-medium">{title}</span>
+        <Badge variant={countVariant} className="ml-1">
+          {count}
+        </Badge>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="border-t">{children}</div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
 
-  const [available, setAvailable] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<CompareResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedDiff, setSelectedDiff] = useState<CompareItem | null>(null);
-  const [selectedView, setSelectedView] = useState<CompareItem | null>(null);
-  const [selectedTemplateType, setSelectedTemplateType] = useState<string>('');
-  const [syncItem, setSyncItem] = useState<CompareItem | null>(null);
-  const [syncType, setSyncType] = useState<SyncType>('create');
-  const [syncing, setSyncing] = useState(false);
-  const [syncedIdentifiers, setSyncedIdentifiers] = useState<Set<string>>(new Set());
+export default function TemplateCompare() {
+  const municipalityId = useLocalStorage((s) => s.municipalityId);
+  const nsOptions = useNamespaces();
 
-  const isItemApproved = useCallback((item: CompareItem): boolean => {
-    const meta = item.detail?.compareMetadata;
-    if (!meta) return false;
-    return getMetadataValue(meta, TEST_STATUS_KEY) === TEST_STATUS_APPROVED;
-  }, []);
+  const [available, setAvailable] = React.useState<boolean | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState<CompareResult | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [namespace, setNamespace] = React.useState('');
+  const [selectedType, setSelectedType] = React.useState('');
 
-  const { handleCreate } = useCrudHelper('templates');
+  const [selectedDiff, setSelectedDiff] = React.useState<CompareItem | null>(null);
+  const [selectedView, setSelectedView] = React.useState<CompareItem | null>(null);
+  const [syncItem, setSyncItem] = React.useState<CompareItem | null>(null);
+  const [syncType, setSyncType] = React.useState<SyncType>('create');
+  const [syncing, setSyncing] = React.useState(false);
+  const [syncedIds, setSyncedIds] = React.useState<Set<string>>(new Set());
 
-  useEffect(() => {
+  React.useEffect(() => {
     checkCompareAvailable().then(setAvailable);
   }, []);
 
-  const runCompare = useCallback(async () => {
+  const runCompare = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchCompare('templates', municipalityId, selectedNamespace || undefined);
+      const data = await fetchCompare('templates', municipalityId, namespace || undefined);
       setResult(data);
     } catch {
       setError('Kunde inte hämta jämförelsedata. Kontrollera att jämförelsemiljön är nåbar.');
     } finally {
       setLoading(false);
     }
-  }, [municipalityId, selectedNamespace]);
+  };
 
-  const openSyncDialog = useCallback((item: CompareItem, type: SyncType) => {
-    setSyncItem(item);
-    setSyncType(type);
-  }, []);
-
-  const handleSync = useCallback(async (data: SyncData) => {
-    if (!resources.templates.create) return;
+  const handleSync = async (data: SyncData) => {
     setSyncing(true);
     try {
-      const result = await handleCreate(() =>
-        resources.templates.create!(municipalityId, {
-          identifier: data.identifier,
-          name: data.name,
-          content: data.content,
-          metadata: data.metadata,
-          defaultValues: data.defaultValues,
-          versionIncrement: data.versionIncrement,
-          changeLog: data.changeLog,
-        })
-      );
-      if (result) {
-        setSyncedIdentifiers((prev) => new Set(prev).add(data.identifier));
-        setSyncItem(null);
-      }
+      await createRow('templates', municipalityId, {
+        identifier: data.identifier,
+        name: data.name,
+        content: data.content,
+        metadata: data.metadata,
+        defaultValues: data.defaultValues,
+        versionIncrement: data.versionIncrement,
+        changeLog: data.changeLog,
+      });
+      setSyncedIds((prev) => new Set(prev).add(data.identifier));
+      setSyncItem(null);
+      toast.success(`${data.identifier} synkroniserades till produktion.`);
+    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      toast.error(`Kunde inte synkronisera: ${(e as any)?.response?.data?.message ?? 'fel'}`);
     } finally {
       setSyncing(false);
     }
-  }, [municipalityId, handleCreate]);
+  };
 
-  const differentWithLabels = useMemo(
-    () =>
-      result?.different.map((item) => ({
-        ...item,
-        diffLabel: item.differences?.map((d) => DIFF_FIELD_LABELS[d] ?? d).join(', ') ?? '',
-      })) ?? [],
-    [result]
+  const isApproved = (item: CompareItem) => item.testApproved === true;
+
+  const byType = React.useCallback(
+    (items: CompareItem[]) => (selectedType ? items.filter((i) => i.templateType === selectedType) : items),
+    [selectedType]
   );
 
-  const allItems = useMemo(
-    () => [
+  const templateTypes = React.useMemo(() => {
+    const all = [
       ...(result?.missingLocally ?? []),
       ...(result?.missingInCompare ?? []),
       ...(result?.different ?? []),
-    ],
-    [result]
+    ];
+    return Array.from(new Set(all.map((i) => i.templateType).filter(Boolean) as string[])).sort();
+  }, [result]);
+
+  const missingLocally = byType(result?.missingLocally ?? []);
+  const missingInCompare = byType(result?.missingInCompare ?? []);
+  const different: Row[] = byType(result?.different ?? []).map((item) => ({
+    ...item,
+    diffLabel: item.differences?.map((d) => DIFF_FIELD_LABELS[d] ?? d).join(', ') ?? '',
+  }));
+  const totalDiffs = result ? missingLocally.length + missingInCompare.length + different.length : null;
+
+  const statusBadges = (item: CompareItem) => (
+    <>
+      {isApproved(item) && (
+        <Badge className="bg-emerald-600 hover:bg-emerald-600">Godkänd</Badge>
+      )}
+      {syncedIds.has(item.identifier) && <Badge variant="secondary">Synkad</Badge>}
+    </>
   );
 
-  const templateTypes = useMemo(() => {
-    const types = new Set<string>();
-    allItems.forEach((item) => {
-      if (item.templateType) types.add(item.templateType);
-    });
-    return Array.from(types).sort();
-  }, [allItems]);
-
-  const filterByType = useCallback(
-    (items: CompareItem[]) =>
-      selectedTemplateType ? items.filter((i) => i.templateType === selectedTemplateType) : items,
-    [selectedTemplateType]
-  );
-
-  const filteredMissingLocally = useMemo(() => filterByType(result?.missingLocally ?? []), [result, filterByType]);
-  const filteredMissingInCompare = useMemo(() => filterByType(result?.missingInCompare ?? []), [result, filterByType]);
-  const filteredDifferent = useMemo(() => filterByType(differentWithLabels), [differentWithLabels, filterByType]);
-
-  const totalDiffs = result
-    ? filteredMissingLocally.length + filteredMissingInCompare.length + filteredDifferent.length
-    : null;
-
-  const missingLocallyHeaders: AutoTableHeader[] = [
-    { label: 'Identifierare', property: 'identifier' },
-    { label: 'Namn', property: 'name' },
-    { label: 'Malltyp', property: 'templateType' },
-    { label: 'Version (test)', property: 'compareVersion' },
+  const missingLocallyCols: Col[] = [
+    { header: 'Identifierare', cell: (i) => <span className="font-medium">{i.identifier}</span> },
+    { header: 'Namn', cell: (i) => <span className="text-muted-foreground">{i.name ?? '—'}</span> },
+    { header: 'Malltyp', cell: (i) => <span className="text-muted-foreground">{i.templateType ?? '—'}</span> },
+    { header: 'Version (test)', cell: (i) => <span className="text-muted-foreground">{i.compareVersion ?? '—'}</span> },
     {
-      label: 'Åtgärder',
-      property: 'identifier',
-      isColumnSortable: false,
-      screenReaderOnly: true,
-      renderColumn: (value: string) => {
-        const item = result?.missingLocally.find((d) => d.identifier === value);
-        const isSynced = syncedIdentifiers.has(value);
-        return (
-          <div className="text-right w-full flex items-center justify-end gap-4">
-            {item && isItemApproved(item) && <Badge color="gronsta" rounded>Godkänd</Badge>}
-            {isSynced && <Badge color="juniskar" rounded>Synkad</Badge>}
-            {item?.detail && !isSynced && (
-              <button onClick={() => openSyncDialog(item, 'create')} aria-label="Synkronisera mall">
-                <Icon.Padded icon={<ArrowDownToLine />} variant="tertiary" className="link-btn" />
-              </button>
-            )}
-            {item?.detail && (
-              <button onClick={() => setSelectedView(item)} aria-label="Visa innehåll">
-                <Icon.Padded icon={<Eye />} variant="tertiary" className="link-btn" />
-              </button>
-            )}
-          </div>
-        );
-      },
+      header: 'Åtgärder',
+      align: 'right',
+      cell: (i) => (
+        <div className="flex items-center justify-end gap-1">
+          {statusBadges(i)}
+          {i.detail && !syncedIds.has(i.identifier) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Synkronisera till produktion"
+              title="Synkronisera till produktion"
+              onClick={() => {
+                setSyncType('create');
+                setSyncItem(i);
+              }}
+            >
+              <Send className="size-4" />
+            </Button>
+          )}
+          {i.detail && (
+            <Button variant="ghost" size="icon" aria-label="Visa innehåll" title="Visa innehåll" onClick={() => setSelectedView(i)}>
+              <Eye className="size-4" />
+            </Button>
+          )}
+        </div>
+      ),
     },
   ];
 
-  const missingInCompareHeaders: AutoTableHeader[] = [
-    { label: 'Identifierare', property: 'identifier' },
-    { label: 'Namn', property: 'name' },
-    { label: 'Malltyp', property: 'templateType' },
-    { label: 'Version (produktion)', property: 'localVersion' },
+  const missingInCompareCols: Col[] = [
+    { header: 'Identifierare', cell: (i) => <span className="font-medium">{i.identifier}</span> },
+    { header: 'Namn', cell: (i) => <span className="text-muted-foreground">{i.name ?? '—'}</span> },
+    { header: 'Malltyp', cell: (i) => <span className="text-muted-foreground">{i.templateType ?? '—'}</span> },
+    { header: 'Version (produktion)', cell: (i) => <span className="text-muted-foreground">{i.localVersion ?? '—'}</span> },
   ];
 
-  const differentHeaders: AutoTableHeader[] = [
-    { label: 'Identifierare', property: 'identifier' },
-    { label: 'Namn', property: 'name' },
-    { label: 'Skillnader', property: 'diffLabel' },
+  const differentCols: Col[] = [
+    { header: 'Identifierare', cell: (i) => <span className="font-medium">{i.identifier}</span> },
+    { header: 'Namn', cell: (i) => <span className="text-muted-foreground">{i.name ?? '—'}</span> },
+    { header: 'Skillnader', cell: (i) => <span className="text-muted-foreground">{i.diffLabel}</span> },
     {
-      label: 'Åtgärder',
-      property: 'identifier',
-      isColumnSortable: false,
-      screenReaderOnly: true,
-      renderColumn: (value: string) => {
-        const item = result?.different.find((d) => d.identifier === value);
-        const isSynced = syncedIdentifiers.has(value);
-        return (
-          <div className="text-right w-full flex items-center justify-end gap-4">
-            {item && isItemApproved(item) && <Badge color="gronsta" rounded>Godkänd</Badge>}
-            {isSynced && <Badge color="juniskar" rounded>Synkad</Badge>}
-            {item?.detail && !isSynced && (
-              <button onClick={() => openSyncDialog(item, 'update')} aria-label="Synkronisera mall">
-                <Icon.Padded icon={<ArrowDownToLine />} variant="tertiary" className="link-btn" />
-              </button>
-            )}
-            {item?.detail && (
-              <button onClick={() => setSelectedDiff(item)} aria-label="Visa diff">
-                <Icon.Padded icon={<Eye />} variant="tertiary" className="link-btn" />
-              </button>
-            )}
-          </div>
-        );
-      },
+      header: 'Åtgärder',
+      align: 'right',
+      cell: (i) => (
+        <div className="flex items-center justify-end gap-1">
+          {statusBadges(i)}
+          {i.detail && !syncedIds.has(i.identifier) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Synkronisera till produktion"
+              title="Synkronisera till produktion"
+              onClick={() => {
+                setSyncType('update');
+                setSyncItem(i);
+              }}
+            >
+              <Send className="size-4" />
+            </Button>
+          )}
+          {i.detail && (
+            <Button variant="ghost" size="icon" aria-label="Visa diff" title="Visa diff" onClick={() => setSelectedDiff(i)}>
+              <Eye className="size-4" />
+            </Button>
+          )}
+        </div>
+      ),
     },
   ];
-
-  if (available === null) {
-    return (
-      <DefaultLayout title={`Jämför miljöer - ${process.env.NEXT_PUBLIC_APP_NAME}`}>
-        <Main>
-          <div className="flex justify-center p-32">
-            <Spinner size={3} />
-          </div>
-        </Main>
-      </DefaultLayout>
-    );
-  }
-
-  if (!available) {
-    return (
-      <DefaultLayout title={`Jämför miljöer - ${process.env.NEXT_PUBLIC_APP_NAME}`}>
-        <Main>
-          <Header>
-            <h1>Jämför miljöer</h1>
-          </Header>
-          <div className="p-16">
-            <p>Jämförelsefunktionen är inte konfigurerad för denna miljö.</p>
-            <p className="mt-8 text-secondary">
-              Sätt miljövariablerna <code>API_COMPARE_URL</code>, <code>CLIENT_KEY_COMPARE</code> och{' '}
-              <code>CLIENT_SECRET_COMPARE</code> i backend för att aktivera.
-            </p>
-          </div>
-        </Main>
-      </DefaultLayout>
-    );
-  }
 
   return (
-    <DefaultLayout title={`Jämför miljöer - ${process.env.NEXT_PUBLIC_APP_NAME}`}>
-      <Main>
-        <Header>
-          <div className="flex items-center gap-16">
-            <h1>Jämför mallar mellan miljöer</h1>
-            {selectedNamespace && (
-              <Badge color="tertiary" rounded>
-                {selectedNamespace}
-              </Badge>
-            )}
-          </div>
-        </Header>
+    <AdminLayout title="Jämför miljöer" breadcrumb="Mallar">
+      {available === null ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : !available ? (
+        <div className="flex flex-col gap-2 rounded-md border bg-muted/40 p-4 text-sm">
+          <p className="font-medium">Jämförelsefunktionen är inte konfigurerad för denna miljö.</p>
+          <p className="text-muted-foreground">
+            Sätt miljövariablerna <code className="rounded bg-muted px-1">API_COMPARE_URL</code>,{' '}
+            <code className="rounded bg-muted px-1">CLIENT_KEY_COMPARE</code> och{' '}
+            <code className="rounded bg-muted px-1">CLIENT_SECRET_COMPARE</code> i backend för att aktivera.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={namespace || 'all'} onValueChange={(v) => setNamespace(v === 'all' ? '' : v)}>
+              <SelectTrigger className="w-[16rem]" aria-label="Filtrera på namespace">
+                <SelectValue placeholder="Alla namespace" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alla namespace</SelectItem>
+                {nsOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-        <div className="flex flex-col gap-16 p-16">
-          <div className="flex items-end gap-16">
             <Button onClick={runCompare} disabled={loading}>
-              {loading ? 'Jämför...' : 'Kör jämförelse'}
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              {loading ? 'Jämför…' : 'Kör jämförelse'}
             </Button>
-            {loading && <Spinner size={2} />}
+
             {result && templateTypes.length > 0 && (
-              <FormControl>
-                <FormLabel>Malltyp</FormLabel>
-                <Select value={selectedTemplateType} onChange={(e) => setSelectedTemplateType(e.target.value)}>
-                  <Select.Option value="">Alla</Select.Option>
-                  {templateTypes.map((type) => (
-                    <Select.Option value={type} key={type}>
-                      {capitalize(type)}
-                    </Select.Option>
+              <Select value={selectedType || 'all'} onValueChange={(v) => setSelectedType(v === 'all' ? '' : v)}>
+                <SelectTrigger className="w-[14rem]" aria-label="Filtrera på malltyp">
+                  <SelectValue placeholder="Alla malltyper" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alla malltyper</SelectItem>
+                  {templateTypes.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
                   ))}
-                </Select>
-              </FormControl>
+                </SelectContent>
+              </Select>
             )}
           </div>
 
-          <div className="text-small text-secondary flex flex-col gap-4">
-            <p><strong>Saknas i produktion</strong> — Mallar som finns i testmiljön men inte i produktionsmiljön. Kan behöva skapas.</p>
-            <p><strong>Saknas i test</strong> — Mallar som finns i produktionsmiljön men inte i testmiljön.</p>
-            <p><strong>Skiljer sig</strong> — Samma mall finns i båda men med skillnader. Klicka på ögat för att se exakt diff.</p>
+          <div className="flex flex-col gap-1 rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            <span className="flex items-center gap-2 font-medium text-foreground">
+              <Info className="size-4" /> Så läser du jämförelsen
+            </span>
+            <p>
+              <strong>Saknas i produktion</strong> — finns i test men inte i produktion. Kan synkas in.
+            </p>
+            <p>
+              <strong>Saknas i test</strong> — finns i produktion men inte i test.
+            </p>
+            <p>
+              <strong>Skiljer sig</strong> — finns i båda men med skillnader. Klicka på ögat för exakt diff.
+            </p>
           </div>
-          {error && <p className="text-error">{error}</p>}
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           {result && totalDiffs === 0 && (
-            <p className="text-success">Inga skillnader hittades. Miljöerna är synkade.</p>
-          )}
-
-          {result && (
-            <>
-              <CompareSection
-                title="Saknas i produktion (finns i test)"
-                items={filteredMissingLocally}
-                variant="error"
-                headers={missingLocallyHeaders}
-              />
-              <CompareSection
-                title="Saknas i test (finns i produktion)"
-                items={filteredMissingInCompare}
-                variant="warning"
-                headers={missingInCompareHeaders}
-              />
-              <CompareSection
-                title="Finns i båda men skiljer sig"
-                items={filteredDifferent}
-                variant="warning"
-                headers={differentHeaders}
-              />
-            </>
+            <p className="text-sm text-emerald-600">Inga skillnader hittades. Miljöerna är synkade.</p>
           )}
 
           {!result && !loading && (
-            <p className="text-secondary">Tryck &quot;Kör jämförelse&quot; för att jämföra mallar mellan produktions- och testmiljön.</p>
+            <p className="text-sm text-muted-foreground">
+              Tryck på <strong>Kör jämförelse</strong> för att jämföra mallar mellan produktions- och testmiljön.
+            </p>
+          )}
+
+          {result && (
+            <div className="flex flex-col gap-3">
+              <Section title="Saknas i produktion (finns i test)" count={missingLocally.length} countVariant="destructive">
+                <CompareTable items={missingLocally} columns={missingLocallyCols} />
+              </Section>
+              <Section title="Saknas i test (finns i produktion)" count={missingInCompare.length} countVariant="secondary">
+                <CompareTable items={missingInCompare} columns={missingInCompareCols} />
+              </Section>
+              <Section title="Finns i båda men skiljer sig" count={different.length} countVariant="default">
+                <CompareTable items={different} columns={differentCols} />
+              </Section>
+            </div>
           )}
         </div>
-      </Main>
+      )}
 
       {selectedDiff?.detail && (
         <CompareDiffDialog
@@ -372,14 +377,6 @@ export const TemplateCompare: React.FC = () => {
         syncType={syncType}
         syncing={syncing}
       />
-    </DefaultLayout>
+    </AdminLayout>
   );
-};
-
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
-  props: {
-    ...(await serverSideTranslations(locale, ['common', 'layout', 'crud', ...Object.keys(resources)])),
-  },
-});
-
-export default TemplateCompare;
+}

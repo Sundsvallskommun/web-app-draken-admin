@@ -1,272 +1,379 @@
-import resources from '@config/resources';
-import DefaultLayout from '@layouts/default-layout/default-layout.component';
-import { Header } from '@layouts/header/header.component';
-import Main from '@layouts/main/main.component';
-import { Api } from '@data-contracts/backend/Api';
-import { Namespace } from '@data-contracts/backend/data-contracts';
-import { AutoTable, AutoTableHeader, Badge, Button, FormControl, FormLabel, Icon, Select, Spinner, useConfirm } from '@sk-web-gui/react';
+import { Badge } from '@components/ui/badge';
+import { Button } from '@components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@components/ui/dropdown-menu';
+import { Input } from '@components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
+import { AdminLayout } from '@admin/admin-layout';
+import { type ResourceRow } from '@admin/resource-config';
+import { fetchResourceRecord, updateRow, useResourceRows } from '@admin/use-resource-data';
+import { approveTemplateMetadata, getApprovalTimestamp, isTemplateApproved } from '@utils/template-metadata';
 import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { useResource } from '@utils/use-resource';
-import { getMetadataValue, TEST_STATUS_KEY, TEST_APPROVED_AT_KEY, TEST_STATUS_APPROVED } from '@utils/template-metadata';
-import { useCrudHelper } from '@utils/use-crud-helpers';
-import { capitalize } from 'underscore.string';
-import { Pencil, ShieldCheck } from 'lucide-react';
-import NextLink from 'next/link';
-import { GetServerSideProps } from 'next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import dayjs from 'dayjs';
+import { Loader2, Search, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import type { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
+import { toast } from 'sonner';
 
-type TestStatusFilter = '' | 'approved' | 'not_approved';
+export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
-export const TemplateTestStatus: React.FC = () => {
-  const resource = 'templates';
+const COLUMN_STORAGE_KEY = 'draken-admin:templates:test-status:columns';
+const FILTER_STORAGE_KEY = 'draken-admin:templates:test-status:filters';
+
+const columns = [
+  { key: 'name', label: 'Mall' },
+  { key: 'identifier', label: 'Identifierare' },
+  { key: 'version', label: 'Version' },
+  { key: 'status', label: 'Teststatus' },
+  { key: 'approvedAt', label: 'Godkänd' },
+  { key: 'actions', label: 'Åtgärder', align: 'right' },
+] as const;
+
+type ColumnKey = (typeof columns)[number]['key'];
+type ColumnVisibility = Record<ColumnKey, boolean>;
+type StatusFilter = 'all' | 'approved' | 'unapproved';
+
+const defaultColumnVisibility = Object.fromEntries(columns.map((column) => [column.key, true])) as ColumnVisibility;
+
+interface SavedFilters {
+  status?: StatusFilter;
+  version?: string;
+}
+
+function asJsonString(value: unknown, fallback: unknown): string {
+  if (typeof value === 'string') return value;
+  return JSON.stringify(value ?? fallback, null, 2);
+}
+
+function formatApprovedAt(value: string | undefined): string {
+  if (!value) return '—';
+  const date = dayjs(value);
+  return date.isValid() ? date.format('YYYY-MM-DD HH:mm:ss') : '—';
+}
+
+function textValue(value: unknown): string {
+  return value == null ? '' : String(value);
+}
+
+export default function TemplateTestStatus() {
   const router = useRouter();
-  const { namespace: urlNamespace } = router.query;
-  const { municipalityId, selectedNamespace, setSelectedNamespace } = useLocalStorage();
+  const municipalityId = useLocalStorage((s) => s.municipalityId);
+  const { loaded: environmentLoaded, showTestFeatures } = useIsProductionEnv();
+  const { rows, loading, refresh } = useResourceRows('templates', undefined, { enabled: showTestFeatures });
+  const [approvingIdentifier, setApprovingIdentifier] = React.useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
+  const [versionFilter, setVersionFilter] = React.useState('all');
+  const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibility>(defaultColumnVisibility);
+  const [columnSettingsLoaded, setColumnSettingsLoaded] = React.useState(false);
+  const [filterSettingsLoaded, setFilterSettingsLoaded] = React.useState(false);
 
-  const activeNamespace = typeof urlNamespace === 'string' ? urlNamespace : selectedNamespace || undefined;
-  const filter = activeNamespace ? { namespace: activeNamespace } : undefined;
-
-  const { data, loaded, loading, refresh } = useResource(resource, filter);
-
-  const [namespaces, setNamespaces] = useState<Namespace[]>([]);
-  const [namespacesLoaded, setNamespacesLoaded] = useState(false);
-  const [selectedTemplateType, setSelectedTemplateType] = useState<string>('');
-  const [selectedTestStatus, setSelectedTestStatus] = useState<TestStatusFilter>('');
-  const [approvingIdentifier, setApprovingIdentifier] = useState<string | null>(null);
-
-  const confirm = useConfirm();
-  const { handleUpdate } = useCrudHelper(resource);
-  const { getOne, update } = resources[resource];
-  const { showTestFeatures } = useIsProductionEnv();
-
-  const apiService = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCredentials: true });
-
-  useEffect(() => {
-    apiService.namespaceControllerGetNamespaces(municipalityId).then((res) => {
-      setNamespaces(res.data.data);
-      setNamespacesLoaded(true);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [municipalityId]);
-
-  useEffect(() => {
-    refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeNamespace]);
-
-  const enrichedData = useMemo(
-    () =>
-      data?.map((item) => ({
-        ...item,
-        templateType: getMetadataValue(item.metadata, 'templateType') ?? '',
-        testStatus: getMetadataValue(item.metadata, TEST_STATUS_KEY) === TEST_STATUS_APPROVED ? 'approved' : 'not_approved',
-      })),
-    [data]
-  );
-
-  const templateTypes = useMemo(() => {
-    const types = new Set<string>();
-    enrichedData?.forEach((item) => {
-      if (item.templateType) types.add(item.templateType);
-    });
-    return Array.from(types).sort();
-  }, [enrichedData]);
-
-  const filteredData = useMemo(() => {
-    let result = enrichedData;
-    if (selectedTemplateType) {
-      result = result?.filter((item) => item.templateType === selectedTemplateType);
-    }
-    if (selectedTestStatus) {
-      result = result?.filter((item) => item.testStatus === selectedTestStatus);
-    }
-    return result;
-  }, [enrichedData, selectedTemplateType, selectedTestStatus]);
-
-  const approvedCount = useMemo(() => enrichedData?.filter((i) => i.testStatus === 'approved').length ?? 0, [enrichedData]);
-  const notApprovedCount = useMemo(() => enrichedData?.filter((i) => i.testStatus === 'not_approved').length ?? 0, [enrichedData]);
-
-  const handleNamespaceChange = useCallback(
-    (value: string) => {
-      setSelectedNamespace(value);
-      router.push(
-        { pathname: router.pathname, query: { ...router.query, namespace: value || undefined } },
-        undefined,
-        { shallow: true }
-      );
-    },
-    [router, setSelectedNamespace]
-  );
-
-  const handleApprove = useCallback(
-    async (identifier: string) => {
-      const confirmed = await confirm.showConfirmation(
-        'Godkänn mall för produktion',
-        `Vill du godkänna "${identifier}"? Mallen kommer att låsas för redigering.`,
-        'Godkänn',
-        'Avbryt',
-        'info'
-      );
-      if (!confirmed || !getOne || !update) return;
-
-      setApprovingIdentifier(identifier);
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const res = await getOne(municipalityId, identifier as any);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const template: any = res.data?.data ?? res.data;
-
-        let metadataArray: Array<{ key: string; value: string }> = [];
-        if (typeof template.metadata === 'string') {
-          try { metadataArray = JSON.parse(template.metadata || '[]'); } catch { metadataArray = []; }
-        } else if (Array.isArray(template.metadata)) {
-          metadataArray = [...template.metadata];
-        }
-
-        const filtered = metadataArray.filter(
-          (item) => item.key !== TEST_STATUS_KEY && item.key !== TEST_APPROVED_AT_KEY
-        );
-        filtered.push({ key: TEST_STATUS_KEY, value: TEST_STATUS_APPROVED });
-        filtered.push({ key: TEST_APPROVED_AT_KEY, value: new Date().toISOString() });
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await handleUpdate(() => update(municipalityId, identifier as any, {
-          identifier: template.identifier,
-          name: template.name,
-          description: template.description,
-          content: template.content,
-          metadata: JSON.stringify(filtered, null, 2),
-          defaultValues: template.defaultValues,
-          versionIncrement: 'MINOR',
-          changeLog: 'Godkänd för produktion',
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        }) as any);
-
-        refresh();
-      } finally {
-        setApprovingIdentifier(null);
+  React.useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(COLUMN_STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as Partial<ColumnVisibility>;
+        setColumnVisibility({ ...defaultColumnVisibility, ...saved });
       }
-    },
-    [municipalityId, getOne, update, confirm, handleUpdate, refresh]
+    } catch {
+      /* Ignore invalid stored preferences and keep defaults. */
+    } finally {
+      setColumnSettingsLoaded(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!columnSettingsLoaded) return;
+    window.localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(columnVisibility));
+  }, [columnSettingsLoaded, columnVisibility]);
+
+  React.useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(FILTER_STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as SavedFilters;
+        if (saved.status === 'all' || saved.status === 'approved' || saved.status === 'unapproved') {
+          setStatusFilter(saved.status);
+        }
+        if (saved.version) setVersionFilter(saved.version);
+      }
+    } catch {
+      /* Ignore invalid stored preferences and keep defaults. */
+    } finally {
+      setFilterSettingsLoaded(true);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!filterSettingsLoaded) return;
+    window.localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({ status: statusFilter, version: versionFilter }));
+  }, [filterSettingsLoaded, statusFilter, versionFilter]);
+
+  const visibleColumns = columns.filter((column) => columnVisibility[column.key]);
+  const visibleColumnCount = visibleColumns.length || 1;
+  const versions = React.useMemo(
+    () => Array.from(new Set(rows.map((row) => textValue(row.version)).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'sv-SE', { numeric: true })),
+    [rows]
   );
 
-  const headers: AutoTableHeader[] = [
-    { label: 'Identifierare', property: 'identifier' },
-    { label: 'Namn', property: 'name' },
-    { label: 'Malltyp', property: 'templateType' },
-    { label: 'Version', property: 'version' },
-    {
-      label: 'Teststatus',
-      property: 'testStatus',
-      renderColumn: (value: string) =>
-        value === 'approved' ?
-          <Badge color="gronsta" rounded>Godkänd</Badge>
-        : <Badge color="warning" rounded>Ej godkänd</Badge>,
-    },
-    {
-      label: 'Åtgärder',
-      property: 'identifier',
-      isColumnSortable: false,
-      screenReaderOnly: true,
-      renderColumn: (value: string) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const item = filteredData?.find((d: any) => d.identifier === value);
-        const isApproving = approvingIdentifier === value;
-        return (
-          <div className="text-right w-full flex items-center justify-end gap-4">
-            {item?.testStatus === 'not_approved' && showTestFeatures && (
-              <Button
-                size="sm"
-                variant="tertiary"
-                color="gronsta"
-                leftIcon={isApproving ? <Spinner size={1.5} /> : <ShieldCheck />}
-                disabled={isApproving}
-                onClick={() => handleApprove(value)}
-              >
-                {isApproving ? 'Godkänner...' : 'Godkänn'}
-              </Button>
-            )}
-            <NextLink href={`/templates/${value}`} aria-label="Redigera">
-              <Icon.Padded icon={<Pencil />} variant="tertiary" className="link-btn" />
-            </NextLink>
-          </div>
-        );
-      },
-    },
-  ];
+  const filteredRows = React.useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return rows.filter((row) => {
+      const approved = isTemplateApproved(row.metadata);
+      const approvedAt = getApprovalTimestamp(row.metadata);
+      const statusText = approved ? 'godkänd för produktion' : 'ej godkänd';
+      const version = textValue(row.version);
+
+      if (statusFilter === 'approved' && !approved) return false;
+      if (statusFilter === 'unapproved' && approved) return false;
+      if (versionFilter !== 'all' && version !== versionFilter) return false;
+      if (!query) return true;
+
+      return [
+        row.name,
+        row.identifier,
+        version ? `v${version}` : '',
+        version,
+        statusText,
+        formatApprovedAt(approvedAt),
+      ].some((value) => textValue(value).toLowerCase().includes(query));
+    });
+  }, [rows, searchQuery, statusFilter, versionFilter]);
+
+  const toggleColumn = (key: ColumnKey, visible: boolean) => {
+    setColumnVisibility((current) => ({ ...current, [key]: visible }));
+  };
+
+  const onlyUnapproved = statusFilter === 'unapproved';
+
+  const openTemplate = (identifier: unknown) => {
+    if (!identifier) return;
+    router.push(`/templates/${encodeURIComponent(String(identifier))}`);
+  };
+
+  const approveTemplate = async (event: React.MouseEvent<HTMLButtonElement>, row: ResourceRow) => {
+    event.stopPropagation();
+    if (!showTestFeatures) {
+      toast.error('Teststatus är inte aktiverad i denna miljö.');
+      return;
+    }
+
+    const identifier = String(row.identifier ?? '');
+    if (!identifier) {
+      toast.error('Mallen saknar identifierare.');
+      return;
+    }
+
+    setApprovingIdentifier(identifier);
+    try {
+      const template = await fetchResourceRecord('templates', municipalityId, identifier);
+      if (!template) throw new Error('not-found');
+
+      await updateRow('templates', municipalityId, template, {
+        identifier,
+        name: template.name ?? row.name ?? identifier,
+        description: template.description ?? '',
+        content: template.content ?? '',
+        metadata: JSON.stringify(approveTemplateMetadata(template.metadata), null, 2),
+        defaultValues: asJsonString(template.defaultValues, []),
+        versionIncrement: 'MINOR',
+        changeLog: '',
+      });
+
+      toast.success(`${template.name ?? identifier} godkändes för produktion.`);
+      refresh();
+    } catch {
+      toast.error(`Kunde inte godkänna ${identifier}.`);
+    } finally {
+      setApprovingIdentifier(null);
+    }
+  };
+
+  if (!environmentLoaded) {
+    return (
+      <AdminLayout title="Teststatus" breadcrumb="Mallar">
+        <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+          <Loader2 className="mr-2 size-4 animate-spin" />
+          Kontrollerar miljö...
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!showTestFeatures) {
+    return (
+      <AdminLayout title="Teststatus" breadcrumb="Mallar">
+        <div className="rounded-md border bg-muted/40 p-4 text-sm text-muted-foreground">
+          Teststatus är inte aktiverad i denna miljö.
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <DefaultLayout title={`Teststatus mallar - ${process.env.NEXT_PUBLIC_APP_NAME}`}>
-      <Main>
-        <Header>
-          <div className="relative flex items-center gap-36">
-            <h1 className="leading-h4-sm">Teststatus mallar</h1>
-            <span className="flex items-center gap-16">
-              {namespacesLoaded && (
-                <FormControl>
-                  <FormLabel>Namespace</FormLabel>
-                  <Select
-                    value={activeNamespace ?? ''}
-                    onChange={(e) => handleNamespaceChange(e.target.value)}
-                  >
-                    <Select.Option value="">Välj ett alternativ</Select.Option>
-                    {namespaces.map((ns, idx) => (
-                      <Select.Option value={ns.namespace} key={idx}>
-                        {ns.displayName} ({ns.namespace})
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
-              <FormControl>
-                <FormLabel>Teststatus</FormLabel>
-                <Select value={selectedTestStatus} onChange={(e) => setSelectedTestStatus(e.target.value as TestStatusFilter)}>
-                  <Select.Option value="">Alla ({enrichedData?.length ?? 0})</Select.Option>
-                  <Select.Option value="not_approved">Ej godkänd ({notApprovedCount})</Select.Option>
-                  <Select.Option value="approved">Godkänd ({approvedCount})</Select.Option>
-                </Select>
-              </FormControl>
-              {templateTypes.length > 0 && (
-                <FormControl>
-                  <FormLabel>Malltyp</FormLabel>
-                  <Select value={selectedTemplateType} onChange={(e) => setSelectedTemplateType(e.target.value)}>
-                    <Select.Option value="">Alla</Select.Option>
-                    {templateTypes.map((type) => (
-                      <Select.Option value={type} key={type}>
-                        {capitalize(type)}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
-              {loading && <Spinner size={2.5} />}
-            </span>
-          </div>
-        </Header>
-
-        <div className="p-0">
-          {loaded && filteredData && filteredData.length > 0 ?
-            <AutoTable
-              pageSize={25}
-              autodata={filteredData}
-              autoheaders={headers}
-            />
-          : loaded ?
-            <p className="p-16 text-secondary">Inga mallar hittades.</p>
-          : null}
+    <AdminLayout title="Teststatus" breadcrumb="Mallar">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[16rem] max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Sök mall..."
+            className="pl-9"
+          />
         </div>
-      </Main>
-    </DefaultLayout>
+
+        <Button
+          type="button"
+          variant={onlyUnapproved ? 'secondary' : 'outline'}
+          size="sm"
+          aria-pressed={onlyUnapproved}
+          onClick={() => setStatusFilter(onlyUnapproved ? 'all' : 'unapproved')}
+        >
+          Ej godkända
+        </Button>
+
+        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+          <SelectTrigger className="w-[12rem]" aria-label="Filtrera på teststatus">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alla statusar</SelectItem>
+            <SelectItem value="approved">Godkända</SelectItem>
+            <SelectItem value="unapproved">Ej godkända</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={versionFilter} onValueChange={setVersionFilter}>
+          <SelectTrigger className="w-[10rem]" aria-label="Filtrera på version">
+            <SelectValue placeholder="Alla versioner" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alla versioner</SelectItem>
+            {versions.map((version) => (
+              <SelectItem key={version} value={version}>
+                v{version}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="ml-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <SlidersHorizontal className="size-4" />
+                Kolumner
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Visa kolumner</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {columns.map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.key}
+                  checked={columnVisibility[column.key]}
+                  disabled={columnVisibility[column.key] && visibleColumns.length === 1}
+                  onCheckedChange={(value) => toggleColumn(column.key, !!value)}
+                  onSelect={(event) => event.preventDefault()}
+                >
+                  {column.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {visibleColumns.map((column) => (
+                <TableHead key={column.key} className={'align' in column && column.align === 'right' ? 'text-right' : undefined}>
+                  {column.label}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredRows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={visibleColumnCount} className="h-24 text-center text-muted-foreground">
+                  {loading ? 'Hämtar…' : rows.length === 0 ? 'Inga mallar.' : 'Inga mallar matchar filtren.'}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredRows.map((t) => {
+                const approved = isTemplateApproved(t.metadata);
+                const approvedAt = getApprovalTimestamp(t.metadata);
+                const identifier = String(t.identifier ?? '');
+                const approving = approvingIdentifier === identifier;
+                return (
+                  <TableRow
+                    key={t.__key}
+                    role="button"
+                    tabIndex={0}
+                    className="cursor-pointer"
+                    onClick={() => openTemplate(t.identifier)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openTemplate(t.identifier);
+                      }
+                    }}
+                  >
+                    {columnVisibility.name && <TableCell className="font-medium">{String(t.name ?? t.identifier)}</TableCell>}
+                    {columnVisibility.identifier && <TableCell className="text-muted-foreground">{String(t.identifier)}</TableCell>}
+                    {columnVisibility.version && <TableCell className="text-muted-foreground">{t.version != null ? `v${t.version}` : '—'}</TableCell>}
+                    {columnVisibility.status && (
+                      <TableCell>
+                        {approved ? (
+                          <Badge>Godkänd för produktion</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-muted-foreground">
+                            Ej godkänd
+                          </Badge>
+                        )}
+                      </TableCell>
+                    )}
+                    {columnVisibility.approvedAt && (
+                      <TableCell className="font-mono text-xs text-muted-foreground">{formatApprovedAt(approvedAt)}</TableCell>
+                    )}
+                    {columnVisibility.actions && (
+                      <TableCell className="text-right">
+                        {!approved && showTestFeatures && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={approving}
+                            onKeyDown={(event) => event.stopPropagation()}
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={(event) => approveTemplate(event, t)}
+                          >
+                            {approving ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
+                            Godkänn
+                          </Button>
+                        )}
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </AdminLayout>
   );
-};
-
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
-  props: {
-    ...(await serverSideTranslations(locale, ['common', 'layout', 'crud', ...Object.keys(resources)])),
-  },
-});
-
-export default TemplateTestStatus;
+}

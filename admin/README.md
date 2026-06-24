@@ -64,6 +64,9 @@ yarn install
 cp .env-example .env
 ```
 
+Adminytans miljömarkering kommer från backendens `API_BASE_URL`.
+En URL med `-test` visas som testmiljö; saknat eller annat värde visas som produktionsmiljö.
+
 3. Starta backend
 
 Se [Dokumentation](../README.md)

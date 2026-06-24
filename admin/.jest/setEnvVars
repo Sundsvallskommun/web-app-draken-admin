@@ -1,0 +1,9 @@
+process.env.NEXT_PUBLIC_APP_NAME = 'Draken admin';
+process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3003';
+process.env.NEXT_PUBLIC_API_PATH = '/api';
+process.env.NEXT_PUBLIC_BASE_PATH = '';
+process.env.NEXT_PUBLIC_ENABLE_TEMPLATE_TEST_STATUS = 'false';
+process.env.DOMAIN_NAME = 'localhost';
+process.env.HEALTH_AUTH = 'false';
+process.env.HEALTH_USERNAME = '';
+process.env.HEALTH_PASSWORD = '';

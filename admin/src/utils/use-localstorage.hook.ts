@@ -2,7 +2,6 @@ import 'dotenv';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { create } from 'zustand';
 import { LocalStorage } from '../interfaces/localstorage';
-import { ColorSchemeMode } from '@sk-web-gui/react';
 
 const newResource = {
   data: [],
@@ -15,7 +14,7 @@ export const useLocalStorage = create(
     (set) => ({
       municipalityId: 2281,
       setMunicipalityId: (municipalityId) => set(() => ({ municipalityId })),
-      colorScheme: ColorSchemeMode.System,
+      colorScheme: 'system',
       setColorScheme: (colorScheme) => set(() => ({ colorScheme })),
       headers: {},
       setHeaders: (headers) => set((state) => ({ headers: { ...state.headers, ...headers } })),

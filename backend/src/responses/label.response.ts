@@ -1,4 +1,3 @@
-import { Label as SupportManagementLabel } from '@/data-contracts/supportmanagement/data-contracts';
 import ApiResponse from '@/interfaces/api-service.interface';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
@@ -24,6 +23,9 @@ export class Label {
   @IsString()
   @IsOptional()
   resourcePath?: string;
+  @IsBoolean()
+  @IsOptional()
+  deprecated?: boolean;
   @IsBoolean()
   @IsOptional()
   isLeaf?: boolean;

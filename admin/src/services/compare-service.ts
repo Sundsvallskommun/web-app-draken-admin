@@ -19,6 +19,7 @@ export interface CompareItem {
   differences?: string[];
   detail?: CompareDetail;
   templateType?: string;
+  testApproved?: boolean;
 }
 
 export interface CompareResult {
