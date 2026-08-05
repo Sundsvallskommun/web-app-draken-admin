@@ -1,4 +1,5 @@
 import type { LabelNode } from '@interfaces/label';
+import { setEscalationEmail } from '@utils/label-attributes';
 
 export const ROOT_PARENT_VALUE = '__root__';
 
@@ -142,6 +143,22 @@ export function setLabelDeprecated(labels: LabelNode[], labelValue: string, depr
     items.map((item, index) => {
       if (index !== labelPath[depth]) return item;
       if (depth === labelPath.length - 1) return applyDeprecatedToSubtree(item, deprecated);
+      return { ...item, labels: updateAtPath(item.labels ?? [], depth + 1) };
+    });
+
+  return updateAtPath(labels, 0);
+}
+
+export function setLabelEscalationEmail(labels: LabelNode[], labelValue: string, email: string): LabelNode[] {
+  const labelPath = pathFromValue(labelValue);
+  if (labelPath.length === 0) return labels;
+
+  const updateAtPath = (items: LabelNode[], depth: number): LabelNode[] =>
+    items.map((item, index) => {
+      if (index !== labelPath[depth]) return item;
+      if (depth === labelPath.length - 1) {
+        return { ...item, attributes: setEscalationEmail(item.attributes, email) };
+      }
       return { ...item, labels: updateAtPath(item.labels ?? [], depth + 1) };
     });
 

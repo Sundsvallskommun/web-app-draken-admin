@@ -9,6 +9,7 @@ import {
   resourceNameFromDisplayName,
   ROOT_PARENT_VALUE,
   setLabelDeprecated,
+  setLabelEscalationEmail,
 } from '../label-editor';
 
 describe('label-editor', () => {
@@ -219,6 +220,38 @@ describe('label-editor', () => {
     expect(next[0].labels?.[0].deprecated).toBe(true);
     expect(next[0].labels?.[0].labels?.[0].deprecated).toBe(true);
     expect(next[1]).toBe(labels[1]);
+  });
+
+  it('updates escalationEmail on the selected label without changing sibling metadata', () => {
+    const labels = [
+      {
+        classification: 'CATEGORY',
+        resourceName: 'HOUSING',
+        attributes: [{ key: 'owner', value: 'housing' }],
+        labels: [
+          {
+            classification: 'TYPE',
+            resourceName: 'RENT',
+            attributes: [{ key: 'owner', value: 'service-center' }],
+            labels: [],
+          },
+          { classification: 'TYPE', resourceName: 'QUEUE', labels: [] },
+        ],
+      },
+    ];
+
+    const added = setLabelEscalationEmail(labels, '0.0', 'rent@example.com');
+
+    expect(added[0].attributes).toEqual([{ key: 'owner', value: 'housing' }]);
+    expect(added[0].labels[0].attributes).toEqual([
+      { key: 'owner', value: 'service-center' },
+      { key: 'escalationEmail', value: 'rent@example.com' },
+    ]);
+    expect(added[0].labels[1]).toBe(labels[0].labels[1]);
+    expect(labels[0].labels[0].attributes).toEqual([{ key: 'owner', value: 'service-center' }]);
+
+    const removed = setLabelEscalationEmail(added, '0.0', '');
+    expect(removed[0].labels[0].attributes).toEqual([{ key: 'owner', value: 'service-center' }]);
   });
 
   it('removes the selected label subtree by path', () => {

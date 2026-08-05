@@ -5,12 +5,14 @@ import { LabelCreateDialog } from '@admin/label-create-dialog';
 import { LabelColumns } from '@admin/label-columns';
 import { LabelDeleteDialog } from '@admin/label-delete-dialog';
 import { LabelDeprecatedDialog } from '@admin/label-deprecated-dialog';
+import { LabelEscalationEmailDialog, type LabelEscalationEmailTarget } from '@admin/label-escalation-email-dialog';
 import {
   canCreateLabelBelow,
   labelsForSave,
   removeLabel,
   ROOT_PARENT_VALUE,
   setLabelDeprecated,
+  setLabelEscalationEmail,
 } from '@admin/label-editor';
 import { LabelTree, type LabelNode } from '@admin/label-tree';
 import { AdminLayout } from '@admin/admin-layout';
@@ -18,6 +20,7 @@ import { useNamespaces } from '@admin/use-namespaces';
 import { useResourceRows } from '@admin/use-resource-data';
 import { saveLabels } from '@services/label-service';
 import { cn } from '@utils/cn';
+import { getEscalationEmail } from '@utils/label-attributes';
 import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { Columns3, ListTree, Loader2, Plus, Search, Tags, TriangleAlert } from 'lucide-react';
@@ -47,6 +50,7 @@ export default function LabelsPage() {
   const [createOpen, setCreateOpen] = React.useState(false);
   const [createParentValue, setCreateParentValue] = React.useState(ROOT_PARENT_VALUE);
   const [deprecatedTarget, setDeprecatedTarget] = React.useState<DeprecatedTarget | null>(null);
+  const [escalationEmailTarget, setEscalationEmailTarget] = React.useState<LabelEscalationEmailTarget | null>(null);
   const [removeTarget, setRemoveTarget] = React.useState<RemoveTarget | null>(null);
   const [saving, setSaving] = React.useState(false);
   const { isProduction, loaded: productionLoaded } = useIsProductionEnv();
@@ -91,6 +95,28 @@ export default function LabelsPage() {
       await refresh();
     } catch (err) {
       toast.error(`Kunde inte uppdatera etikett: ${saveErrorMessage(err)}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveEscalationEmail = async (email: string) => {
+    if (!namespace || !escalationEmailTarget) return;
+    const previousEmail = getEscalationEmail(escalationEmailTarget.label);
+    setSaving(true);
+    try {
+      const nextLabels = setLabelEscalationEmail(labelRows, escalationEmailTarget.labelValue, email);
+      await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      toast.success(
+        email ?
+          previousEmail ? 'Eskaleringsadressen uppdaterades.'
+          : 'Eskaleringsadressen lades till.'
+        : 'Eskaleringsadressen togs bort.'
+      );
+      setEscalationEmailTarget(null);
+      await refresh();
+    } catch (err) {
+      toast.error(`Kunde inte spara eskaleringsadress: ${saveErrorMessage(err)}`);
     } finally {
       setSaving(false);
     }
@@ -200,6 +226,7 @@ export default function LabelsPage() {
             query={query}
             resetKey={namespace}
             onAdd={openCreateDialog}
+            onEscalationEmailEdit={(label, labelValue) => setEscalationEmailTarget({ label, labelValue })}
             onDeprecatedChange={(label, labelValue, deprecated) =>
               setDeprecatedTarget({ label, labelValue, deprecated })
             }
@@ -208,6 +235,7 @@ export default function LabelsPage() {
         : <LabelTree
             data={labelRows}
             query={query}
+            onEscalationEmailEdit={(label, labelValue) => setEscalationEmailTarget({ label, labelValue })}
             onDeprecatedChange={(label, labelValue, deprecated) =>
               setDeprecatedTarget({ label, labelValue, deprecated })
             }
@@ -223,6 +251,13 @@ export default function LabelsPage() {
         initialParentValue={createParentValue}
         onOpenChange={setCreateOpen}
         onCreate={createLabel}
+      />
+      <LabelEscalationEmailDialog
+        target={escalationEmailTarget}
+        open={Boolean(escalationEmailTarget)}
+        saving={saving}
+        onOpenChange={(open) => !open && setEscalationEmailTarget(null)}
+        onSave={saveEscalationEmail}
       />
       <LabelDeprecatedDialog
         target={deprecatedTarget}

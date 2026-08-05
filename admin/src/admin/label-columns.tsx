@@ -3,9 +3,11 @@ import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Highlight, type LabelNode } from '@admin/label-tree';
 import { LabelCopyValue } from '@admin/label-copy-value';
+import { LabelEscalationEmail } from '@admin/label-escalation-email';
 import { matchesSubtree } from '@admin/label-utils';
 import { cn } from '@utils/cn';
-import { Ban, ChevronRight, FolderOpen, Plus, RotateCcw, Tag, Trash2 } from 'lucide-react';
+import { getEscalationEmail, isEscalationEmailApplicable } from '@utils/label-attributes';
+import { Ban, ChevronRight, FolderOpen, Pencil, Plus, RotateCcw, Tag, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 const nodeName = (node: LabelNode) => node.displayName || node.classification;
@@ -34,6 +36,7 @@ function ColumnItem({
   selected,
   query,
   onSelect,
+  onEscalationEmailEdit,
   onDeprecatedChange,
   onRemove,
 }: {
@@ -42,11 +45,14 @@ function ColumnItem({
   selected: boolean;
   query: string;
   onSelect: () => void;
+  onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
 }) {
   const hasChildren = (node.labels?.length ?? 0) > 0;
   const isDeprecated = node.deprecated === true;
+  const escalationEmail = getEscalationEmail(node);
+  const canEditEscalationEmail = isEscalationEmailApplicable(node.classification) || Boolean(escalationEmail);
   return (
     <div
       aria-current={selected ? 'true' : undefined}
@@ -96,6 +102,19 @@ function ColumnItem({
         {hasChildren && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />}
       </button>
       <LabelCopyValue value={node.resourceName} iconOnly className="opacity-80 group-hover:opacity-100" />
+      <LabelEscalationEmail label={node} className="max-w-36" />
+      {onEscalationEmailEdit && canEditEscalationEmail && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 text-muted-foreground opacity-80 hover:text-foreground group-hover:opacity-100"
+          aria-label={`${escalationEmail ? 'Redigera' : 'Lägg till'} eskaleringsadress för ${nodeName(node)}`}
+          onClick={() => onEscalationEmailEdit(node, pathValue)}
+        >
+          <Pencil className="size-4" />
+        </Button>
+      )}
       {onDeprecatedChange && (
         <Button
           type="button"
@@ -136,6 +155,7 @@ export function LabelColumns({
   query = '',
   resetKey,
   onAdd,
+  onEscalationEmailEdit,
   onDeprecatedChange,
   onRemove,
 }: {
@@ -143,6 +163,7 @@ export function LabelColumns({
   query?: string;
   resetKey?: string;
   onAdd?: (parentValue: string) => void;
+  onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
 }) {
@@ -253,6 +274,7 @@ export function LabelColumns({
                       query={query}
                       selected={path[level]?.pathValue === entry.pathValue}
                       onSelect={() => selectAt(level, entry)}
+                      onEscalationEmailEdit={onEscalationEmailEdit}
                       onDeprecatedChange={onDeprecatedChange}
                       onRemove={onRemove}
                     />
@@ -327,6 +349,7 @@ export function LabelColumns({
               </Badge>
             )}
             <LabelCopyValue value={leaf.node.resourceName} />
+            <LabelEscalationEmail label={leaf.node} />
           </div>
         </div>
       )}

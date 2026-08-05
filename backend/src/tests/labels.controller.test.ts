@@ -20,19 +20,21 @@ describe('mapLabel', () => {
           resourcePath: 'ROOTTEST/TYPETEST',
           deprecated: true,
           labels: [],
-          attributes: [],
+          attributes: [{ key: 'escalationEmail', value: 'rent@example.com' }],
         },
       ],
-      attributes: [],
+      attributes: [{ key: 'owner', value: 'contact-center' }],
     };
 
     expect(mapLabel(label)).toMatchObject({
       id: 'category-id',
       deprecated: true,
+      attributes: [{ key: 'owner', value: 'contact-center' }],
       labels: [
         {
           id: 'type-id',
           deprecated: true,
+          attributes: [{ key: 'escalationEmail', value: 'rent@example.com' }],
         },
       ],
     });

@@ -3,6 +3,10 @@ import { LabelAttribute, LabelNode } from '@interfaces/label';
 /** Conventional attribute key agreed between clients for the escalation email address. */
 export const ESCALATION_EMAIL_KEY = 'escalationEmail';
 
+/** Escalation recipients replace the legacy category/type value and belong to TYPE labels. */
+export const isEscalationEmailApplicable = (classification: string): boolean =>
+  classification.trim().toUpperCase() === 'TYPE';
+
 /** Read the escalationEmail value from a label's free-form attributes, or '' if not set. */
 export const getEscalationEmail = (label: LabelNode): string =>
   label.attributes?.find((attribute) => attribute.key === ESCALATION_EMAIL_KEY)?.value ?? '';
@@ -11,14 +15,9 @@ export const getEscalationEmail = (label: LabelNode): string =>
  * Return a new attributes array with the escalationEmail key set to the trimmed value,
  * or removed when the value is empty. All other attribute keys are preserved untouched.
  */
-export const setEscalationEmail = (
-  attributes: LabelAttribute[] | undefined,
-  value: string
-): LabelAttribute[] => {
+export const setEscalationEmail = (attributes: LabelAttribute[] | undefined, value: string): LabelAttribute[] => {
   const trimmedValue = value.trim();
-  const withoutEscalationEmail = (attributes ?? []).filter(
-    (attribute) => attribute.key !== ESCALATION_EMAIL_KEY
-  );
+  const withoutEscalationEmail = (attributes ?? []).filter((attribute) => attribute.key !== ESCALATION_EMAIL_KEY);
 
   if (!trimmedValue) {
     return withoutEscalationEmail;
