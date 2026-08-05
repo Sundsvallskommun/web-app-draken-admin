@@ -1,10 +1,12 @@
 import { Badge } from '@components/ui/badge';
 import { matchesSubtree } from '@admin/label-utils';
 import { LabelCopyValue } from '@admin/label-copy-value';
+import { LabelEscalationEmail } from '@admin/label-escalation-email';
 import { Button } from '@components/ui/button';
 import type { LabelNode } from '@interfaces/label';
 import { cn } from '@utils/cn';
-import { Ban, ChevronDown, ChevronRight, FolderOpen, RotateCcw, Tag, Trash2 } from 'lucide-react';
+import { getEscalationEmail, isEscalationEmailApplicable } from '@utils/label-attributes';
+import { Ban, ChevronDown, ChevronRight, FolderOpen, Pencil, RotateCcw, Tag, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 export type { LabelNode };
@@ -29,6 +31,7 @@ function TreeNode({
   depth,
   pathValue,
   query,
+  onEscalationEmailEdit,
   onDeprecatedChange,
   onRemove,
 }: {
@@ -36,6 +39,7 @@ function TreeNode({
   depth: number;
   pathValue: string;
   query: string;
+  onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
 }) {
@@ -44,6 +48,8 @@ function TreeNode({
   const hasChildren = children.length > 0;
   const isMatch = query ? name.toLowerCase().includes(query.toLowerCase()) : false;
   const isDeprecated = node.deprecated === true;
+  const escalationEmail = getEscalationEmail(node);
+  const canEditEscalationEmail = isEscalationEmailApplicable(node.classification) || Boolean(escalationEmail);
 
   const [expanded, setExpanded] = React.useState(true);
   const [prevQuery, setPrevQuery] = React.useState(query);
@@ -124,6 +130,19 @@ function TreeNode({
         )}
         <span className="ml-2 text-xs text-muted-foreground">{node.classification}</span>
         <LabelCopyValue value={node.resourceName} className="ml-1" />
+        <LabelEscalationEmail label={node} className="ml-1 max-w-64" />
+        {onEscalationEmailEdit && canEditEscalationEmail && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="ml-1 size-7 text-muted-foreground hover:text-foreground"
+            aria-label={`${escalationEmail ? 'Redigera' : 'Lägg till'} eskaleringsadress för ${name}`}
+            onClick={() => onEscalationEmailEdit(node, pathValue)}
+          >
+            <Pencil className="size-4" />
+          </Button>
+        )}
         {onDeprecatedChange && (
           <Button
             type="button"
@@ -163,6 +182,7 @@ function TreeNode({
                 depth={depth + 1}
                 pathValue={childPath}
                 query={query}
+                onEscalationEmailEdit={onEscalationEmailEdit}
                 onDeprecatedChange={onDeprecatedChange}
                 onRemove={onRemove}
               />
@@ -177,11 +197,13 @@ function TreeNode({
 export function LabelTree({
   data,
   query = '',
+  onEscalationEmailEdit,
   onDeprecatedChange,
   onRemove,
 }: {
   data: LabelNode[];
   query?: string;
+  onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
 }) {
@@ -198,6 +220,7 @@ export function LabelTree({
           depth={0}
           pathValue={String(i)}
           query={query}
+          onEscalationEmailEdit={onEscalationEmailEdit}
           onDeprecatedChange={onDeprecatedChange}
           onRemove={onRemove}
         />

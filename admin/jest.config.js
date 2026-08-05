@@ -21,6 +21,7 @@ module.exports = {
 
     // Handle module aliases (this will be automatically configured for you soon)
     '@services/(.*)$': ['<rootDir>/src/services/$1'],
+    '@admin/(.*)$': ['<rootDir>/src/admin/$1'],
     '@components/(.*)$': ['<rootDir>/src/components/$1'],
     '@interfaces/(.*)$': ['<rootDir>/src/interfaces/$1'],
     '@contexts/(.*)$': ['<rootDir>/src/contexts/$1'],
@@ -41,7 +42,7 @@ module.exports = {
     '^.+\\.(js|jsx|ts|tsx)$': [
       'babel-jest',
       {
-        presets: ['next/babel', ['@babel/preset-env', { targets: { node: 'current' } }], '@babel/preset-react'],
+        presets: ['next/babel', ['@babel/preset-env', { targets: { node: 'current' } }]],
         plugins: ['@babel/plugin-transform-private-methods'],
       },
     ],

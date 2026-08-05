@@ -12,6 +12,8 @@ import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import type { LabelNode } from '@interfaces/label';
+import { isValidEmail } from '@utils/email';
+import { isEscalationEmailApplicable, setEscalationEmail } from '@utils/label-attributes';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
 
@@ -41,6 +43,7 @@ export function LabelCreateDialog({
   const [displayName, setDisplayName] = React.useState('');
   const [resourceName, setResourceName] = React.useState('');
   const [resourceNameTouched, setResourceNameTouched] = React.useState(false);
+  const [escalationEmail, setEscalationEmailValue] = React.useState('');
   const [error, setError] = React.useState('');
 
   React.useEffect(() => {
@@ -51,6 +54,7 @@ export function LabelCreateDialog({
     setDisplayName('');
     setResourceName('');
     setResourceNameTouched(false);
+    setEscalationEmailValue('');
     setError('');
   }, [initialParentValue, open, parentOptions]);
 
@@ -90,6 +94,14 @@ export function LabelCreateDialog({
       setError('Resursnamn får bara innehålla A-Z, 0-9 och _.');
       return;
     }
+    if (
+      isEscalationEmailApplicable(nextClassification) &&
+      escalationEmail.trim() &&
+      !isValidEmail(escalationEmail.trim())
+    ) {
+      setError('Ange en giltig e-postadress, till exempel namn@domän.se.');
+      return;
+    }
     if (!canCreateLabelBelow(data, selectedParent.value)) {
       setError('Det går inte att lägga till etiketter under en deprecated etikett.');
       return;
@@ -100,7 +112,7 @@ export function LabelCreateDialog({
       displayName: nextDisplayName,
       resourceName: nextResourceName,
       labels: [],
-      attributes: [],
+      attributes: isEscalationEmailApplicable(nextClassification) ? setEscalationEmail([], escalationEmail) : [],
     };
 
     await onCreate(appendLabel(data, selectedParent.value, nextLabel));
@@ -113,7 +125,7 @@ export function LabelCreateDialog({
           <DialogTitle>Lägg till etikett</DialogTitle>
         </DialogHeader>
 
-        <form className="flex flex-col gap-4" onSubmit={submit}>
+        <form className="flex flex-col gap-4" onSubmit={submit} noValidate>
           <div className="space-y-2">
             <Label>Placering</Label>
             <Select value={parentValue} onValueChange={updateParent} disabled={saving}>
@@ -165,6 +177,24 @@ export function LabelCreateDialog({
               disabled={saving}
             />
           </div>
+
+          {isEscalationEmailApplicable(classification) && (
+            <div className="space-y-2">
+              <Label htmlFor="new-label-escalation-email">Eskaleringsadress</Label>
+              <Input
+                id="new-label-escalation-email"
+                type="email"
+                value={escalationEmail}
+                onChange={(event) => setEscalationEmailValue(event.target.value)}
+                placeholder="namn@domän.se"
+                autoComplete="email"
+                disabled={saving}
+              />
+              <p className="text-xs text-muted-foreground">
+                Valfritt. Förifylls som mottagare när ett ärende med typen överlämnas via e-post.
+              </p>
+            </div>
+          )}
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
