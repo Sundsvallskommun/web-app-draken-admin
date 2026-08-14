@@ -231,6 +231,7 @@ export default function LabelsPage() {
             query={query}
             resetKey={namespace}
             onAdd={openCreateDialog}
+            onSearchResultSelect={() => setQuery('')}
             onEscalationEmailEdit={(label, labelValue) => setEscalationEmailTarget({ label, labelValue })}
             onDeprecatedChange={(label, labelValue, deprecated) =>
               setDeprecatedTarget({ label, labelValue, deprecated })

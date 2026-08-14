@@ -153,6 +153,7 @@ export function LabelColumns({
   query = '',
   resetKey,
   onAdd,
+  onSearchResultSelect,
   onEscalationEmailEdit,
   onDeprecatedChange,
   onRemove,
@@ -161,6 +162,7 @@ export function LabelColumns({
   query?: string;
   resetKey?: string;
   onAdd?: (parentValue: string) => void;
+  onSearchResultSelect?: () => void;
   onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
@@ -198,6 +200,11 @@ export function LabelColumns({
   }, [columns.length]);
 
   const selectAt = (level: number, entry: ColumnEntry) => setPath((prev) => [...prev.slice(0, level), entry]);
+
+  const selectSearchResult = (resultPath: PathEntry[]) => {
+    setPath(resultPath);
+    onSearchResultSelect?.();
+  };
 
   const parentValueForColumn = (level: number) => (level === 0 ? ROOT_PARENT_VALUE : path[level - 1]?.pathValue);
 
@@ -263,7 +270,7 @@ export function LabelColumns({
                 pathValue={result.pathValue}
                 query={normalizedQuery}
                 selected={path[path.length - 1]?.pathValue === result.pathValue}
-                onSelect={() => setPath(result.path)}
+                onSelect={() => selectSearchResult(result.path)}
                 onEscalationEmailEdit={onEscalationEmailEdit}
                 onDeprecatedChange={onDeprecatedChange}
                 onRemove={onRemove}

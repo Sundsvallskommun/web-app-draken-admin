@@ -1,3 +1,6 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+import { LabelColumns } from '../label-columns';
 import { findLabelMatches, visibleLabelEntries } from '../label-utils';
 
 const labels = [
@@ -59,5 +62,24 @@ describe('label search', () => {
     expect(roots).toEqual([{ node: labels[1], index: 1 }]);
     expect(types).toEqual([{ node: labels[1].labels[0], index: 0 }]);
     expect(subtypes).toEqual([{ node: labels[1].labels[0].labels[0], index: 0 }]);
+  });
+
+  it('opens the selected search result in the column view', () => {
+    const SearchableColumns = () => {
+      const [query, setQuery] = React.useState('autogiro');
+      return React.createElement(LabelColumns, {
+        data: labels,
+        query,
+        onSearchResultSelect: () => setQuery(''),
+      });
+    };
+
+    render(React.createElement(SearchableColumns));
+    fireEvent.click(screen.getByRole('button', { name: 'Autogiro' }));
+
+    expect(screen.queryByLabelText('Sökresultat för etiketter')).not.toBeInTheDocument();
+    const selectedPath = document.querySelectorAll('[aria-current="true"]');
+    expect(selectedPath).toHaveLength(3);
+    expect(selectedPath[selectedPath.length - 1]).toHaveTextContent('Autogiro');
   });
 });
