@@ -1,5 +1,5 @@
 import { Badge } from '@components/ui/badge';
-import { matchesSubtree } from '@admin/label-utils';
+import { matchesLabel, matchesSubtree, visibleLabelEntries } from '@admin/label-utils';
 import { LabelCopyValue } from '@admin/label-copy-value';
 import { LabelEscalationEmail } from '@admin/label-escalation-email';
 import { Button } from '@components/ui/button';
@@ -12,16 +12,17 @@ import * as React from 'react';
 export type { LabelNode };
 
 export function Highlight({ text, query }: { text: string; query: string }) {
-  if (!query) return <>{text}</>;
-  const i = text.toLowerCase().indexOf(query.toLowerCase());
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return <>{text}</>;
+  const i = text.toLocaleLowerCase('sv').indexOf(normalizedQuery.toLocaleLowerCase('sv'));
   if (i === -1) return <>{text}</>;
   return (
     <>
       {text.slice(0, i)}
       <mark className="rounded-sm bg-amber-200 px-0.5 text-amber-950 dark:bg-amber-500/40 dark:text-amber-100">
-        {text.slice(i, i + query.length)}
+        {text.slice(i, i + normalizedQuery.length)}
       </mark>
-      {text.slice(i + query.length)}
+      {text.slice(i + normalizedQuery.length)}
     </>
   );
 }
@@ -46,17 +47,17 @@ function TreeNode({
   const name = node.displayName || node.classification;
   const children = node.labels ?? [];
   const hasChildren = children.length > 0;
-  const isMatch = query ? name.toLowerCase().includes(query.toLowerCase()) : false;
+  const visibleChildren = visibleLabelEntries(children, query);
+  const hasVisibleChildren = visibleChildren.length > 0;
+  const isMatch = matchesLabel(node, query);
   const isDeprecated = node.deprecated === true;
   const escalationEmail = getEscalationEmail(node);
   const canEditEscalationEmail = isEscalationEmailApplicable(node.classification) || Boolean(escalationEmail);
 
   const [expanded, setExpanded] = React.useState(true);
-  const [prevQuery, setPrevQuery] = React.useState(query);
-  if (prevQuery !== query) {
-    setPrevQuery(query);
-    if (query && matchesSubtree(node, query)) setExpanded(true);
-  }
+  React.useEffect(() => {
+    if (query.trim() && matchesSubtree(node, query)) setExpanded(true);
+  }, [node, query]);
 
   return (
     <div>
@@ -70,19 +71,22 @@ function TreeNode({
       >
         <button
           type="button"
-          onClick={() => hasChildren && setExpanded((e) => !e)}
-          className={cn('flex size-5 shrink-0 items-center justify-center rounded', hasChildren && 'hover:bg-muted')}
-          aria-expanded={hasChildren ? expanded : undefined}
+          onClick={() => hasVisibleChildren && setExpanded((e) => !e)}
+          className={cn(
+            'flex size-5 shrink-0 items-center justify-center rounded',
+            hasVisibleChildren && 'hover:bg-muted'
+          )}
+          aria-expanded={hasVisibleChildren ? expanded : undefined}
           aria-label={
-            hasChildren ?
+            hasVisibleChildren ?
               expanded ?
                 'Fäll ihop'
               : 'Expandera'
             : undefined
           }
-          tabIndex={hasChildren ? 0 : -1}
+          tabIndex={hasVisibleChildren ? 0 : -1}
         >
-          {hasChildren ?
+          {hasVisibleChildren ?
             expanded ?
               <ChevronDown className="size-3.5 text-muted-foreground" />
             : <ChevronRight className="size-3.5 text-muted-foreground" />
@@ -125,7 +129,7 @@ function TreeNode({
         )}
         {hasChildren && (
           <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-            {children.length}
+            {query.trim() ? visibleChildren.length : children.length}
           </Badge>
         )}
         <span className="ml-2 text-xs text-muted-foreground">{node.classification}</span>
@@ -171,13 +175,13 @@ function TreeNode({
         )}
       </div>
 
-      {hasChildren && expanded && (
+      {hasVisibleChildren && expanded && (
         <div>
-          {children.map((child, i) => {
-            const childPath = `${pathValue}.${i}`;
+          {visibleChildren.map(({ node: child, index }) => {
+            const childPath = `${pathValue}.${index}`;
             return (
               <TreeNode
-                key={child.id ?? `${child.classification}-${i}`}
+                key={child.id ?? `${child.classification}-${index}`}
                 node={child}
                 depth={depth + 1}
                 pathValue={childPath}
@@ -207,18 +211,18 @@ export function LabelTree({
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
 }) {
-  const visible = query ? data.filter((n) => matchesSubtree(n, query)) : data;
+  const visible = visibleLabelEntries(data, query);
   if (!visible.length) {
     return <p className="py-8 text-center text-sm text-muted-foreground">Inga etiketter matchade.</p>;
   }
   return (
     <div className="rounded-md border bg-card p-3">
-      {visible.map((node, i) => (
+      {visible.map(({ node, index }) => (
         <TreeNode
-          key={node.id ?? `${node.classification}-${i}`}
+          key={node.id ?? `${node.classification}-${index}`}
           node={node}
           depth={0}
-          pathValue={String(i)}
+          pathValue={String(index)}
           query={query}
           onEscalationEmailEdit={onEscalationEmailEdit}
           onDeprecatedChange={onDeprecatedChange}

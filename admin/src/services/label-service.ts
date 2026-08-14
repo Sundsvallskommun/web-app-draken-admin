@@ -12,5 +12,6 @@ export const saveLabels = async (
   isNew: boolean
 ) => {
   const method = isNew ? apiService.post : apiService.put;
-  return method<ApiResponse<LabelNode[]>>(`/labels/${municipalityId}/${namespace}`, { labelStructure });
+  const response = await method<ApiResponse<LabelNode[]>>(`/labels/${municipalityId}/${namespace}`, { labelStructure });
+  return response.data.data;
 };

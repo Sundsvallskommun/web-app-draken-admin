@@ -1,7 +1,7 @@
 import {
   appendLabel,
   canCreateLabelBelow,
-  defaultClassificationForDepth,
+  defaultClassificationForParent,
   flattenLabelParents,
   labelsForSave,
   rehydrateLabelPath,
@@ -13,11 +13,11 @@ import {
 } from '../label-editor';
 
 describe('label-editor', () => {
-  it('uses the established classification names by level', () => {
-    expect(defaultClassificationForDepth(0)).toBe('CATEGORY');
-    expect(defaultClassificationForDepth(1)).toBe('TYPE');
-    expect(defaultClassificationForDepth(2)).toBe('SUBTYPE');
-    expect(defaultClassificationForDepth(3)).toBe('SUBTYPE');
+  it('only defaults to SUBTYPE below a TYPE parent', () => {
+    expect(defaultClassificationForParent({ value: ROOT_PARENT_VALUE, label: 'Rotnivå' })).toBe('');
+    expect(defaultClassificationForParent({ value: '0', label: 'Kategori', classification: 'CATEGORY' })).toBe('');
+    expect(defaultClassificationForParent({ value: '0.0', label: 'Typ', classification: 'TYPE' })).toBe('SUBTYPE');
+    expect(defaultClassificationForParent({ value: '0.0', label: 'Typ', classification: 'type' })).toBe('SUBTYPE');
   });
 
   it('builds API-compatible resource names from display names', () => {
@@ -85,8 +85,8 @@ describe('label-editor', () => {
     ];
 
     expect(flattenLabelParents(labels)).toEqual([
-      { value: ROOT_PARENT_VALUE, label: 'Rotnivå', depth: -1 },
-      { value: '1', label: 'Omsorg', depth: 0 },
+      { value: ROOT_PARENT_VALUE, label: 'Rotnivå' },
+      { value: '1', label: 'Omsorg', classification: 'CATEGORY' },
     ]);
     expect(canCreateLabelBelow(labels, ROOT_PARENT_VALUE)).toBe(true);
     expect(canCreateLabelBelow(labels, '0')).toBe(false);

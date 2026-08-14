@@ -46,6 +46,7 @@ describe('label escalation email UI', () => {
       })
     );
 
+    fireEvent.change(screen.getByLabelText('Klassificering *'), { target: { value: 'TYPE' } });
     fireEvent.change(screen.getByLabelText('Namn'), { target: { value: 'Hyra' } });
     fireEvent.change(await screen.findByLabelText('Eskaleringsadress'), {
       target: { value: 'rent@example.com' },

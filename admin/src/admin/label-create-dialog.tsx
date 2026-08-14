@@ -1,7 +1,7 @@
 import {
   appendLabel,
   canCreateLabelBelow,
-  defaultClassificationForDepth,
+  defaultClassificationForParent,
   flattenLabelParents,
   resourceNameFromDisplayName,
   ROOT_PARENT_VALUE,
@@ -39,7 +39,7 @@ export function LabelCreateDialog({
   const classificationListId = React.useId();
   const parentOptions = React.useMemo(() => flattenLabelParents(data), [data]);
   const [parentValue, setParentValue] = React.useState(ROOT_PARENT_VALUE);
-  const [classification, setClassification] = React.useState(defaultClassificationForDepth(0));
+  const [classification, setClassification] = React.useState('');
   const [displayName, setDisplayName] = React.useState('');
   const [resourceName, setResourceName] = React.useState('');
   const [resourceNameTouched, setResourceNameTouched] = React.useState(false);
@@ -50,7 +50,7 @@ export function LabelCreateDialog({
     if (!open) return;
     const nextParent = parentOptions.find((option) => option.value === initialParentValue) ?? parentOptions[0];
     setParentValue(nextParent.value);
-    setClassification(defaultClassificationForDepth(nextParent.depth + 1));
+    setClassification(defaultClassificationForParent(nextParent));
     setDisplayName('');
     setResourceName('');
     setResourceNameTouched(false);
@@ -63,7 +63,7 @@ export function LabelCreateDialog({
   const updateParent = (value: string) => {
     const nextParent = parentOptions.find((option) => option.value === value) ?? parentOptions[0];
     setParentValue(nextParent.value);
-    setClassification(defaultClassificationForDepth(nextParent.depth + 1));
+    setClassification(defaultClassificationForParent(nextParent));
   };
 
   const updateDisplayName = (value: string) => {
@@ -143,13 +143,14 @@ export function LabelCreateDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="label-classification">Klassificering</Label>
+            <Label htmlFor="label-classification">Klassificering *</Label>
             <Input
               id="label-classification"
               list={classificationListId}
               value={classification}
               onChange={(event) => setClassification(event.target.value)}
               disabled={saving}
+              required
             />
             <datalist id={classificationListId}>
               {CLASSIFICATION_OPTIONS.map((option) => (

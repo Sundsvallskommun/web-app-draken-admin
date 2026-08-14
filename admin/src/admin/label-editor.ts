@@ -3,12 +3,10 @@ import { setEscalationEmail } from '@utils/label-attributes';
 
 export const ROOT_PARENT_VALUE = '__root__';
 
-const DEFAULT_CLASSIFICATIONS = ['CATEGORY', 'TYPE', 'SUBTYPE'] as const;
-
 export interface LabelParentOption {
   value: string;
   label: string;
-  depth: number;
+  classification?: string;
 }
 
 export interface LabelPathEntry {
@@ -22,8 +20,8 @@ const pathFromValue = (value: string): number[] =>
     .map((part) => Number(part))
     .filter((part) => Number.isInteger(part));
 
-export function defaultClassificationForDepth(depth: number): string {
-  return DEFAULT_CLASSIFICATIONS[depth] ?? DEFAULT_CLASSIFICATIONS[DEFAULT_CLASSIFICATIONS.length - 1];
+export function defaultClassificationForParent(parent: LabelParentOption): string {
+  return parent.classification?.trim().toUpperCase() === 'TYPE' ? 'SUBTYPE' : '';
 }
 
 export function resourceNameFromDisplayName(displayName: string): string {
@@ -36,7 +34,7 @@ export function resourceNameFromDisplayName(displayName: string): string {
 }
 
 export function flattenLabelParents(labels: LabelNode[]): LabelParentOption[] {
-  const options: LabelParentOption[] = [{ value: ROOT_PARENT_VALUE, label: 'Rotnivå', depth: -1 }];
+  const options: LabelParentOption[] = [{ value: ROOT_PARENT_VALUE, label: 'Rotnivå' }];
 
   const visit = (items: LabelNode[], path: number[], names: string[], blockedByDeprecated: boolean) => {
     items.forEach((item, index) => {
@@ -49,7 +47,7 @@ export function flattenLabelParents(labels: LabelNode[]): LabelParentOption[] {
       options.push({
         value: nextPath.join('.'),
         label: nextNames.join(' / '),
-        depth: nextPath.length - 1,
+        classification: item.classification,
       });
       visit(item.labels ?? [], nextPath, nextNames, nextBlockedByDeprecated);
     });

@@ -4,7 +4,7 @@ import { Button } from '@components/ui/button';
 import { Highlight, type LabelNode } from '@admin/label-tree';
 import { LabelCopyValue } from '@admin/label-copy-value';
 import { LabelEscalationEmail } from '@admin/label-escalation-email';
-import { matchesSubtree } from '@admin/label-utils';
+import { findLabelMatches } from '@admin/label-utils';
 import { cn } from '@utils/cn';
 import { getEscalationEmail, isEscalationEmailApplicable } from '@utils/label-attributes';
 import { Ban, ChevronRight, FolderOpen, Pencil, Plus, RotateCcw, Tag, Trash2 } from 'lucide-react';
@@ -25,10 +25,8 @@ interface ColumnEntry {
 
 type PathEntry = LabelPathEntry;
 
-const columnEntries = (items: LabelNode[], parentPath: string, query: string): ColumnEntry[] =>
-  items
-    .map((node, index) => ({ node, pathValue: parentPath ? `${parentPath}.${index}` : String(index) }))
-    .filter(({ node }) => !query || matchesSubtree(node, query));
+const columnEntries = (items: LabelNode[], parentPath: string): ColumnEntry[] =>
+  items.map((node, index) => ({ node, pathValue: parentPath ? `${parentPath}.${index}` : String(index) }));
 
 function ColumnItem({
   node,
@@ -171,6 +169,8 @@ export function LabelColumns({
   const [columnWidths, setColumnWidths] = React.useState<Record<number, number>>({});
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const resizeRef = React.useRef<{ level: number; startX: number; startWidth: number } | null>(null);
+  const normalizedQuery = query.trim();
+  const searchResults = React.useMemo(() => findLabelMatches(data, normalizedQuery), [data, normalizedQuery]);
 
   // Reset when the namespace changes, but keep the current drill-down after saves/refetches.
   React.useEffect(() => {
@@ -183,13 +183,13 @@ export function LabelColumns({
 
   // Columns: roots first, then the children of each selected node that has any.
   const columns = React.useMemo(() => {
-    const cols: ColumnEntry[][] = [columnEntries(data, '', query)];
+    const cols: ColumnEntry[][] = [columnEntries(data, '')];
     for (const entry of path) {
-      const children = columnEntries(entry.node.labels ?? [], entry.pathValue, query);
+      const children = columnEntries(entry.node.labels ?? [], entry.pathValue);
       cols.push(children);
     }
     return cols;
-  }, [data, query, path]);
+  }, [data, path]);
 
   // Keep the newest column in view, like Finder scrolling right as you drill in.
   React.useEffect(() => {
@@ -243,6 +243,37 @@ export function LabelColumns({
       setColumnWidth(level, MAX_COLUMN_WIDTH);
     }
   };
+
+  if (normalizedQuery) {
+    if (searchResults.length === 0) {
+      return <p className="py-8 text-center text-sm text-muted-foreground">Inga etiketter matchade.</p>;
+    }
+
+    return (
+      <div className="rounded-md border bg-card p-2" aria-label="Sökresultat för etiketter">
+        <p className="px-2 pb-2 text-sm text-muted-foreground">
+          {searchResults.length} {searchResults.length === 1 ? 'träff' : 'träffar'}
+        </p>
+        <div className="space-y-1">
+          {searchResults.map((result) => (
+            <div key={result.pathValue} className="rounded-md border border-transparent px-1 py-1 hover:border-border">
+              <p className="truncate px-2 pb-1 text-xs text-muted-foreground">{result.breadcrumb}</p>
+              <ColumnItem
+                node={result.node}
+                pathValue={result.pathValue}
+                query={normalizedQuery}
+                selected={path[path.length - 1]?.pathValue === result.pathValue}
+                onSelect={() => setPath(result.path)}
+                onEscalationEmailEdit={onEscalationEmailEdit}
+                onDeprecatedChange={onDeprecatedChange}
+                onRemove={onRemove}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (!columns[0]?.length) {
     return <p className="py-8 text-center text-sm text-muted-foreground">Inga etiketter matchade.</p>;

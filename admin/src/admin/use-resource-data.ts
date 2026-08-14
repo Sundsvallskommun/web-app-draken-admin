@@ -125,7 +125,19 @@ export function useResourceRows(resourceName: string | undefined, namespace?: st
     fetchData();
   }, [fetchData]);
 
-  return { ...state, resource, refresh: fetchData };
+  const replaceRows = React.useCallback(
+    (rawRows: object[]) => {
+      if (!resource) return;
+      setState({
+        rows: withKeys(resource, rawRows as Record<string, unknown>[]),
+        loading: false,
+        error: null,
+      });
+    },
+    [resource]
+  );
+
+  return { ...state, resource, refresh: fetchData, replaceRows };
 }
 
 /**

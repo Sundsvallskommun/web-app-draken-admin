@@ -56,7 +56,7 @@ export default function LabelsPage() {
   const { isProduction, loaded: productionLoaded } = useIsProductionEnv();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const namespaceOptions = useNamespaces();
-  const { rows, loading, error, refresh } = useResourceRows('labels', namespace || undefined);
+  const { rows, loading, error, replaceRows } = useResourceRows('labels', namespace || undefined);
   const labelRows = rows as unknown as LabelNode[];
   const canDeleteLabels = productionLoaded && !isProduction;
 
@@ -64,10 +64,15 @@ export default function LabelsPage() {
     if (!namespace) return;
     setSaving(true);
     try {
-      await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), labelRows.length === 0);
+      const savedLabels = await saveLabels(
+        municipalityId,
+        namespace,
+        labelsForSave(nextLabels),
+        labelRows.length === 0
+      );
+      replaceRows(savedLabels);
       toast.success('Etiketten skapades.');
       setCreateOpen(false);
-      await refresh();
     } catch (err) {
       toast.error(`Kunde inte skapa etikett: ${saveErrorMessage(err)}`);
     } finally {
@@ -89,10 +94,10 @@ export default function LabelsPage() {
     setSaving(true);
     try {
       const nextLabels = setLabelDeprecated(labelRows, deprecatedTarget.labelValue, deprecatedTarget.deprecated);
-      await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      const savedLabels = await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      replaceRows(savedLabels);
       toast.success(deprecatedTarget.deprecated ? 'Etiketten avvecklades.' : 'Etiketten återaktiverades.');
       setDeprecatedTarget(null);
-      await refresh();
     } catch (err) {
       toast.error(`Kunde inte uppdatera etikett: ${saveErrorMessage(err)}`);
     } finally {
@@ -106,7 +111,8 @@ export default function LabelsPage() {
     setSaving(true);
     try {
       const nextLabels = setLabelEscalationEmail(labelRows, escalationEmailTarget.labelValue, email);
-      await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      const savedLabels = await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      replaceRows(savedLabels);
       toast.success(
         email ?
           previousEmail ? 'Eskaleringsadressen uppdaterades.'
@@ -114,7 +120,6 @@ export default function LabelsPage() {
         : 'Eskaleringsadressen togs bort.'
       );
       setEscalationEmailTarget(null);
-      await refresh();
     } catch (err) {
       toast.error(`Kunde inte spara eskaleringsadress: ${saveErrorMessage(err)}`);
     } finally {
@@ -131,10 +136,10 @@ export default function LabelsPage() {
     setSaving(true);
     try {
       const nextLabels = removeLabel(labelRows, removeTarget.labelValue);
-      await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      const savedLabels = await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      replaceRows(savedLabels);
       toast.success('Etiketten togs bort permanent.');
       setRemoveTarget(null);
-      await refresh();
     } catch (err) {
       toast.error(`Kunde inte ta bort etikett: ${saveErrorMessage(err)}`);
     } finally {
@@ -163,7 +168,7 @@ export default function LabelsPage() {
               disabled={!namespace}
             />
           </div>
-          <Select value={namespace} onValueChange={setNamespace}>
+          <Select value={namespace} onValueChange={setNamespace} disabled={saving}>
             <SelectTrigger className="w-[16rem]" aria-label="Namespace">
               <SelectValue placeholder="Välj namespace" />
             </SelectTrigger>
@@ -207,7 +212,7 @@ export default function LabelsPage() {
           <Button
             type="button"
             className="ml-auto gap-1.5"
-            disabled={!namespace || loading}
+            disabled={!namespace || loading || saving}
             onClick={() => openCreateDialog()}
           >
             <Plus className="size-4" />
