@@ -1,5 +1,5 @@
 import { ADMIN_PANEL_GROUP } from '@/config';
-import { Permissions, InternalRole, ADRole } from '@interfaces/auth.interface';
+import { Permissions, InternalRole } from '@interfaces/auth.interface';
 
 // export function authorizeGroups(groups) {
 //   const authorizedGroupsList = AUTHORIZED_GROUPS.split(',');

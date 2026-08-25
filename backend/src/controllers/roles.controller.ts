@@ -102,9 +102,7 @@ export class RolesController {
         }),
       );
 
-      const data: Role[] = roleResponses.flatMap(({ namespace: ns, roles }) =>
-        roles.map(role => this.mapRole(role, ns)),
-      );
+      const data: Role[] = roleResponses.flatMap(({ namespace: ns, roles }) => roles.map(role => this.mapRole(role, ns)));
 
       return response.send({ data, message: 'success' });
     } catch (error) {

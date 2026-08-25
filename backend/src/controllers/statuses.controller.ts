@@ -104,9 +104,7 @@ export class StatusesController {
         }),
       );
 
-      const data: Status[] = statusesResponses.flatMap(({ namespace: ns, statuses }) =>
-        statuses.map(status => this.mapStatus(status, ns)),
-      );
+      const data: Status[] = statusesResponses.flatMap(({ namespace: ns, statuses }) => statuses.map(status => this.mapStatus(status, ns)));
 
       return response.send({ data, message: 'success' });
     } catch (error) {

@@ -1,72 +1,55 @@
-import { ListResources } from '@components/list-resources/list-resources';
-import { ListToolbar } from '@components/list-toolbar/list-toolbar';
-import resources from '@config/resources';
-import { ResourceName } from '@interfaces/resource-name';
-import DefaultLayout from '@layouts/default-layout/default-layout.component';
-import { Header } from '@layouts/header/header.component';
-import Main from '@layouts/main/main.component';
-import { Spinner } from '@sk-web-gui/react';
-import { stringToResourceName } from '@utils/stringToResourceName';
-import { useResource } from '@utils/use-resource';
-import { GetServerSideProps } from 'next';
-import { useTranslation } from 'next-i18next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import { useParams } from 'next/navigation';
+import { Button } from '@components/ui/button';
+import { AdminLayout } from '@admin/admin-layout';
+import { getResourceConfig } from '@admin/resource-config';
+import { ResourceTable } from '@admin/resource-table';
+import { Plus } from 'lucide-react';
+import type { GetServerSideProps } from 'next';
+import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
-import { capitalize } from 'underscore.string';
 
-export const ListResource: React.FC = () => {
-  const { t } = useTranslation();
+// Enables SSR so router.query (the [resource] param) is populated on first
+// paint — avoids the "Laddar…" flash on direct loads.
+export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
+
+export default function ResourceListPage() {
   const router = useRouter();
-  const { namespace } = router.query;
+  const resource = getResourceConfig(Array.isArray(router.query.resource) ? router.query.resource[0] : router.query.resource);
 
-  const { resource: _resource } = useParams();
-  const resource = stringToResourceName(typeof _resource === 'object' ? _resource[0] : (_resource ?? ''));
-  const filter = typeof namespace === 'string' ? { namespace } : undefined;
+  if (!router.isReady) {
+    return (
+      <AdminLayout title="Laddar…" breadcrumb="Resurser">
+        {null}
+      </AdminLayout>
+    );
+  }
 
-  const { data, refresh, loaded, loading } = useResource(resource as ResourceName, filter);
-
-  useEffect(() => {
-    if (!resource) {
-      router.push('/');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resource]);
-
-  const getProperties = () => {
-    return data?.[0] ?
-        Object.keys(data[0]).filter((key) => {
-          const type = typeof data[0][key];
-          return type === 'string' || type === 'number' || type === 'boolean';
-        })
-      : undefined;
-  };
-
-  const editProperty = resource === 'namespaces' ? 'namespace' : 'id';
+  if (!resource) {
+    return (
+      <AdminLayout title="Okänd resurs" breadcrumb="Resurser">
+        <p className="text-muted-foreground">Den här resursen finns inte.</p>
+      </AdminLayout>
+    );
+  }
 
   return (
-    resource && (
-      <DefaultLayout title={`${capitalize(t(`${resource}:name_many`))} - ${process.env.NEXT_PUBLIC_APP_NAME}`}>
-        <Main>
-          <Header>
-            <span className="flex flex-row gap-16">
-              <h1 className="leading-h4-sm">{capitalize(t(`${resource}:name_many`))}</h1>
-              {loading && <Spinner size={2.5} className="leading-h4-sm" />}
-            </span>
-            <ListToolbar resource={resource} onRefresh={refresh} properties={getProperties()} />
-          </Header>
-          {loaded && <ListResources resource={resource} data={data} editProperty={editProperty} />}
-        </Main>
-      </DefaultLayout>
-    )
+    <AdminLayout
+      title={resource.label}
+      breadcrumb="Resurser"
+      actions={
+        resource.canCreate ? (
+          <Button asChild size="sm">
+            <NextLink href={`/${resource.name}/new`}>
+              <Plus className="size-4" />
+              Skapa
+            </NextLink>
+          </Button>
+        ) : null
+      }
+    >
+      {resource.readOnly && (
+        <p className="mb-4 text-sm text-muted-foreground">Den här resursen är skrivskyddad (endast lista).</p>
+      )}
+      <ResourceTable resource={resource} />
+    </AdminLayout>
   );
-};
-
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
-  props: {
-    ...(await serverSideTranslations(locale, ['common', 'layout', 'crud', ...Object.keys(resources)])),
-  },
-});
-
-export default ListResource;
+}

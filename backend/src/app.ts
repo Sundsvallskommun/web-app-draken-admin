@@ -45,7 +45,6 @@ import createFileStore from 'session-file-store';
 import swaggerUi from 'swagger-ui-express';
 import { HttpException } from './exceptions/HttpException';
 import { Profile } from './interfaces/profile.interface';
-import { User } from './interfaces/users.interface';
 import { additionalConverters } from './utils/custom-validation-classes';
 import { isValidOrigin } from './utils/isValidOrigin';
 import { isValidUrl } from './utils/util';
@@ -53,6 +52,7 @@ import { ADRole } from './interfaces/auth.interface';
 import { getPermissions, getRole } from './services/authorization.service';
 
 const corsWhitelist = ORIGIN.split(',');
+type ControllerClass = new (...args: never[]) => unknown;
 
 const SessionStoreCreate = SESSION_MEMORY ? createMemoryStore(session) : createFileStore(session);
 const sessionTTL = 4 * 24 * 60 * 60;
@@ -112,10 +112,7 @@ const samlStrategy = new Strategy(
       });
     }
 
-    const groupList: string[] =
-      groups !== undefined
-        ? groups.split(',').map(x => x.toLowerCase())
-        : [];
+    const groupList: string[] = groups !== undefined ? groups.split(',').map(x => x.toLowerCase()) : [];
 
     const requiredGroup = ADMIN_PANEL_GROUP?.toLowerCase();
     if (!requiredGroup || !groupList.includes(requiredGroup)) {
@@ -172,7 +169,7 @@ class App {
   public port: string | number;
   public swaggerEnabled: boolean;
 
-  constructor(Controllers: Function[]) {
+  constructor(Controllers: ControllerClass[]) {
     this.app = express();
     this.env = NODE_ENV || 'development';
     this.port = PORT || 3000;
@@ -375,7 +372,7 @@ class App {
     });
   }
 
-  private initializeRoutes(controllers: Function[]) {
+  private initializeRoutes(controllers: ControllerClass[]) {
     useExpressServer(this.app, {
       routePrefix: BASE_URL_PREFIX,
       controllers: controllers,
@@ -383,7 +380,7 @@ class App {
     });
   }
 
-  private initializeSwagger(controllers: Function[]) {
+  private initializeSwagger(controllers: ControllerClass[]) {
     const schemas = validationMetadatasToSchemas({
       classTransformerMetadataStorage: defaultMetadataStorage,
       refPointerPrefix: '#/components/schemas/',

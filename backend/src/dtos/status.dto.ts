@@ -1,4 +1,4 @@
-import { Status as supportmanagementStatus} from '@/data-contracts/supportmanagement/data-contracts';
+import { Status as supportmanagementStatus } from '@/data-contracts/supportmanagement/data-contracts';
 import { IsOptional, IsString } from 'class-validator';
 
 export class StatusRequestDto implements supportmanagementStatus {

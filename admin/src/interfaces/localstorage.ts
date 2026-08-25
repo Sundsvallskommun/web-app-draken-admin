@@ -1,5 +1,6 @@
-import { ColorSchemeMode } from '@sk-web-gui/react';
 import { ResourceName } from './resource-name';
+
+export type ColorSchemeMode = 'light' | 'dark' | 'system';
 
 export type TableProperty = string;
 

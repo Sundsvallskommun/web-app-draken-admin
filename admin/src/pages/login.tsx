@@ -1,103 +1,57 @@
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/router';
-import { Button, FormErrorMessage } from '@sk-web-gui/react';
-import EmptyLayout from '@layouts/empty-layout/empty-layout.component';
-import LoaderFullScreen from '@components/loader/loader-fullscreen';
-import { appURL } from '@utils/app-url';
-import { useTranslation } from 'next-i18next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { Button } from '@components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card';
 import { apiURL } from '@utils/api-url';
-import { GetServerSideProps } from 'next';
-import { capitalize } from 'underscore.string';
+import { appURL } from '@utils/app-url';
+import { LogIn } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
 
-// Turn on/off automatic login
-const autoLogin = false;
+const appName = process.env.NEXT_PUBLIC_APP_NAME;
 
-export default function Start() {
+export default function Login() {
   const router = useRouter();
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const { t } = useTranslation();
+  const [error, setError] = useState('');
 
-
-
-  const params = new URLSearchParams(window.location.search);
-  const isLoggedOut = params.get('loggedout') === '';
-  const failMessage = params.get('failMessage');
-
-  const initalFocus = useRef<HTMLButtonElement>(null);
-  const setInitalFocus = () => {
-    setTimeout(() => {
-      initalFocus?.current?.focus();
-    });
-  };
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const failMessage = params.get('failMessage');
+    if (failMessage && failMessage !== 'NOT_AUTHORIZED') {
+      setError(failMessage === 'NOT_AUTHORIZED' ? 'Du saknar behörighet.' : 'Inloggningen misslyckades. Försök igen.');
+    } else if (failMessage === 'NOT_AUTHORIZED') {
+      setError('Du saknar behörighet till adminpanelen.');
+    }
+  }, []);
 
   const onLogin = () => {
-    let path = router.query.path || new URLSearchParams(window.location.search).get('path') || '';
-    if (typeof path === 'string' && !path.startsWith(process.env.NEXT_PUBLIC_BASE_PATH ?? '')) {
-      path = process.env.NEXT_PUBLIC_BASE_PATH + path;
-    }
+    let path = (router.query.path as string) || new URLSearchParams(window.location.search).get('path') || '';
+    const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+    if (typeof path === 'string' && !path.startsWith(base)) path = base + path;
 
     const url = new URL(apiURL('/saml/login'));
-    const queries = new URLSearchParams({
-      successRedirect: `${appURL(path as string)}`,
+    url.search = new URLSearchParams({
+      successRedirect: `${appURL(path)}`,
       failureRedirect: `${appURL()}/login`,
-    });
-    url.search = queries.toString();
-    // NOTE: send user to login with SSO
+    }).toString();
     window.location.href = url.toString();
   };
 
-  useEffect(() => {
-    setInitalFocus();
-    if (!router.isReady) return;
-    if (isLoggedOut) {
-      router.push('/login', '/login', { shallow: true });
-      setIsLoading(false);
-    } else {
-      if (failMessage === 'NOT_AUTHORIZED' && autoLogin) {
-        // autologin
-        onLogin();
-      } else if (failMessage) {
-        setErrorMessage(t(`login:errors.${failMessage}`));
-        setIsLoading(false);
-      } else {
-        setIsLoading(false);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router.isReady]);
-
-  if (isLoading) {
-    // to not flash the login-screen on autologin
-    return <LoaderFullScreen />;
-  }
-
   return (
-    <EmptyLayout title={`${process.env.NEXT_PUBLIC_APP_NAME} - Logga In`}>
-      <main>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="max-w-5xl w-full flex flex-col text-light-primary bg-inverted-background-content p-20 shadow-lg text-left">
-            <div className="mb-14">
-              <p className="my-0">{capitalize(t('common:admin_for'))}</p>
-              <h1 className="mb-10 text-xl">{process.env.NEXT_PUBLIC_APP_NAME}</h1>
-              <p className="my-0">{t('login:description')}</p>
-            </div>
-
-            <Button inverted onClick={() => onLogin()} ref={initalFocus} data-cy="loginButton">
-              {capitalize(t('common:login'))}
-            </Button>
-
-            {errorMessage && <FormErrorMessage className="mt-lg">{errorMessage}</FormErrorMessage>}
-          </div>
-        </div>
-      </main>
-    </EmptyLayout>
+    <main className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardDescription>Admin för</CardDescription>
+          <CardTitle className="text-2xl">{appName}</CardTitle>
+          <CardDescription>Logga in med ditt konto för att fortsätta.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <Button onClick={onLogin} data-cy="loginButton" className="w-full">
+            <LogIn className="size-4" />
+            Logga in
+          </Button>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </CardContent>
+      </Card>
+    </main>
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
-  props: {
-    ...(await serverSideTranslations(locale, ['common', 'login', 'crud'])),
-  },
-});

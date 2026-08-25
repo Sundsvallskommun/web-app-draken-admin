@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
 import { FeatureFlags as _FeatureFlag } from '@prisma/client';
 
 export class FeatureFlagRequestDto implements Partial<_FeatureFlag> {
