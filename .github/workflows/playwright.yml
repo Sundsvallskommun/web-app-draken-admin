@@ -44,18 +44,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Use Node.js 20
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: yarn
           cache-dependency-path: admin/yarn.lock
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --network-timeout 1000000
+        run: yarn install --frozen-lockfile --ignore-scripts --network-timeout 1000000
 
       - name: Install Chromium
-        run: yarn playwright install --with-deps chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
 
       - name: Build admin
         run: yarn build
