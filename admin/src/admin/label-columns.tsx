@@ -7,7 +7,7 @@ import { LabelEscalationEmail } from '@admin/label-escalation-email';
 import { findLabelMatches } from '@admin/label-utils';
 import { cn } from '@utils/cn';
 import { getEscalationEmail, isEscalationEmailApplicable } from '@utils/label-attributes';
-import { Ban, ChevronRight, FolderOpen, Pencil, Plus, RotateCcw, Tag, Trash2 } from 'lucide-react';
+import { Ban, ChevronRight, FolderOpen, Pencil, Plus, RotateCcw, Tag, TextCursorInput, Trash2 } from 'lucide-react';
 import * as React from 'react';
 
 const nodeName = (node: LabelNode) => node.displayName || node.classification;
@@ -34,6 +34,7 @@ function ColumnItem({
   selected,
   query,
   onSelect,
+  onDisplayNameEdit,
   onEscalationEmailEdit,
   onDeprecatedChange,
   onRemove,
@@ -43,6 +44,7 @@ function ColumnItem({
   selected: boolean;
   query: string;
   onSelect: () => void;
+  onDisplayNameEdit?: (label: LabelNode, labelValue: string) => void;
   onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
@@ -100,6 +102,18 @@ function ColumnItem({
         {hasChildren && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />}
       </button>
       <LabelCopyValue value={node.resourceName} iconOnly className="opacity-80 group-hover:opacity-100" />
+      {onDisplayNameEdit && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 text-muted-foreground opacity-80 hover:text-foreground group-hover:opacity-100"
+          aria-label={`Redigera visningsnamn för ${nodeName(node)}`}
+          onClick={() => onDisplayNameEdit(node, pathValue)}
+        >
+          <TextCursorInput className="size-4" />
+        </Button>
+      )}
       <LabelEscalationEmail label={node} className="max-w-36" />
       {onEscalationEmailEdit && canEditEscalationEmail && (
         <Button
@@ -154,6 +168,7 @@ export function LabelColumns({
   resetKey,
   onAdd,
   onSearchResultSelect,
+  onDisplayNameEdit,
   onEscalationEmailEdit,
   onDeprecatedChange,
   onRemove,
@@ -163,6 +178,7 @@ export function LabelColumns({
   resetKey?: string;
   onAdd?: (parentValue: string) => void;
   onSearchResultSelect?: () => void;
+  onDisplayNameEdit?: (label: LabelNode, labelValue: string) => void;
   onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
@@ -271,6 +287,7 @@ export function LabelColumns({
                 query={normalizedQuery}
                 selected={path[path.length - 1]?.pathValue === result.pathValue}
                 onSelect={() => selectSearchResult(result.path)}
+                onDisplayNameEdit={onDisplayNameEdit}
                 onEscalationEmailEdit={onEscalationEmailEdit}
                 onDeprecatedChange={onDeprecatedChange}
                 onRemove={onRemove}
@@ -312,6 +329,7 @@ export function LabelColumns({
                       query={query}
                       selected={path[level]?.pathValue === entry.pathValue}
                       onSelect={() => selectAt(level, entry)}
+                      onDisplayNameEdit={onDisplayNameEdit}
                       onEscalationEmailEdit={onEscalationEmailEdit}
                       onDeprecatedChange={onDeprecatedChange}
                       onRemove={onRemove}

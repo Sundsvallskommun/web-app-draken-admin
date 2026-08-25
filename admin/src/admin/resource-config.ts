@@ -31,6 +31,8 @@ export interface FieldDef {
   help?: string;
   /** Show this field as a column in the list table. */
   inTable?: boolean;
+  /** Show an exact-value filter for this field above the list table. */
+  filterable?: boolean;
   /**
    * Virtual form field that reads/writes one logical value across several API
    * fields, e.g. email text + HTML template bodies that must stay in sync.
@@ -134,9 +136,23 @@ export const resourceConfigs: ResourceConfig[] = [
     canCreate: true,
     canRemove: true,
     fields: [
-      { key: 'name', label: 'Namn', type: 'text', required: true, lockedOnEdit: true, help: 'Tekniskt namn. Kan inte ändras efter skapande.', inTable: true },
+      {
+        key: 'name',
+        label: 'Namn',
+        type: 'text',
+        required: true,
+        lockedOnEdit: true,
+        help: 'Tekniskt namn. Kan inte ändras efter skapande.',
+        inTable: true,
+      },
       { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
-      { key: 'externalDisplayName', label: 'Externt visningsnamn', type: 'text', help: 'Visas för medborgaren.', inTable: true },
+      {
+        key: 'externalDisplayName',
+        label: 'Externt visningsnamn',
+        type: 'text',
+        help: 'Visas för medborgaren.',
+        inTable: true,
+      },
       nsField(),
       { key: 'updatedAt', label: 'Uppdaterad', type: 'text', inTable: true },
     ],
@@ -238,8 +254,10 @@ export const resourceConfigs: ResourceConfig[] = [
     fields: [
       { key: 'identifier', label: 'Identifierare', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'name', label: 'Namn', type: 'text', inTable: true },
+      { key: 'description', label: 'Beskrivning', type: 'textarea', inTable: true },
+      { key: 'templateType', label: 'Malltyp', type: 'select', inTable: true, filterable: true },
       { key: 'version', label: 'Version', type: 'text', inTable: true },
-      { key: 'description', label: 'Beskrivning', type: 'textarea' },
+      { key: 'namespace', label: 'Namespace', type: 'select' },
       { key: 'content', label: 'Innehåll', type: 'code' },
       { key: 'changeLog', label: 'Ändringslogg', type: 'text' },
     ],

@@ -22,6 +22,7 @@ module.exports = {
     // Handle module aliases (this will be automatically configured for you soon)
     '@services/(.*)$': ['<rootDir>/src/services/$1'],
     '@admin/(.*)$': ['<rootDir>/src/admin/$1'],
+    '@config/(.*)$': ['<rootDir>/src/config/$1'],
     '@components/(.*)$': ['<rootDir>/src/components/$1'],
     '@interfaces/(.*)$': ['<rootDir>/src/interfaces/$1'],
     '@contexts/(.*)$': ['<rootDir>/src/contexts/$1'],

@@ -133,34 +133,37 @@ const applyDeprecatedToSubtree = (label: LabelNode, deprecated: boolean): LabelN
   labels: (label.labels ?? []).map((child) => applyDeprecatedToSubtree(child, deprecated)),
 });
 
-export function setLabelDeprecated(labels: LabelNode[], labelValue: string, deprecated: boolean): LabelNode[] {
+const updateLabelAtPath = (
+  labels: LabelNode[],
+  labelValue: string,
+  updateLabel: (label: LabelNode) => LabelNode
+): LabelNode[] => {
   const labelPath = pathFromValue(labelValue);
   if (labelPath.length === 0) return labels;
 
   const updateAtPath = (items: LabelNode[], depth: number): LabelNode[] =>
     items.map((item, index) => {
       if (index !== labelPath[depth]) return item;
-      if (depth === labelPath.length - 1) return applyDeprecatedToSubtree(item, deprecated);
+      if (depth === labelPath.length - 1) return updateLabel(item);
       return { ...item, labels: updateAtPath(item.labels ?? [], depth + 1) };
     });
 
   return updateAtPath(labels, 0);
+};
+
+export function setLabelDeprecated(labels: LabelNode[], labelValue: string, deprecated: boolean): LabelNode[] {
+  return updateLabelAtPath(labels, labelValue, (label) => applyDeprecatedToSubtree(label, deprecated));
+}
+
+export function setLabelDisplayName(labels: LabelNode[], labelValue: string, displayName: string): LabelNode[] {
+  return updateLabelAtPath(labels, labelValue, (label) => ({ ...label, displayName: displayName.trim() }));
 }
 
 export function setLabelEscalationEmail(labels: LabelNode[], labelValue: string, email: string): LabelNode[] {
-  const labelPath = pathFromValue(labelValue);
-  if (labelPath.length === 0) return labels;
-
-  const updateAtPath = (items: LabelNode[], depth: number): LabelNode[] =>
-    items.map((item, index) => {
-      if (index !== labelPath[depth]) return item;
-      if (depth === labelPath.length - 1) {
-        return { ...item, attributes: setEscalationEmail(item.attributes, email) };
-      }
-      return { ...item, labels: updateAtPath(item.labels ?? [], depth + 1) };
-    });
-
-  return updateAtPath(labels, 0);
+  return updateLabelAtPath(labels, labelValue, (label) => ({
+    ...label,
+    attributes: setEscalationEmail(label.attributes, email),
+  }));
 }
 
 export function removeLabel(labels: LabelNode[], labelValue: string): LabelNode[] {

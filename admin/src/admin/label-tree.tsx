@@ -6,7 +6,17 @@ import { Button } from '@components/ui/button';
 import type { LabelNode } from '@interfaces/label';
 import { cn } from '@utils/cn';
 import { getEscalationEmail, isEscalationEmailApplicable } from '@utils/label-attributes';
-import { Ban, ChevronDown, ChevronRight, FolderOpen, Pencil, RotateCcw, Tag, Trash2 } from 'lucide-react';
+import {
+  Ban,
+  ChevronDown,
+  ChevronRight,
+  FolderOpen,
+  Pencil,
+  RotateCcw,
+  Tag,
+  TextCursorInput,
+  Trash2,
+} from 'lucide-react';
 import * as React from 'react';
 
 export type { LabelNode };
@@ -32,6 +42,7 @@ function TreeNode({
   depth,
   pathValue,
   query,
+  onDisplayNameEdit,
   onEscalationEmailEdit,
   onDeprecatedChange,
   onRemove,
@@ -40,6 +51,7 @@ function TreeNode({
   depth: number;
   pathValue: string;
   query: string;
+  onDisplayNameEdit?: (label: LabelNode, labelValue: string) => void;
   onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
@@ -134,6 +146,18 @@ function TreeNode({
         )}
         <span className="ml-2 text-xs text-muted-foreground">{node.classification}</span>
         <LabelCopyValue value={node.resourceName} className="ml-1" />
+        {onDisplayNameEdit && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="ml-1 size-7 text-muted-foreground hover:text-foreground"
+            aria-label={`Redigera visningsnamn för ${name}`}
+            onClick={() => onDisplayNameEdit(node, pathValue)}
+          >
+            <TextCursorInput className="size-4" />
+          </Button>
+        )}
         <LabelEscalationEmail label={node} className="ml-1 max-w-64" />
         {onEscalationEmailEdit && canEditEscalationEmail && (
           <Button
@@ -186,6 +210,7 @@ function TreeNode({
                 depth={depth + 1}
                 pathValue={childPath}
                 query={query}
+                onDisplayNameEdit={onDisplayNameEdit}
                 onEscalationEmailEdit={onEscalationEmailEdit}
                 onDeprecatedChange={onDeprecatedChange}
                 onRemove={onRemove}
@@ -201,12 +226,14 @@ function TreeNode({
 export function LabelTree({
   data,
   query = '',
+  onDisplayNameEdit,
   onEscalationEmailEdit,
   onDeprecatedChange,
   onRemove,
 }: {
   data: LabelNode[];
   query?: string;
+  onDisplayNameEdit?: (label: LabelNode, labelValue: string) => void;
   onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
   onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
   onRemove?: (label: LabelNode, labelValue: string) => void;
@@ -224,6 +251,7 @@ export function LabelTree({
           depth={0}
           pathValue={String(index)}
           query={query}
+          onDisplayNameEdit={onDisplayNameEdit}
           onEscalationEmailEdit={onEscalationEmailEdit}
           onDeprecatedChange={onDeprecatedChange}
           onRemove={onRemove}

@@ -9,6 +9,7 @@ import {
   resourceNameFromDisplayName,
   ROOT_PARENT_VALUE,
   setLabelDeprecated,
+  setLabelDisplayName,
   setLabelEscalationEmail,
 } from '../label-editor';
 
@@ -178,6 +179,7 @@ describe('label-editor', () => {
       {
         id: 'category-id',
         classification: 'CATEGORY',
+        displayName: 'Boende',
         resourceName: 'BOENDE',
         resourcePath: 'BOENDE',
         isLeaf: false,
@@ -191,6 +193,7 @@ describe('label-editor', () => {
       {
         id: 'category-id',
         classification: 'CATEGORY',
+        displayName: 'Boende',
         resourceName: 'BOENDE',
         deprecated: true,
         labels: [{ id: 'type-id', classification: 'TYPE', resourceName: 'HYRA', deprecated: true, labels: [] }],
@@ -252,6 +255,38 @@ describe('label-editor', () => {
 
     const removed = setLabelEscalationEmail(added, '0.0', '');
     expect(removed[0].labels[0].attributes).toEqual([{ key: 'owner', value: 'service-center' }]);
+  });
+
+  it('updates only the selected display name and preserves its stable resource name', () => {
+    const labels = [
+      {
+        classification: 'CATEGORY',
+        displayName: 'Boende',
+        resourceName: 'HOUSING',
+        labels: [
+          {
+            classification: 'TYPE',
+            displayName: 'Hyra',
+            resourceName: 'RENT',
+            attributes: [{ key: 'owner', value: 'service-center' }],
+            labels: [],
+          },
+          { classification: 'TYPE', displayName: 'Kö', resourceName: 'QUEUE', labels: [] },
+        ],
+      },
+    ];
+
+    const next = setLabelDisplayName(labels, '0.0', '  Hyresfrågor  ');
+
+    expect(next[0].labels[0]).toEqual({
+      classification: 'TYPE',
+      displayName: 'Hyresfrågor',
+      resourceName: 'RENT',
+      attributes: [{ key: 'owner', value: 'service-center' }],
+      labels: [],
+    });
+    expect(next[0].labels[1]).toBe(labels[0].labels[1]);
+    expect(labels[0].labels[0].displayName).toBe('Hyra');
   });
 
   it('removes the selected label subtree by path', () => {
