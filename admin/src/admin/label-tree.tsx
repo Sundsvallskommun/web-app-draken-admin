@@ -1,22 +1,10 @@
 import { Badge } from '@components/ui/badge';
 import { matchesLabel, matchesSubtree, visibleLabelEntries } from '@admin/label-utils';
-import { LabelCopyValue } from '@admin/label-copy-value';
+import { LabelActions } from '@admin/label-actions';
 import { LabelEscalationEmail } from '@admin/label-escalation-email';
-import { Button } from '@components/ui/button';
 import type { LabelNode } from '@interfaces/label';
 import { cn } from '@utils/cn';
-import { getEscalationEmail, isEscalationEmailApplicable } from '@utils/label-attributes';
-import {
-  Ban,
-  ChevronDown,
-  ChevronRight,
-  FolderOpen,
-  Pencil,
-  RotateCcw,
-  Tag,
-  TextCursorInput,
-  Trash2,
-} from 'lucide-react';
+import { Ban, ChevronDown, ChevronRight, FolderOpen, Tag } from 'lucide-react';
 import * as React from 'react';
 
 export type { LabelNode };
@@ -42,19 +30,13 @@ function TreeNode({
   depth,
   pathValue,
   query,
-  onDisplayNameEdit,
-  onEscalationEmailEdit,
-  onDeprecatedChange,
-  onRemove,
+  onSettings,
 }: {
   node: LabelNode;
   depth: number;
   pathValue: string;
   query: string;
-  onDisplayNameEdit?: (label: LabelNode, labelValue: string) => void;
-  onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
-  onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
-  onRemove?: (label: LabelNode, labelValue: string) => void;
+  onSettings?: (label: LabelNode, labelValue: string) => void;
 }) {
   const name = node.displayName || node.classification;
   const children = node.labels ?? [];
@@ -63,8 +45,6 @@ function TreeNode({
   const hasVisibleChildren = visibleChildren.length > 0;
   const isMatch = matchesLabel(node, query);
   const isDeprecated = node.deprecated === true;
-  const escalationEmail = getEscalationEmail(node);
-  const canEditEscalationEmail = isEscalationEmailApplicable(node.classification) || Boolean(escalationEmail);
 
   const [expanded, setExpanded] = React.useState(true);
   React.useEffect(() => {
@@ -145,58 +125,8 @@ function TreeNode({
           </Badge>
         )}
         <span className="ml-2 text-xs text-muted-foreground">{node.classification}</span>
-        <LabelCopyValue value={node.resourceName} className="ml-1" />
-        {onDisplayNameEdit && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="ml-1 size-7 text-muted-foreground hover:text-foreground"
-            aria-label={`Redigera visningsnamn för ${name}`}
-            onClick={() => onDisplayNameEdit(node, pathValue)}
-          >
-            <TextCursorInput className="size-4" />
-          </Button>
-        )}
         <LabelEscalationEmail label={node} className="ml-1 max-w-64" />
-        {onEscalationEmailEdit && canEditEscalationEmail && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="ml-1 size-7 text-muted-foreground hover:text-foreground"
-            aria-label={`${escalationEmail ? 'Redigera' : 'Lägg till'} eskaleringsadress för ${name}`}
-            onClick={() => onEscalationEmailEdit(node, pathValue)}
-          >
-            <Pencil className="size-4" />
-          </Button>
-        )}
-        {onDeprecatedChange && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="ml-1 size-7 text-muted-foreground hover:text-foreground"
-            aria-label={`${isDeprecated ? 'Återaktivera' : 'Avveckla'} ${name}`}
-            onClick={() => onDeprecatedChange(node, pathValue, !isDeprecated)}
-          >
-            {isDeprecated ?
-              <RotateCcw className="size-4" />
-            : <Ban className="size-4" />}
-          </Button>
-        )}
-        {onRemove && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="ml-1 size-7 text-muted-foreground hover:text-destructive"
-            aria-label={`Ta bort ${name} permanent`}
-            onClick={() => onRemove(node, pathValue)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        )}
+        <LabelActions label={node} labelValue={pathValue} className="ml-auto" onSettings={onSettings} />
       </div>
 
       {hasVisibleChildren && expanded && (
@@ -210,10 +140,7 @@ function TreeNode({
                 depth={depth + 1}
                 pathValue={childPath}
                 query={query}
-                onDisplayNameEdit={onDisplayNameEdit}
-                onEscalationEmailEdit={onEscalationEmailEdit}
-                onDeprecatedChange={onDeprecatedChange}
-                onRemove={onRemove}
+                onSettings={onSettings}
               />
             );
           })}
@@ -226,17 +153,11 @@ function TreeNode({
 export function LabelTree({
   data,
   query = '',
-  onDisplayNameEdit,
-  onEscalationEmailEdit,
-  onDeprecatedChange,
-  onRemove,
+  onSettings,
 }: {
   data: LabelNode[];
   query?: string;
-  onDisplayNameEdit?: (label: LabelNode, labelValue: string) => void;
-  onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
-  onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
-  onRemove?: (label: LabelNode, labelValue: string) => void;
+  onSettings?: (label: LabelNode, labelValue: string) => void;
 }) {
   const visible = visibleLabelEntries(data, query);
   if (!visible.length) {
@@ -251,10 +172,7 @@ export function LabelTree({
           depth={0}
           pathValue={String(index)}
           query={query}
-          onDisplayNameEdit={onDisplayNameEdit}
-          onEscalationEmailEdit={onEscalationEmailEdit}
-          onDeprecatedChange={onDeprecatedChange}
-          onRemove={onRemove}
+          onSettings={onSettings}
         />
       ))}
     </div>

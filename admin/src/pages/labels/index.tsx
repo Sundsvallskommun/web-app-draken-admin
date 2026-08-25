@@ -5,8 +5,7 @@ import { LabelCreateDialog } from '@admin/label-create-dialog';
 import { LabelColumns } from '@admin/label-columns';
 import { LabelDeleteDialog } from '@admin/label-delete-dialog';
 import { LabelDeprecatedDialog } from '@admin/label-deprecated-dialog';
-import { LabelDisplayNameDialog, type LabelDisplayNameTarget } from '@admin/label-display-name-dialog';
-import { LabelEscalationEmailDialog, type LabelEscalationEmailTarget } from '@admin/label-escalation-email-dialog';
+import { LabelSettingsDialog, type LabelSettingsTarget, type LabelSettingsValues } from '@admin/label-settings-dialog';
 import {
   canCreateLabelBelow,
   labelsForSave,
@@ -22,7 +21,6 @@ import { useNamespaces } from '@admin/use-namespaces';
 import { useResourceRows } from '@admin/use-resource-data';
 import { saveLabels } from '@services/label-service';
 import { cn } from '@utils/cn';
-import { getEscalationEmail } from '@utils/label-attributes';
 import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { Columns3, ListTree, Loader2, Plus, Search, Tags, TriangleAlert } from 'lucide-react';
@@ -52,8 +50,7 @@ export default function LabelsPage() {
   const [createOpen, setCreateOpen] = React.useState(false);
   const [createParentValue, setCreateParentValue] = React.useState(ROOT_PARENT_VALUE);
   const [deprecatedTarget, setDeprecatedTarget] = React.useState<DeprecatedTarget | null>(null);
-  const [displayNameTarget, setDisplayNameTarget] = React.useState<LabelDisplayNameTarget | null>(null);
-  const [escalationEmailTarget, setEscalationEmailTarget] = React.useState<LabelEscalationEmailTarget | null>(null);
+  const [settingsTarget, setSettingsTarget] = React.useState<LabelSettingsTarget | null>(null);
   const [removeTarget, setRemoveTarget] = React.useState<RemoveTarget | null>(null);
   const [saving, setSaving] = React.useState(false);
   const { isProduction, loaded: productionLoaded } = useIsProductionEnv();
@@ -108,39 +105,20 @@ export default function LabelsPage() {
     }
   };
 
-  const saveEscalationEmail = async (email: string) => {
-    if (!namespace || !escalationEmailTarget) return;
-    const previousEmail = getEscalationEmail(escalationEmailTarget.label);
+  const saveSettings = async ({ displayName, escalationEmail }: LabelSettingsValues) => {
+    if (!namespace || !settingsTarget) return;
     setSaving(true);
     try {
-      const nextLabels = setLabelEscalationEmail(labelRows, escalationEmailTarget.labelValue, email);
+      let nextLabels = setLabelDisplayName(labelRows, settingsTarget.labelValue, displayName);
+      if (escalationEmail !== undefined) {
+        nextLabels = setLabelEscalationEmail(nextLabels, settingsTarget.labelValue, escalationEmail);
+      }
       const savedLabels = await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
       replaceRows(savedLabels);
-      toast.success(
-        email ?
-          previousEmail ? 'Eskaleringsadressen uppdaterades.'
-          : 'Eskaleringsadressen lades till.'
-        : 'Eskaleringsadressen togs bort.'
-      );
-      setEscalationEmailTarget(null);
+      toast.success('Etikettinställningarna sparades.');
+      setSettingsTarget(null);
     } catch (err) {
-      toast.error(`Kunde inte spara eskaleringsadress: ${saveErrorMessage(err)}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveDisplayName = async (displayName: string) => {
-    if (!namespace || !displayNameTarget) return;
-    setSaving(true);
-    try {
-      const nextLabels = setLabelDisplayName(labelRows, displayNameTarget.labelValue, displayName);
-      const savedLabels = await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
-      replaceRows(savedLabels);
-      toast.success('Visningsnamnet uppdaterades.');
-      setDisplayNameTarget(null);
-    } catch (err) {
-      toast.error(`Kunde inte uppdatera visningsnamn: ${saveErrorMessage(err)}`);
+      toast.error(`Kunde inte spara etikettinställningar: ${saveErrorMessage(err)}`);
     } finally {
       setSaving(false);
     }
@@ -251,22 +229,12 @@ export default function LabelsPage() {
             resetKey={namespace}
             onAdd={openCreateDialog}
             onSearchResultSelect={() => setQuery('')}
-            onDisplayNameEdit={(label, labelValue) => setDisplayNameTarget({ label, labelValue })}
-            onEscalationEmailEdit={(label, labelValue) => setEscalationEmailTarget({ label, labelValue })}
-            onDeprecatedChange={(label, labelValue, deprecated) =>
-              setDeprecatedTarget({ label, labelValue, deprecated })
-            }
-            onRemove={canDeleteLabels ? (label, labelValue) => setRemoveTarget({ label, labelValue }) : undefined}
+            onSettings={(label, labelValue) => setSettingsTarget({ label, labelValue })}
           />
         : <LabelTree
             data={labelRows}
             query={query}
-            onDisplayNameEdit={(label, labelValue) => setDisplayNameTarget({ label, labelValue })}
-            onEscalationEmailEdit={(label, labelValue) => setEscalationEmailTarget({ label, labelValue })}
-            onDeprecatedChange={(label, labelValue, deprecated) =>
-              setDeprecatedTarget({ label, labelValue, deprecated })
-            }
-            onRemove={canDeleteLabels ? (label, labelValue) => setRemoveTarget({ label, labelValue }) : undefined}
+            onSettings={(label, labelValue) => setSettingsTarget({ label, labelValue })}
           />
         }
       </div>
@@ -279,19 +247,23 @@ export default function LabelsPage() {
         onOpenChange={setCreateOpen}
         onCreate={createLabel}
       />
-      <LabelDisplayNameDialog
-        target={displayNameTarget}
-        open={Boolean(displayNameTarget)}
+      <LabelSettingsDialog
+        target={settingsTarget}
+        open={Boolean(settingsTarget)}
         saving={saving}
-        onOpenChange={(open) => !open && setDisplayNameTarget(null)}
-        onSave={saveDisplayName}
-      />
-      <LabelEscalationEmailDialog
-        target={escalationEmailTarget}
-        open={Boolean(escalationEmailTarget)}
-        saving={saving}
-        onOpenChange={(open) => !open && setEscalationEmailTarget(null)}
-        onSave={saveEscalationEmail}
+        canRemove={canDeleteLabels}
+        onOpenChange={(open) => !open && setSettingsTarget(null)}
+        onSave={saveSettings}
+        onDeprecatedChange={(deprecated) => {
+          if (!settingsTarget) return;
+          setDeprecatedTarget({ ...settingsTarget, deprecated });
+          setSettingsTarget(null);
+        }}
+        onRemove={() => {
+          if (!settingsTarget) return;
+          setRemoveTarget(settingsTarget);
+          setSettingsTarget(null);
+        }}
       />
       <LabelDeprecatedDialog
         target={deprecatedTarget}
