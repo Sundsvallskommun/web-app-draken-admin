@@ -38,7 +38,7 @@ import {
 import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import type { TextEditorProps } from '@sk-web-gui/text-editor';
-import { ChevronDown, Code2, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { ChevronDown, Code2, Loader2, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import * as React from 'react';
@@ -46,7 +46,9 @@ import { toast } from 'sonner';
 
 const TextEditor = dynamic<TextEditorProps>(() => import('@sk-web-gui/text-editor').then((mod) => mod.TextEditor), {
   ssr: false,
-  loading: () => <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">Laddar editor...</div>,
+  loading: () => (
+    <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">Laddar editor...</div>
+  ),
 });
 
 const TEMPLATE_TYPES = ['Email', 'Sms', 'Decision', 'Investigation'];
@@ -82,7 +84,7 @@ function parseMeta(m: unknown): MetaEntry[] {
 
 function prettyJson(value: unknown, fallback: unknown): string {
   try {
-    const parsed = typeof value === 'string' ? JSON.parse(value || JSON.stringify(fallback)) : value ?? fallback;
+    const parsed = typeof value === 'string' ? JSON.parse(value || JSON.stringify(fallback)) : (value ?? fallback);
     return JSON.stringify(parsed, null, 2);
   } catch {
     return typeof value === 'string' ? value : JSON.stringify(fallback, null, 2);
@@ -113,10 +115,16 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
   const { showTestFeatures } = useIsProductionEnv();
 
   const initialMeta = React.useMemo(() => parseMeta(initial?.metadata), [initial?.metadata]);
-  const metaVal = React.useCallback((key: string) => initialMeta.find((entry) => entry.key === key)?.value ?? '', [initialMeta]);
+  const metaVal = React.useCallback(
+    (key: string) => initialMeta.find((entry) => entry.key === key)?.value ?? '',
+    [initialMeta]
+  );
 
-  const approved = !isNew && showTestFeatures && isTemplateApproved(initial?.metadata);
-  const approvedAt = getApprovalTimestamp(initial?.metadata);
+  const [approvalOverride, setApprovalOverride] = React.useState<{ approved: boolean; approvedAt?: string } | null>(
+    null
+  );
+  const approved = approvalOverride?.approved ?? (!isNew && showTestFeatures && isTemplateApproved(initial?.metadata));
+  const approvedAt = approvalOverride ? approvalOverride.approvedAt : getApprovalTimestamp(initial?.metadata);
 
   const initialTemplateType = metaVal(FACET_KEYS.templateType);
   const [identifier, setIdentifier] = React.useState(String(initial?.identifier ?? ''));
@@ -126,16 +134,21 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
   const [content, setContent] = React.useState(String(initial?.content ?? ''));
   const [changeLog, setChangeLog] = React.useState('');
   const [templateType, setTemplateType] = React.useState(initialTemplateType);
-  const [customType, setCustomType] = React.useState(initialTemplateType !== '' && !TEMPLATE_TYPES.includes(initialTemplateType));
+  const [customType, setCustomType] = React.useState(
+    initialTemplateType !== '' && !TEMPLATE_TYPES.includes(initialTemplateType)
+  );
   const [namespace, setNamespace] = React.useState(metaVal('namespace'));
   const [process, setProcess] = React.useState(metaVal(FACET_KEYS.process) as Process | '');
   const [decision, setDecision] = React.useState(metaVal(FACET_KEYS.decision) as Outcome | '');
   const [capacity, setCapacity] = React.useState(metaVal(FACET_KEYS.capacity) as Capacity | '');
   const [isRich, setIsRich] = React.useState(metaVal('editor') === 'richtexteditor');
   const [defaultValuesJson, setDefaultValuesJson] = React.useState(prettyJson(initial?.defaultValues, []));
-  const [extra, setExtra] = React.useState<MetaEntry[]>(initialMeta.filter((entry) => !MANAGED_KEYS.includes(entry.key)));
+  const [extra, setExtra] = React.useState<MetaEntry[]>(
+    initialMeta.filter((entry) => !MANAGED_KEYS.includes(entry.key))
+  );
   const [metadataUnlocked, setMetadataUnlocked] = React.useState(false);
   const [manualMetadataJson, setManualMetadataJson] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
 
   const kind = templateKind(templateType);
   const selectionRule = kind && process ? findSelectionRule(kind, process as Process) : undefined;
@@ -168,7 +181,20 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
       );
     }
     return entries;
-  }, [approved, approvedAt, capacity, decision, extra, isRich, kind, namespace, needsCapacity, needsDecision, process, templateType]);
+  }, [
+    approved,
+    approvedAt,
+    capacity,
+    decision,
+    extra,
+    isRich,
+    kind,
+    namespace,
+    needsCapacity,
+    needsDecision,
+    process,
+    templateType,
+  ]);
 
   const metadataJson = metadataUnlocked ? manualMetadataJson : JSON.stringify(generatedMetadata, null, 2);
 
@@ -178,16 +204,16 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
     }
   }, [generatedMetadata, metadataUnlocked]);
 
-  const save = async (metadataEntries: MetaEntry[]) => {
+  const save = async (metadataEntries: MetaEntry[]): Promise<boolean> => {
     if (!identifier.trim()) {
       toast.error('Identifierare är obligatoriskt.');
-      return;
+      return false;
     }
 
     const normalizedDefaultValues = parseJsonText(defaultValuesJson, []);
     if (!normalizedDefaultValues) {
       toast.error('Standardvärden innehåller ogiltig JSON.');
-      return;
+      return false;
     }
 
     const data = {
@@ -201,13 +227,19 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
       defaultValues: normalizedDefaultValues,
     };
 
+    setSaving(true);
     try {
       if (isNew) await createRow('templates', municipalityId, data);
       else await updateRow('templates', municipalityId, initial as ResourceRow, data);
       toast.success(`${isNew ? 'Skapade' : 'Sparade'} mall "${name || identifier}".`);
-      router.push('/templates');
+      setChangeLog('');
+      if (isNew) await router.replace(`/templates/${encodeURIComponent(data.identifier)}`);
+      return true;
     } catch (err) {
       toast.error(`Kunde inte spara: ${errMsg(err)}`);
+      return false;
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -229,13 +261,21 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
     await save(metadataEntries);
   };
 
-  const approve = () => {
+  const approve = async () => {
     const now = new Date().toISOString();
-    save(approveTemplateMetadata(generatedMetadata, now));
+    if (await save(approveTemplateMetadata(generatedMetadata, now))) {
+      setApprovalOverride({ approved: true, approvedAt: now });
+    }
   };
 
-  const unapprove = () => {
-    save(generatedMetadata.filter((entry) => entry.key !== TEST_STATUS_KEY && entry.key !== TEST_APPROVED_AT_KEY));
+  const unapprove = async () => {
+    if (
+      await save(
+        generatedMetadata.filter((entry) => entry.key !== TEST_STATUS_KEY && entry.key !== TEST_APPROVED_AT_KEY)
+      )
+    ) {
+      setApprovalOverride({ approved: false, approvedAt: undefined });
+    }
   };
 
   return (
@@ -245,9 +285,11 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
           <ShieldCheck className="size-5 text-emerald-600" />
           <div className="min-w-0 flex-1">
             <p className="font-medium">Mallen är godkänd för produktion.</p>
-            {approvedAt && <p className="text-muted-foreground">Godkänd {new Date(approvedAt).toLocaleString('sv-SE')}.</p>}
+            {approvedAt && (
+              <p className="text-muted-foreground">Godkänd {new Date(approvedAt).toLocaleString('sv-SE')}.</p>
+            )}
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={unapprove}>
+          <Button type="button" variant="outline" size="sm" onClick={() => void unapprove()} disabled={saving}>
             Ta bort godkännande
           </Button>
         </div>
@@ -256,7 +298,12 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label>Identifierare *</Label>
-          <Input value={identifier} onChange={(e) => setIdentifier(e.target.value)} disabled={!isNew || readOnly} placeholder="t.ex. decision.letter" />
+          <Input
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            disabled={!isNew || readOnly}
+            placeholder="t.ex. decision.letter"
+          />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label>Namn</Label>
@@ -306,7 +353,12 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
               </SelectContent>
             </Select>
             {customType && (
-              <Input value={templateType} onChange={(e) => setTemplateType(e.target.value)} disabled={readOnly} placeholder="Ange malltyp" />
+              <Input
+                value={templateType}
+                onChange={(e) => setTemplateType(e.target.value)}
+                disabled={readOnly}
+                placeholder="Ange malltyp"
+              />
             )}
           </div>
           <div className="flex flex-col gap-1.5">
@@ -400,7 +452,9 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
         <div className="mt-4 flex items-center justify-between rounded-md border p-3">
           <div className="space-y-0.5 pr-4">
             <Label>Visuell texteditor (rich text)</Label>
-            <p className="text-xs text-muted-foreground">Sparas som metadata editor: richtexteditor och styr rendering i konsumenten.</p>
+            <p className="text-xs text-muted-foreground">
+              Sparas som metadata editor: richtexteditor och styr rendering i konsumenten.
+            </p>
           </div>
           <Switch checked={isRich} onCheckedChange={setIsRich} disabled={readOnly} />
         </div>
@@ -414,20 +468,38 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
                 placeholder="nyckel"
                 className="w-44"
                 disabled={readOnly}
-                onChange={(e) => setExtra((items) => items.map((item, j) => (j === i ? { ...item, key: e.target.value } : item)))}
+                onChange={(e) =>
+                  setExtra((items) => items.map((item, j) => (j === i ? { ...item, key: e.target.value } : item)))
+                }
               />
               <Input
                 value={entry.value}
                 placeholder="värde"
                 disabled={readOnly}
-                onChange={(e) => setExtra((items) => items.map((item, j) => (j === i ? { ...item, value: e.target.value } : item)))}
+                onChange={(e) =>
+                  setExtra((items) => items.map((item, j) => (j === i ? { ...item, value: e.target.value } : item)))
+                }
               />
-              <Button type="button" variant="ghost" size="icon" aria-label="Ta bort metadata" disabled={readOnly} onClick={() => setExtra((items) => items.filter((_, j) => j !== i))}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Ta bort metadata"
+                disabled={readOnly}
+                onClick={() => setExtra((items) => items.filter((_, j) => j !== i))}
+              >
                 <Trash2 className="size-4 text-destructive" />
               </Button>
             </div>
           ))}
-          <Button type="button" variant="outline" size="sm" className="w-fit" disabled={readOnly} onClick={() => setExtra((items) => [...items, { key: '', value: '' }])}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            disabled={readOnly}
+            onClick={() => setExtra((items) => [...items, { key: '', value: '' }])}
+          >
             <Plus className="size-4" />
             Lägg till metadata
           </Button>
@@ -436,7 +508,9 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
         <div className="mt-4 flex items-center justify-between rounded-md border p-3">
           <div className="space-y-0.5 pr-4">
             <Label>Redigera metadata manuellt</Label>
-            <p className="text-xs text-muted-foreground">Använd endast för legacyvärden eller specialfall som inte täcks av fälten ovan.</p>
+            <p className="text-xs text-muted-foreground">
+              Använd endast för legacyvärden eller specialfall som inte täcks av fälten ovan.
+            </p>
           </div>
           <Switch checked={metadataUnlocked} onCheckedChange={setMetadataUnlocked} disabled={readOnly} />
         </div>
@@ -458,22 +532,26 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            {metadataUnlocked ? (
+            {metadataUnlocked ?
               <MonacoField value={metadataJson} onChange={setManualMetadataJson} language="json" disabled={readOnly} />
-            ) : (
-              <pre className="mt-2 max-h-72 overflow-auto rounded-md border bg-muted p-3 font-mono text-xs leading-relaxed">{metadataJson}</pre>
-            )}
+            : <pre className="mt-2 max-h-72 overflow-auto rounded-md border bg-muted p-3 font-mono text-xs leading-relaxed">
+                {metadataJson}
+              </pre>
+            }
           </CollapsibleContent>
         </Collapsible>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <Label>Innehåll</Label>
-        {isRich ? (
-          <TextEditor className="min-h-[320px]" value={{ markup: content }} readOnly={readOnly} onChange={(e) => setContent(e.target.value.markup ?? '')} />
-        ) : (
-          <MonacoField value={content} onChange={setContent} language="markdown" disabled={readOnly} />
-        )}
+        {isRich ?
+          <TextEditor
+            className="min-h-[320px]"
+            value={{ markup: content }}
+            readOnly={readOnly}
+            onChange={(e) => setContent(e.target.value.markup ?? '')}
+          />
+        : <MonacoField value={content} onChange={setContent} language="markdown" disabled={readOnly} />}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -487,16 +565,17 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
       </div>
 
       <div className="flex flex-wrap gap-3 border-t pt-6">
-        <Button type="button" onClick={onSubmit} disabled={readOnly}>
+        <Button type="button" onClick={onSubmit} disabled={readOnly || saving}>
+          {saving && <Loader2 className="size-4 animate-spin" />}
           {isNew ? 'Skapa mall' : 'Spara ändringar'}
         </Button>
         {showTestFeatures && !isNew && !approved && (
-          <Button type="button" variant="outline" onClick={approve}>
+          <Button type="button" variant="outline" onClick={() => void approve()} disabled={saving}>
             <ShieldCheck className="size-4" />
             Godkänn för produktion
           </Button>
         )}
-        <Button type="button" variant="outline" onClick={() => router.push('/templates')}>
+        <Button type="button" variant="outline" onClick={() => router.push('/templates')} disabled={saving}>
           Avbryt
         </Button>
       </div>

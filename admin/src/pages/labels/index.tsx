@@ -5,6 +5,7 @@ import { LabelCreateDialog } from '@admin/label-create-dialog';
 import { LabelColumns } from '@admin/label-columns';
 import { LabelDeleteDialog } from '@admin/label-delete-dialog';
 import { LabelDeprecatedDialog } from '@admin/label-deprecated-dialog';
+import { LabelDisplayNameDialog, type LabelDisplayNameTarget } from '@admin/label-display-name-dialog';
 import { LabelEscalationEmailDialog, type LabelEscalationEmailTarget } from '@admin/label-escalation-email-dialog';
 import {
   canCreateLabelBelow,
@@ -12,6 +13,7 @@ import {
   removeLabel,
   ROOT_PARENT_VALUE,
   setLabelDeprecated,
+  setLabelDisplayName,
   setLabelEscalationEmail,
 } from '@admin/label-editor';
 import { LabelTree, type LabelNode } from '@admin/label-tree';
@@ -50,6 +52,7 @@ export default function LabelsPage() {
   const [createOpen, setCreateOpen] = React.useState(false);
   const [createParentValue, setCreateParentValue] = React.useState(ROOT_PARENT_VALUE);
   const [deprecatedTarget, setDeprecatedTarget] = React.useState<DeprecatedTarget | null>(null);
+  const [displayNameTarget, setDisplayNameTarget] = React.useState<LabelDisplayNameTarget | null>(null);
   const [escalationEmailTarget, setEscalationEmailTarget] = React.useState<LabelEscalationEmailTarget | null>(null);
   const [removeTarget, setRemoveTarget] = React.useState<RemoveTarget | null>(null);
   const [saving, setSaving] = React.useState(false);
@@ -122,6 +125,22 @@ export default function LabelsPage() {
       setEscalationEmailTarget(null);
     } catch (err) {
       toast.error(`Kunde inte spara eskaleringsadress: ${saveErrorMessage(err)}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveDisplayName = async (displayName: string) => {
+    if (!namespace || !displayNameTarget) return;
+    setSaving(true);
+    try {
+      const nextLabels = setLabelDisplayName(labelRows, displayNameTarget.labelValue, displayName);
+      const savedLabels = await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
+      replaceRows(savedLabels);
+      toast.success('Visningsnamnet uppdaterades.');
+      setDisplayNameTarget(null);
+    } catch (err) {
+      toast.error(`Kunde inte uppdatera visningsnamn: ${saveErrorMessage(err)}`);
     } finally {
       setSaving(false);
     }
@@ -232,6 +251,7 @@ export default function LabelsPage() {
             resetKey={namespace}
             onAdd={openCreateDialog}
             onSearchResultSelect={() => setQuery('')}
+            onDisplayNameEdit={(label, labelValue) => setDisplayNameTarget({ label, labelValue })}
             onEscalationEmailEdit={(label, labelValue) => setEscalationEmailTarget({ label, labelValue })}
             onDeprecatedChange={(label, labelValue, deprecated) =>
               setDeprecatedTarget({ label, labelValue, deprecated })
@@ -241,6 +261,7 @@ export default function LabelsPage() {
         : <LabelTree
             data={labelRows}
             query={query}
+            onDisplayNameEdit={(label, labelValue) => setDisplayNameTarget({ label, labelValue })}
             onEscalationEmailEdit={(label, labelValue) => setEscalationEmailTarget({ label, labelValue })}
             onDeprecatedChange={(label, labelValue, deprecated) =>
               setDeprecatedTarget({ label, labelValue, deprecated })
@@ -257,6 +278,13 @@ export default function LabelsPage() {
         initialParentValue={createParentValue}
         onOpenChange={setCreateOpen}
         onCreate={createLabel}
+      />
+      <LabelDisplayNameDialog
+        target={displayNameTarget}
+        open={Boolean(displayNameTarget)}
+        saving={saving}
+        onOpenChange={(open) => !open && setDisplayNameTarget(null)}
+        onSave={saveDisplayName}
       />
       <LabelEscalationEmailDialog
         target={escalationEmailTarget}

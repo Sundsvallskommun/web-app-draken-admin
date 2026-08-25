@@ -27,6 +27,7 @@ import { useNamespaces } from '@admin/use-namespaces';
 import { removeRow, useResourceRows } from '@admin/use-resource-data';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import {
+  type ColumnFiltersState,
   type ColumnDef,
   type SortingState,
   type VisibilityState,
@@ -58,13 +59,11 @@ function SortHeader({ column, children }: { column: any; children: React.ReactNo
 
 function renderCell(field: FieldDef, value: unknown, emphasize: boolean) {
   if (field.type === 'switch') {
-    return value ? (
-      <Badge>Ja</Badge>
-    ) : (
-      <Badge variant="outline" className="text-muted-foreground">
-        Nej
-      </Badge>
-    );
+    return value ?
+        <Badge>Ja</Badge>
+      : <Badge variant="outline" className="text-muted-foreground">
+          Nej
+        </Badge>;
   }
   if (field.type === 'select') {
     return value ? <Badge variant="secondary">{String(value)}</Badge> : null;
@@ -75,10 +74,13 @@ function renderCell(field: FieldDef, value: unknown, emphasize: boolean) {
 }
 
 export function ResourceTable({ resource }: { resource: ResourceConfig }) {
+  const storedNamespace = useLocalStorage((state) => state.selectedNamespace);
+  const setStoredNamespace = useLocalStorage((state) => state.setSelectedNamespace);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [filter, setFilter] = React.useState('');
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [namespace, setNamespace] = React.useState('');
+  const [namespace, setNamespace] = React.useState(resource.name === 'templates' ? storedNamespace : '');
 
   const { rows, loading, error, refresh } = useResourceRows(resource.name, namespace || undefined);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
@@ -97,15 +99,36 @@ export function ResourceTable({ resource }: { resource: ResourceConfig }) {
   );
 
   const namespaceField = resource.fields.find((f) => f.key === 'namespace' && f.type === 'select');
+  const filterFields = React.useMemo(
+    () => resource.fields.filter((field) => field.filterable && field.key !== 'namespace'),
+    [resource.fields]
+  );
+  const filterOptions = React.useMemo(
+    () =>
+      Object.fromEntries(
+        filterFields.map((field) => [
+          field.key,
+          Array.from(new Set(rows.map((row) => String(row[field.key] ?? '')).filter(Boolean))).sort((a, b) =>
+            a.localeCompare(b, 'sv-SE')
+          ),
+        ])
+      ),
+    [filterFields, rows]
+  );
   // Resources whose endpoint needs a specific namespace show a prompt until one
   // is picked, instead of fetching nothing and rendering an empty table.
   const needsNamespace = !!resource.requiresNamespace && !namespace;
+
+  React.useEffect(() => {
+    if (resource.name === 'templates' && !namespace && storedNamespace) setNamespace(storedNamespace);
+  }, [namespace, resource.name, storedNamespace]);
 
   const columns = React.useMemo<ColumnDef<ResourceRow>[]>(() => {
     const cols: ColumnDef<ResourceRow>[] = tableFields.map((field, index) => ({
       accessorKey: field.key,
       header: ({ column }) => <SortHeader column={column}>{field.label}</SortHeader>,
       cell: ({ row }) => renderCell(field, row.original[field.key], index === 0),
+      filterFn: field.filterable ? 'equalsString' : undefined,
     }));
 
     if (hasActions) {
@@ -167,9 +190,10 @@ export function ResourceTable({ resource }: { resource: ResourceConfig }) {
   const table = useReactTable({
     data: rows,
     columns,
-    state: { sorting, globalFilter: filter, columnVisibility },
+    state: { sorting, globalFilter: filter, columnFilters, columnVisibility },
     onSortingChange: setSorting,
     onGlobalFilterChange: setFilter,
+    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -199,7 +223,11 @@ export function ResourceTable({ resource }: { resource: ResourceConfig }) {
         {namespaceField && (
           <Select
             value={namespace || (resource.requiresNamespace ? '' : 'all')}
-            onValueChange={(v) => setNamespace(v === 'all' ? '' : v)}
+            onValueChange={(value) => {
+              const nextNamespace = value === 'all' ? '' : value;
+              setNamespace(nextNamespace);
+              if (resource.name === 'templates') setStoredNamespace(nextNamespace);
+            }}
           >
             <SelectTrigger
               className="w-[16rem]"
@@ -217,6 +245,29 @@ export function ResourceTable({ resource }: { resource: ResourceConfig }) {
             </SelectContent>
           </Select>
         )}
+
+        {filterFields.map((field) => {
+          const column = table.getColumn(field.key);
+          return (
+            <Select
+              key={field.key}
+              value={String(column?.getFilterValue() ?? 'all')}
+              onValueChange={(value) => column?.setFilterValue(value === 'all' ? undefined : value)}
+            >
+              <SelectTrigger className="w-[14rem]" aria-label={`Filtrera på ${field.label.toLocaleLowerCase('sv-SE')}`}>
+                <SelectValue placeholder={field.label} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alla</SelectItem>
+                {(filterOptions[field.key] ?? []).map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          );
+        })}
 
         <div className="ml-auto flex items-center gap-2">
           {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
@@ -249,76 +300,82 @@ export function ResourceTable({ resource }: { resource: ResourceConfig }) {
         </div>
       </div>
 
-      {needsNamespace ? (
+      {needsNamespace ?
         <div className="flex flex-col items-center gap-2 rounded-md border border-dashed py-12 text-center text-muted-foreground">
           {React.createElement(resource.icon, { className: 'size-6' })}
           <p className="text-sm">Välj ett namespace för att visa {resource.label.toLowerCase()}.</p>
         </div>
-      ) : (
-        <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
-                {hg.headers.map((header) => (
-                  <TableHead key={header.id} className={header.id === 'actions' ? 'text-right' : undefined}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
+      : <>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((hg) => (
+                  <TableRow key={hg.id}>
+                    {hg.headers.map((header) => (
+                      <TableHead key={header.id} className={header.id === 'actions' ? 'text-right' : undefined}>
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={table.getVisibleFlatColumns().length} className="h-24 text-center text-muted-foreground">
-                  {loading ? 'Hämtar…' : 'Inga rader.'}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.length ?
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                : <TableRow>
+                    <TableCell
+                      colSpan={table.getVisibleFlatColumns().length}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      {loading ? 'Hämtar…' : 'Inga rader.'}
+                    </TableCell>
+                  </TableRow>
+                }
+              </TableBody>
+            </Table>
+          </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Visa</span>
-          <Select value={pageSizeValue} onValueChange={onPageSizeChange}>
-            <SelectTrigger className="h-9 w-[5.5rem]" aria-label="Antal rader per sida">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="all">Alla</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="text-sm text-muted-foreground">av {table.getFilteredRowModel().rows.length} rader</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-            Föregående
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Sida {table.getState().pagination.pageIndex + 1} av {table.getPageCount() || 1}
-          </span>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-            Nästa
-          </Button>
-        </div>
-      </div>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Visa</span>
+              <Select value={pageSizeValue} onValueChange={onPageSizeChange}>
+                <SelectTrigger className="h-9 w-[5.5rem]" aria-label="Antal rader per sida">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="all">Alla</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">av {table.getFilteredRowModel().rows.length} rader</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Föregående
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Sida {table.getState().pagination.pageIndex + 1} av {table.getPageCount() || 1}
+              </span>
+              <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                Nästa
+              </Button>
+            </div>
+          </div>
         </>
-      )}
+      }
     </div>
   );
 }

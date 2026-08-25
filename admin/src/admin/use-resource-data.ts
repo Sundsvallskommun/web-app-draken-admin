@@ -1,5 +1,7 @@
 import realResources from '@config/resources';
 import { getResourceConfig, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
+import { FACET_KEYS } from '@config/template-schema';
+import { getMetadataValue } from '@utils/template-metadata';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import * as React from 'react';
 
@@ -59,8 +61,17 @@ export function apiEditId(resource: ResourceConfig, row: ResourceRow): string | 
   }
 }
 
-const withKeys = (resource: ResourceConfig, rows: Record<string, unknown>[]): ResourceRow[] =>
-  rows.map((r) => ({ ...r, id: (r.id as string) ?? computeRowId(resource, r), __key: computeRowId(resource, r) }));
+const withTemplateFacets = (row: Record<string, unknown>): Record<string, unknown> => ({
+  ...row,
+  namespace: getMetadataValue(row.metadata, 'namespace') ?? row.namespace ?? '',
+  templateType: getMetadataValue(row.metadata, FACET_KEYS.templateType) ?? row.templateType ?? '',
+});
+
+export const prepareResourceRows = (resource: ResourceConfig, rows: Record<string, unknown>[]): ResourceRow[] =>
+  rows.map((sourceRow) => {
+    const row = resource.name === 'templates' ? withTemplateFacets(sourceRow) : sourceRow;
+    return { ...row, id: (row.id as string) ?? computeRowId(resource, row), __key: computeRowId(resource, row) };
+  });
 
 type DataResponse<T> = { data?: { data?: T; message?: string } } | { data?: T };
 
@@ -70,13 +81,19 @@ const errorCode = (e: any): string => {
   return status ? String(status) : 'network';
 };
 
-export async function fetchResourceRecord(name: string, municipalityId: number, id: string): Promise<ResourceRow | undefined> {
+export async function fetchResourceRecord(
+  name: string,
+  municipalityId: number,
+  id: string
+): Promise<ResourceRow | undefined> {
   const resource = getResourceConfig(name);
   const getOne = svc(name)?.getOne;
   if (!resource || !getOne) return undefined;
 
   const res = (await getOne(municipalityId, id)) as DataResponse<Record<string, unknown>>;
-  const data = ('data' in res && res.data && 'data' in res.data ? res.data.data : res.data) as Record<string, unknown> | undefined;
+  const data = ('data' in res && res.data && 'data' in res.data ? res.data.data : res.data) as
+    | Record<string, unknown>
+    | undefined;
   return data ? ({ ...data, __key: computeRowId(resource, data) } as ResourceRow) : undefined;
 }
 
@@ -90,7 +107,11 @@ interface UseResourceRowsOptions {
   enabled?: boolean;
 }
 
-export function useResourceRows(resourceName: string | undefined, namespace?: string, options: UseResourceRowsOptions = {}) {
+export function useResourceRows(
+  resourceName: string | undefined,
+  namespace?: string,
+  options: UseResourceRowsOptions = {}
+) {
   const resource = getResourceConfig(resourceName);
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const enabled = options.enabled ?? true;
@@ -112,9 +133,11 @@ export function useResourceRows(resourceName: string | undefined, namespace?: st
     }
     setState((s) => ({ ...s, loading: true }));
     try {
-      const res = (await getMany(municipalityId, namespace ? { namespace } : undefined)) as DataResponse<Record<string, unknown>[]>;
+      const res = (await getMany(municipalityId, namespace ? { namespace } : undefined)) as DataResponse<
+        Record<string, unknown>[]
+      >;
       const raw = ('data' in res && res.data && 'data' in res.data ? res.data.data : []) ?? [];
-      setState({ rows: withKeys(resource, raw), loading: false, error: null });
+      setState({ rows: prepareResourceRows(resource, raw), loading: false, error: null });
     } catch (e) {
       setState({ rows: [], loading: false, error: errorCode(e) });
     }
@@ -129,7 +152,7 @@ export function useResourceRows(resourceName: string | undefined, namespace?: st
     (rawRows: object[]) => {
       if (!resource) return;
       setState({
-        rows: withKeys(resource, rawRows as Record<string, unknown>[]),
+        rows: prepareResourceRows(resource, rawRows as Record<string, unknown>[]),
         loading: false,
         error: null,
       });
