@@ -1,4 +1,5 @@
 import { canCreateLabelBelow, rehydrateLabelPath, ROOT_PARENT_VALUE, type LabelPathEntry } from '@admin/label-editor';
+import { LabelActions } from '@admin/label-actions';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Highlight, type LabelNode } from '@admin/label-tree';
@@ -6,8 +7,7 @@ import { LabelCopyValue } from '@admin/label-copy-value';
 import { LabelEscalationEmail } from '@admin/label-escalation-email';
 import { findLabelMatches } from '@admin/label-utils';
 import { cn } from '@utils/cn';
-import { getEscalationEmail, isEscalationEmailApplicable } from '@utils/label-attributes';
-import { Ban, ChevronRight, FolderOpen, Pencil, Plus, RotateCcw, Tag, TextCursorInput, Trash2 } from 'lucide-react';
+import { Ban, ChevronRight, FolderOpen, Plus, Tag } from 'lucide-react';
 import * as React from 'react';
 
 const nodeName = (node: LabelNode) => node.displayName || node.classification;
@@ -34,25 +34,17 @@ function ColumnItem({
   selected,
   query,
   onSelect,
-  onDisplayNameEdit,
-  onEscalationEmailEdit,
-  onDeprecatedChange,
-  onRemove,
+  onSettings,
 }: {
   node: LabelNode;
   pathValue: string;
   selected: boolean;
   query: string;
   onSelect: () => void;
-  onDisplayNameEdit?: (label: LabelNode, labelValue: string) => void;
-  onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
-  onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
-  onRemove?: (label: LabelNode, labelValue: string) => void;
+  onSettings?: (label: LabelNode, labelValue: string) => void;
 }) {
   const hasChildren = (node.labels?.length ?? 0) > 0;
   const isDeprecated = node.deprecated === true;
-  const escalationEmail = getEscalationEmail(node);
-  const canEditEscalationEmail = isEscalationEmailApplicable(node.classification) || Boolean(escalationEmail);
   return (
     <div
       aria-current={selected ? 'true' : undefined}
@@ -101,58 +93,8 @@ function ColumnItem({
         )}
         {hasChildren && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />}
       </button>
-      <LabelCopyValue value={node.resourceName} iconOnly className="opacity-80 group-hover:opacity-100" />
-      {onDisplayNameEdit && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7 text-muted-foreground opacity-80 hover:text-foreground group-hover:opacity-100"
-          aria-label={`Redigera visningsnamn för ${nodeName(node)}`}
-          onClick={() => onDisplayNameEdit(node, pathValue)}
-        >
-          <TextCursorInput className="size-4" />
-        </Button>
-      )}
       <LabelEscalationEmail label={node} className="max-w-36" />
-      {onEscalationEmailEdit && canEditEscalationEmail && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7 text-muted-foreground opacity-80 hover:text-foreground group-hover:opacity-100"
-          aria-label={`${escalationEmail ? 'Redigera' : 'Lägg till'} eskaleringsadress för ${nodeName(node)}`}
-          onClick={() => onEscalationEmailEdit(node, pathValue)}
-        >
-          <Pencil className="size-4" />
-        </Button>
-      )}
-      {onDeprecatedChange && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7 text-muted-foreground opacity-80 hover:text-foreground group-hover:opacity-100"
-          aria-label={`${isDeprecated ? 'Återaktivera' : 'Avveckla'} ${nodeName(node)}`}
-          onClick={() => onDeprecatedChange(node, pathValue, !isDeprecated)}
-        >
-          {isDeprecated ?
-            <RotateCcw className="size-4" />
-          : <Ban className="size-4" />}
-        </Button>
-      )}
-      {onRemove && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7 text-muted-foreground opacity-70 hover:text-destructive group-hover:opacity-100"
-          aria-label={`Ta bort ${nodeName(node)} permanent`}
-          onClick={() => onRemove(node, pathValue)}
-        >
-          <Trash2 className="size-4" />
-        </Button>
-      )}
+      <LabelActions label={node} labelValue={pathValue} onSettings={onSettings} />
     </div>
   );
 }
@@ -168,20 +110,14 @@ export function LabelColumns({
   resetKey,
   onAdd,
   onSearchResultSelect,
-  onDisplayNameEdit,
-  onEscalationEmailEdit,
-  onDeprecatedChange,
-  onRemove,
+  onSettings,
 }: {
   data: LabelNode[];
   query?: string;
   resetKey?: string;
   onAdd?: (parentValue: string) => void;
   onSearchResultSelect?: () => void;
-  onDisplayNameEdit?: (label: LabelNode, labelValue: string) => void;
-  onEscalationEmailEdit?: (label: LabelNode, labelValue: string) => void;
-  onDeprecatedChange?: (label: LabelNode, labelValue: string, deprecated: boolean) => void;
-  onRemove?: (label: LabelNode, labelValue: string) => void;
+  onSettings?: (label: LabelNode, labelValue: string) => void;
 }) {
   const [path, setPath] = React.useState<PathEntry[]>([]);
   const [columnWidths, setColumnWidths] = React.useState<Record<number, number>>({});
@@ -287,10 +223,7 @@ export function LabelColumns({
                 query={normalizedQuery}
                 selected={path[path.length - 1]?.pathValue === result.pathValue}
                 onSelect={() => selectSearchResult(result.path)}
-                onDisplayNameEdit={onDisplayNameEdit}
-                onEscalationEmailEdit={onEscalationEmailEdit}
-                onDeprecatedChange={onDeprecatedChange}
-                onRemove={onRemove}
+                onSettings={onSettings}
               />
             </div>
           ))}
@@ -329,10 +262,7 @@ export function LabelColumns({
                       query={query}
                       selected={path[level]?.pathValue === entry.pathValue}
                       onSelect={() => selectAt(level, entry)}
-                      onDisplayNameEdit={onDisplayNameEdit}
-                      onEscalationEmailEdit={onEscalationEmailEdit}
-                      onDeprecatedChange={onDeprecatedChange}
-                      onRemove={onRemove}
+                      onSettings={onSettings}
                     />
                   ))
                 : <p className="px-2 py-3 text-sm text-muted-foreground">Inga etiketter på den här nivån.</p>}

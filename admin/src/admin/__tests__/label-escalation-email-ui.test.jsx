@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { LabelCreateDialog } from '../label-create-dialog';
-import { LabelEscalationEmailDialog } from '../label-escalation-email-dialog';
 import { LabelTree } from '../label-tree';
 
 const category = {
@@ -12,8 +11,8 @@ const category = {
 };
 
 describe('label escalation email UI', () => {
-  it('shows an existing escalation address and offers editing for TYPE labels', () => {
-    const onEdit = jest.fn();
+  it('shows an existing escalation address and offers label settings', () => {
+    const onSettings = jest.fn();
     render(
       React.createElement(LabelTree, {
         data: [
@@ -24,13 +23,13 @@ describe('label escalation email UI', () => {
             attributes: [{ key: 'escalationEmail', value: 'rent@example.com' }],
           },
         ],
-        onEscalationEmailEdit: onEdit,
+        onSettings,
       })
     );
 
     expect(screen.getByText('rent@example.com')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Redigera eskaleringsadress för Hyra' }));
-    expect(onEdit).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Öppna inställningar för Hyra' }));
+    expect(onSettings).toHaveBeenCalledTimes(1);
   });
 
   it('adds escalationEmail when a TYPE label is created', async () => {
@@ -60,57 +59,5 @@ describe('label escalation email UI', () => {
       resourceName: 'HYRA',
       attributes: [{ key: 'escalationEmail', value: 'rent@example.com' }],
     });
-  });
-
-  it('removes an existing escalationEmail through the edit dialog', async () => {
-    const onSave = jest.fn().mockResolvedValue(undefined);
-    render(
-      React.createElement(LabelEscalationEmailDialog, {
-        target: {
-          label: {
-            classification: 'TYPE',
-            displayName: 'Hyra',
-            resourceName: 'RENT',
-            attributes: [{ key: 'escalationEmail', value: 'rent@example.com' }],
-          },
-          labelValue: '0.0',
-        },
-        open: true,
-        saving: false,
-        onOpenChange: jest.fn(),
-        onSave,
-      })
-    );
-
-    expect(screen.getByLabelText('E-postadress')).toHaveValue('rent@example.com');
-    fireEvent.click(screen.getByRole('button', { name: 'Ta bort adress' }));
-
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith(''));
-  });
-
-  it('edits an existing escalationEmail through the edit dialog', async () => {
-    const onSave = jest.fn().mockResolvedValue(undefined);
-    render(
-      React.createElement(LabelEscalationEmailDialog, {
-        target: {
-          label: {
-            classification: 'TYPE',
-            displayName: 'Hyra',
-            resourceName: 'RENT',
-            attributes: [{ key: 'escalationEmail', value: 'rent@example.com' }],
-          },
-          labelValue: '0.0',
-        },
-        open: true,
-        saving: false,
-        onOpenChange: jest.fn(),
-        onSave,
-      })
-    );
-
-    fireEvent.change(screen.getByLabelText('E-postadress'), { target: { value: 'new-rent@example.com' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Spara' }));
-
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith('new-rent@example.com'));
   });
 });
