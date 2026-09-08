@@ -20,8 +20,37 @@ const pathFromValue = (value: string): number[] =>
     .map((part) => Number(part))
     .filter((part) => Number.isInteger(part));
 
-export function defaultClassificationForParent(parent: LabelParentOption): string {
-  return parent.classification?.trim().toUpperCase() === 'TYPE' ? 'SUBTYPE' : '';
+/**
+ * Conventional classification levels, outermost first. CATEGORY_ROOT is an optional
+ * extra tier above CATEGORY — namespaces that don't use it simply start at CATEGORY.
+ * Classification stays free text in the API, so this only drives suggestions and defaults.
+ */
+export const CLASSIFICATION_LEVELS = ['CATEGORY_ROOT', 'CATEGORY', 'TYPE', 'SUBTYPE'] as const;
+
+const normalizedClassification = (classification: string): string => classification.trim().toUpperCase();
+
+/** The level below `classification`, or '' for the deepest/unknown levels. */
+const classificationBelow = (classification: string): string => {
+  const index = CLASSIFICATION_LEVELS.indexOf(
+    normalizedClassification(classification) as (typeof CLASSIFICATION_LEVELS)[number]
+  );
+  if (index < 0) return '';
+  return CLASSIFICATION_LEVELS[index + 1] ?? '';
+};
+
+/**
+ * At root level the existing top labels decide the convention: a namespace whose roots are
+ * CATEGORY keeps suggesting CATEGORY, one built on CATEGORY_ROOT suggests that. Mixed or
+ * empty namespaces suggest nothing rather than guess.
+ */
+const rootClassification = (labels: LabelNode[]): string => {
+  const distinct = new Set(labels.map((label) => normalizedClassification(label.classification ?? '')).filter(Boolean));
+  return distinct.size === 1 ? [...distinct][0] : '';
+};
+
+export function defaultClassificationForParent(parent: LabelParentOption, labels: LabelNode[] = []): string {
+  if (parent.value === ROOT_PARENT_VALUE) return rootClassification(labels);
+  return classificationBelow(parent.classification ?? '');
 }
 
 export function resourceNameFromDisplayName(displayName: string): string {

@@ -14,11 +14,58 @@ import {
 } from '../label-editor';
 
 describe('label-editor', () => {
-  it('only defaults to SUBTYPE below a TYPE parent', () => {
-    expect(defaultClassificationForParent({ value: ROOT_PARENT_VALUE, label: 'Rotnivå' })).toBe('');
-    expect(defaultClassificationForParent({ value: '0', label: 'Kategori', classification: 'CATEGORY' })).toBe('');
-    expect(defaultClassificationForParent({ value: '0.0', label: 'Typ', classification: 'TYPE' })).toBe('SUBTYPE');
-    expect(defaultClassificationForParent({ value: '0.0', label: 'Typ', classification: 'type' })).toBe('SUBTYPE');
+  it('defaults to the next classification level below the selected parent', () => {
+    expect(
+      defaultClassificationForParent({ value: '0', label: 'Kategorirot', classification: 'CATEGORY_ROOT' })
+    ).toBe('CATEGORY');
+    expect(defaultClassificationForParent({ value: '0.0', label: 'Kategori', classification: 'CATEGORY' })).toBe(
+      'TYPE'
+    );
+    expect(defaultClassificationForParent({ value: '0.0.0', label: 'Typ', classification: 'TYPE' })).toBe('SUBTYPE');
+    expect(defaultClassificationForParent({ value: '0.0.0', label: 'Typ', classification: 'type' })).toBe('SUBTYPE');
+  });
+
+  it('suggests nothing below the deepest level or an unknown classification', () => {
+    expect(defaultClassificationForParent({ value: '0', label: 'Undertyp', classification: 'SUBTYPE' })).toBe('');
+    expect(defaultClassificationForParent({ value: '0', label: 'Eget', classification: 'CUSTOM' })).toBe('');
+    expect(defaultClassificationForParent({ value: '0', label: 'Tom' })).toBe('');
+  });
+
+  it('takes the root level default from the existing root labels', () => {
+    const root = { value: ROOT_PARENT_VALUE, label: 'Rotnivå' };
+
+    expect(defaultClassificationForParent(root, [])).toBe('');
+    expect(
+      defaultClassificationForParent(root, [
+        { classification: 'CATEGORY', resourceName: 'BOENDE' },
+        { classification: 'CATEGORY', resourceName: 'OMSORG' },
+      ])
+    ).toBe('CATEGORY');
+    expect(defaultClassificationForParent(root, [{ classification: 'CATEGORY_ROOT', resourceName: 'STAD' }])).toBe(
+      'CATEGORY_ROOT'
+    );
+    expect(
+      defaultClassificationForParent(root, [
+        { classification: 'CATEGORY_ROOT', resourceName: 'STAD' },
+        { classification: 'CATEGORY', resourceName: 'BOENDE' },
+      ])
+    ).toBe('');
+  });
+
+  it('appends a CATEGORY_ROOT label at root level and categories below it', () => {
+    const withRoot = appendLabel([], ROOT_PARENT_VALUE, {
+      classification: 'CATEGORY_ROOT',
+      resourceName: 'STAD',
+      labels: [],
+    });
+    expect(withRoot).toHaveLength(1);
+
+    const withCategory = appendLabel(withRoot, '0', {
+      classification: 'CATEGORY',
+      resourceName: 'BOENDE',
+      labels: [],
+    });
+    expect(withCategory[0].labels).toEqual([{ classification: 'CATEGORY', resourceName: 'BOENDE', labels: [] }]);
   });
 
   it('builds API-compatible resource names from display names', () => {
