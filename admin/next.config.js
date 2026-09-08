@@ -1,5 +1,6 @@
 const envalid = require('envalid');
 const { i18n } = require('./next-i18next.config');
+const path = require('node:path');
 
 const authDependent = envalid.makeValidator((x) => {
   const authEnabled = process.env.HEALTH_AUTH === 'true';
@@ -24,6 +25,10 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 module.exports = withBundleAnalyzer({
   output: 'standalone',
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
+  allowedDevOrigins: ['dev.test'],
   i18n,
   images: {
     domains: [process.env.DOMAIN_NAME],
