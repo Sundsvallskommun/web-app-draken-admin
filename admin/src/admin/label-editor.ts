@@ -1,4 +1,4 @@
-import type { LabelNode } from '@interfaces/label';
+import type { LabelAttribute, LabelNode } from '@interfaces/label';
 import { setEscalationEmail } from '@utils/label-attributes';
 
 export const ROOT_PARENT_VALUE = '__root__';
@@ -21,11 +21,12 @@ const pathFromValue = (value: string): number[] =>
     .filter((part) => Number.isInteger(part));
 
 /**
- * Conventional classification levels, outermost first. CATEGORY_ROOT is an optional
- * extra tier above CATEGORY — namespaces that don't use it simply start at CATEGORY.
+ * Conventional classification levels, outermost first. ROOT is an optional extra tier above
+ * CATEGORY — namespaces that don't use it simply start at CATEGORY, and those that do can
+ * hold several ROOT labels side by side (TAGROOT, CATEGORYROOT, …).
  * Classification stays free text in the API, so this only drives suggestions and defaults.
  */
-export const CLASSIFICATION_LEVELS = ['CATEGORY_ROOT', 'CATEGORY', 'TYPE', 'SUBTYPE'] as const;
+export const CLASSIFICATION_LEVELS = ['ROOT', 'CATEGORY', 'TYPE', 'SUBTYPE'] as const;
 
 const normalizedClassification = (classification: string): string => classification.trim().toUpperCase();
 
@@ -40,7 +41,7 @@ const classificationBelow = (classification: string): string => {
 
 /**
  * At root level the existing top labels decide the convention: a namespace whose roots are
- * CATEGORY keeps suggesting CATEGORY, one built on CATEGORY_ROOT suggests that. Mixed or
+ * CATEGORY keeps suggesting CATEGORY, one built on ROOT suggests that. Mixed or
  * empty namespaces suggest nothing rather than guess.
  */
 const rootClassification = (labels: LabelNode[]): string => {
@@ -186,6 +187,10 @@ export function setLabelDeprecated(labels: LabelNode[], labelValue: string, depr
 
 export function setLabelDisplayName(labels: LabelNode[], labelValue: string, displayName: string): LabelNode[] {
   return updateLabelAtPath(labels, labelValue, (label) => ({ ...label, displayName: displayName.trim() }));
+}
+
+export function setLabelAttributes(labels: LabelNode[], labelValue: string, attributes: LabelAttribute[]): LabelNode[] {
+  return updateLabelAtPath(labels, labelValue, (label) => ({ ...label, attributes }));
 }
 
 export function setLabelEscalationEmail(labels: LabelNode[], labelValue: string, email: string): LabelNode[] {

@@ -11,6 +11,7 @@ import {
   labelsForSave,
   removeLabel,
   ROOT_PARENT_VALUE,
+  setLabelAttributes,
   setLabelDeprecated,
   setLabelDisplayName,
   setLabelEscalationEmail,
@@ -105,11 +106,13 @@ export default function LabelsPage() {
     }
   };
 
-  const saveSettings = async ({ displayName, escalationEmail }: LabelSettingsValues) => {
+  const saveSettings = async ({ displayName, escalationEmail, attributes }: LabelSettingsValues) => {
     if (!namespace || !settingsTarget) return;
     setSaving(true);
     try {
       let nextLabels = setLabelDisplayName(labelRows, settingsTarget.labelValue, displayName);
+      nextLabels = setLabelAttributes(nextLabels, settingsTarget.labelValue, attributes);
+      // Runs last so the escalation address is re-applied on top of the edited attribute list.
       if (escalationEmail !== undefined) {
         nextLabels = setLabelEscalationEmail(nextLabels, settingsTarget.labelValue, escalationEmail);
       }

@@ -8,6 +8,7 @@ import {
   removeLabel,
   resourceNameFromDisplayName,
   ROOT_PARENT_VALUE,
+  setLabelAttributes,
   setLabelDeprecated,
   setLabelDisplayName,
   setLabelEscalationEmail,
@@ -15,9 +16,7 @@ import {
 
 describe('label-editor', () => {
   it('defaults to the next classification level below the selected parent', () => {
-    expect(
-      defaultClassificationForParent({ value: '0', label: 'Kategorirot', classification: 'CATEGORY_ROOT' })
-    ).toBe('CATEGORY');
+    expect(defaultClassificationForParent({ value: '0', label: 'Rot', classification: 'ROOT' })).toBe('CATEGORY');
     expect(defaultClassificationForParent({ value: '0.0', label: 'Kategori', classification: 'CATEGORY' })).toBe(
       'TYPE'
     );
@@ -41,21 +40,24 @@ describe('label-editor', () => {
         { classification: 'CATEGORY', resourceName: 'OMSORG' },
       ])
     ).toBe('CATEGORY');
-    expect(defaultClassificationForParent(root, [{ classification: 'CATEGORY_ROOT', resourceName: 'STAD' }])).toBe(
-      'CATEGORY_ROOT'
-    );
     expect(
       defaultClassificationForParent(root, [
-        { classification: 'CATEGORY_ROOT', resourceName: 'STAD' },
+        { classification: 'ROOT', resourceName: 'TAGROOT' },
+        { classification: 'ROOT', resourceName: 'CATEGORYROOT' },
+      ])
+    ).toBe('ROOT');
+    expect(
+      defaultClassificationForParent(root, [
+        { classification: 'ROOT', resourceName: 'TAGROOT' },
         { classification: 'CATEGORY', resourceName: 'BOENDE' },
       ])
     ).toBe('');
   });
 
-  it('appends a CATEGORY_ROOT label at root level and categories below it', () => {
+  it('appends a ROOT label at root level and categories below it', () => {
     const withRoot = appendLabel([], ROOT_PARENT_VALUE, {
-      classification: 'CATEGORY_ROOT',
-      resourceName: 'STAD',
+      classification: 'ROOT',
+      resourceName: 'TAGROOT',
       labels: [],
     });
     expect(withRoot).toHaveLength(1);
@@ -334,6 +336,43 @@ describe('label-editor', () => {
     });
     expect(next[0].labels[1]).toBe(labels[0].labels[1]);
     expect(labels[0].labels[0].displayName).toBe('Hyra');
+  });
+
+  it('replaces the attributes of the selected label only, keeping the escalation address applied after', () => {
+    const labels = [
+      {
+        classification: 'CATEGORY',
+        resourceName: 'HOUSING',
+        labels: [
+          {
+            classification: 'TYPE',
+            resourceName: 'RENT',
+            attributes: [
+              { key: 'owner', value: 'service-center' },
+              { key: 'escalationEmail', value: 'rent@example.com' },
+            ],
+            labels: [],
+          },
+          {
+            classification: 'TYPE',
+            resourceName: 'QUEUE',
+            attributes: [{ key: 'owner', value: 'housing' }],
+            labels: [],
+          },
+        ],
+      },
+    ];
+
+    const withAttributes = setLabelAttributes(labels, '0.0', [{ key: 'sla', value: '48h' }]);
+    const next = setLabelEscalationEmail(withAttributes, '0.0', 'housing@example.com');
+
+    expect(next[0].labels[0].attributes).toEqual([
+      { key: 'sla', value: '48h' },
+      { key: 'escalationEmail', value: 'housing@example.com' },
+    ]);
+    expect(next[0].labels[1]).toBe(labels[0].labels[1]);
+    expect(labels[0].labels[0].attributes).toHaveLength(2);
+    expect(labelsForSave(next)[0].labels[0].attributes).toEqual(next[0].labels[0].attributes);
   });
 
   it('removes the selected label subtree by path', () => {

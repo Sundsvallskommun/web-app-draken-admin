@@ -1,4 +1,14 @@
 import { LabelCopyValue } from '@admin/label-copy-value';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@components/ui/alert-dialog';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import {
@@ -11,10 +21,10 @@ import {
 } from '@components/ui/dialog';
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
-import type { LabelNode } from '@interfaces/label';
+import type { LabelAttribute, LabelNode } from '@interfaces/label';
 import { isValidEmail } from '@utils/email';
-import { getEscalationEmail, isEscalationEmailApplicable } from '@utils/label-attributes';
-import { Ban, Loader2, RotateCcw, Trash2 } from 'lucide-react';
+import { ESCALATION_EMAIL_KEY, getEscalationEmail, isEscalationEmailApplicable } from '@utils/label-attributes';
+import { Ban, Loader2, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import * as React from 'react';
 
 export interface LabelSettingsTarget {
@@ -25,7 +35,22 @@ export interface LabelSettingsTarget {
 export interface LabelSettingsValues {
   displayName: string;
   escalationEmail?: string;
+  /** Free-form attributes without the escalation address, which has its own field. */
+  attributes: LabelAttribute[];
 }
+
+interface AttributeRow extends LabelAttribute {
+  /** Stable across edits so the inputs keep focus when rows are added or removed. */
+  rowId: number;
+}
+
+const toAttributeRows = (attributes: LabelAttribute[]): AttributeRow[] =>
+  attributes.map((attribute, index) => ({ ...attribute, rowId: index }));
+
+const trimAttributes = (rows: AttributeRow[]): LabelAttribute[] =>
+  rows
+    .map(({ key, value }) => ({ key: key.trim(), value: value.trim() }))
+    .filter((attribute) => attribute.key || attribute.value);
 
 const labelName = (label: LabelNode) => label.displayName || label.resourceName || label.classification;
 
@@ -50,7 +75,10 @@ export function LabelSettingsDialog({
 }) {
   const [displayName, setDisplayName] = React.useState('');
   const [escalationEmail, setEscalationEmail] = React.useState('');
+  const [attributeRows, setAttributeRows] = React.useState<AttributeRow[]>([]);
   const [error, setError] = React.useState('');
+  const [rowPendingRemoval, setRowPendingRemoval] = React.useState<AttributeRow | null>(null);
+  const nextRowId = React.useRef(0);
 
   const currentDisplayName = target?.label.displayName ?? '';
   const currentEscalationEmail = target ? getEscalationEmail(target.label) : '';
@@ -58,18 +86,56 @@ export function LabelSettingsDialog({
     target && (isEscalationEmailApplicable(target.label.classification) || currentEscalationEmail)
   );
   const isDeprecated = target?.label.deprecated === true;
+  /** The escalation address has its own editable field above, so it is not repeated in the list. */
+  const currentAttributes = React.useMemo(
+    () =>
+      (target?.label.attributes ?? []).filter(
+        (attribute) => !(showEscalationEmail && attribute.key === ESCALATION_EMAIL_KEY)
+      ),
+    [showEscalationEmail, target]
+  );
   const trimmedDisplayName = displayName.trim();
   const trimmedEscalationEmail = escalationEmail.trim();
+  const trimmedAttributes = trimAttributes(attributeRows);
   const unchanged =
     trimmedDisplayName === currentDisplayName.trim() &&
-    (!showEscalationEmail || trimmedEscalationEmail === currentEscalationEmail.trim());
+    (!showEscalationEmail || trimmedEscalationEmail === currentEscalationEmail.trim()) &&
+    JSON.stringify(trimmedAttributes) === JSON.stringify(trimAttributes(toAttributeRows(currentAttributes)));
 
   React.useEffect(() => {
     if (!open) return;
     setDisplayName(currentDisplayName);
     setEscalationEmail(currentEscalationEmail);
+    setAttributeRows(toAttributeRows(currentAttributes));
+    nextRowId.current = currentAttributes.length;
+    setRowPendingRemoval(null);
     setError('');
-  }, [currentDisplayName, currentEscalationEmail, open]);
+  }, [currentAttributes, currentDisplayName, currentEscalationEmail, open]);
+
+  const updateAttribute = (rowId: number, field: 'key' | 'value', fieldValue: string) => {
+    setAttributeRows((rows) => rows.map((row) => (row.rowId === rowId ? { ...row, [field]: fieldValue } : row)));
+    setError('');
+  };
+
+  const addAttribute = () => {
+    setAttributeRows((rows) => [...rows, { rowId: nextRowId.current++, key: '', value: '' }]);
+    setError('');
+  };
+
+  const removeAttribute = (rowId: number) => {
+    setAttributeRows((rows) => rows.filter((row) => row.rowId !== rowId));
+    setRowPendingRemoval(null);
+    setError('');
+  };
+
+  /** Empty rows are only scaffolding, so they are dropped without asking. */
+  const requestRemoveAttribute = (row: AttributeRow) => {
+    if (!row.key.trim() && !row.value.trim()) {
+      removeAttribute(row.rowId);
+      return;
+    }
+    setRowPendingRemoval(row);
+  };
 
   const save = async () => {
     if (!trimmedDisplayName) {
@@ -80,11 +146,25 @@ export function LabelSettingsDialog({
       setError('Ange en giltig e-postadress, till exempel namn@domän.se.');
       return;
     }
+    if (trimmedAttributes.some((attribute) => !attribute.key)) {
+      setError('Alla attribut måste ha en nyckel.');
+      return;
+    }
+    if (showEscalationEmail && trimmedAttributes.some((attribute) => attribute.key === ESCALATION_EMAIL_KEY)) {
+      setError(`Använd fältet Eskaleringsadress i stället för attributet ${ESCALATION_EMAIL_KEY}.`);
+      return;
+    }
+    const attributeKeys = trimmedAttributes.map((attribute) => attribute.key);
+    if (new Set(attributeKeys).size !== attributeKeys.length) {
+      setError('Varje attributnyckel får bara förekomma en gång.');
+      return;
+    }
 
     setError('');
     await onSave({
       displayName: trimmedDisplayName,
       ...(showEscalationEmail ? { escalationEmail: trimmedEscalationEmail } : {}),
+      attributes: trimmedAttributes,
     });
   };
 
@@ -167,6 +247,58 @@ export function LabelSettingsDialog({
             </div>
           </section>
 
+          <section className="space-y-3 border-t pt-4" aria-labelledby="label-settings-attributes">
+            <div>
+              <h3 id="label-settings-attributes" className="text-sm font-medium">
+                Attribut
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Fria nyckel/värde-par som följer med etiketten. Nyckeln måste vara unik.
+              </p>
+            </div>
+
+            {attributeRows.length === 0 ?
+              <p className="text-sm text-muted-foreground">Inga attribut.</p>
+            : <ul className="space-y-2">
+                {attributeRows.map((row, index) => (
+                  <li key={row.rowId} className="flex items-start gap-2">
+                    <Input
+                      aria-label={`Attributnyckel ${index + 1}`}
+                      value={row.key}
+                      onChange={(event) => updateAttribute(row.rowId, 'key', event.target.value)}
+                      placeholder="nyckel"
+                      className="font-mono sm:max-w-[14rem]"
+                      disabled={saving}
+                    />
+                    <Input
+                      aria-label={`Attributvärde ${index + 1}`}
+                      value={row.value}
+                      onChange={(event) => updateAttribute(row.rowId, 'value', event.target.value)}
+                      placeholder="värde"
+                      disabled={saving}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                      aria-label={`Ta bort attribut ${row.key || index + 1}`}
+                      disabled={saving}
+                      onClick={() => requestRemoveAttribute(row)}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            }
+
+            <Button type="button" variant="outline" size="sm" onClick={addAttribute} disabled={saving}>
+              <Plus className="size-4" />
+              Lägg till attribut
+            </Button>
+          </section>
+
           <section className="space-y-3 border-t pt-4" aria-labelledby="label-settings-status">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -235,6 +367,31 @@ export function LabelSettingsDialog({
           </DialogFooter>
         </form>
       </DialogContent>
+
+      <AlertDialog
+        open={rowPendingRemoval !== null}
+        onOpenChange={(nextOpen) => !nextOpen && setRowPendingRemoval(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Ta bort attributet {rowPendingRemoval?.key.trim() || rowPendingRemoval?.value.trim()}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Attributet tas bort från etiketten när du sparar inställningarna.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => rowPendingRemoval && removeAttribute(rowPendingRemoval.rowId)}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              Ta bort
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
