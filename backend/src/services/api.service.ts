@@ -2,6 +2,8 @@ import { HttpException } from '@/exceptions/HttpException';
 import { API_BASE_URL, CLIENT_KEY, CLIENT_SECRET } from '@config';
 import { apiURL } from '@/utils/util';
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import { classifyGatewayFailure, sanitizeLogInput, serializeBody } from '@/utils/gateway-error';
+import { logger } from '@/utils/logger';
 import ApiTokenService from './api-token.service';
 import { User } from '@/interfaces/users.interface';
 
@@ -37,11 +39,14 @@ class ApiService {
     };
     const defaultParams = {};
 
+    const url = this.buildUrl(config.url);
+    const method = (config.method ?? 'GET').toUpperCase();
+
     const preparedConfig: AxiosRequestConfig = {
       ...config,
       headers: { ...defaultHeaders, ...config.headers },
       params: { ...defaultParams, ...config.params },
-      url: this.buildUrl(config.url),
+      url,
     };
 
     try {
@@ -50,12 +55,24 @@ class ApiService {
     } catch (error: unknown | AxiosError) {
       if (axios.isAxiosError(error)) {
         const axiosErr = error as AxiosError;
-        console.error('API Gateway error:', axiosErr.response?.status, axiosErr.response?.data);
-        if (axiosErr.response?.status === 404) {
-          throw new HttpException(404, 'Not found');
+        const status = axiosErr.response?.status;
+
+        // NOTE: always name the call - a bare 'gateway error' cannot be acted on
+        logger.error(
+          sanitizeLogInput(
+            `API gateway ${method} ${url} failed: ${status ?? axiosErr.code ?? 'no response'} ${serializeBody(axiosErr.response?.data)}`,
+          ),
+        );
+
+        const failure = classifyGatewayFailure(method, url, status, axiosErr.response?.data);
+        if (failure.status !== 404) {
+          logger.error(sanitizeLogInput(failure.message));
         }
+
+        throw new HttpException(failure.status, failure.message);
       }
-      // NOTE: did you subscribe to the API called?
+
+      logger.error(sanitizeLogInput(`API gateway ${method} ${url} failed: ${error instanceof Error ? error.message : String(error)}`));
       throw new HttpException(500, 'Internal server error from gateway');
     }
   }

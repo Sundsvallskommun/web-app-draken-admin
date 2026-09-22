@@ -24,6 +24,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 module.exports = withBundleAnalyzer({
   output: 'standalone',
+  allowedDevOrgins: ['dev.test'],
   i18n,
   images: {
     domains: [process.env.DOMAIN_NAME],

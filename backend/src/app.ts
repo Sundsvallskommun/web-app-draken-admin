@@ -342,8 +342,10 @@ class App {
         failureRedirect = successRedirect;
       }
 
-      passport.authenticate('saml', (err, user) => {
+      passport.authenticate('saml', (err, user, info) => {
         if (err) {
+          // NOTE: the redirect only carries err.name (often just 'Error') - the reason is in err.message
+          logger.error(`SAML login callback failed: ${err?.name ?? 'unknown'}: ${err?.message ?? JSON.stringify(err)}`);
           const queries = new URLSearchParams(failureRedirect.searchParams);
           if (err?.name) {
             queries.append('failMessage', err.name);
@@ -353,6 +355,7 @@ class App {
           failureRedirect.search = queries.toString();
           res.redirect(failureRedirect.toString());
         } else if (!user) {
+          logger.error(`SAML login callback returned no user: ${info?.name ?? ''} ${info?.message ?? JSON.stringify(info ?? {})}`);
           const failMessage = new URLSearchParams(failureRedirect.searchParams);
           failMessage.append('failMessage', 'NO_USER');
           failureRedirect.search = failMessage.toString();
@@ -360,10 +363,11 @@ class App {
         } else {
           req.login(user, loginErr => {
             if (loginErr) {
+              logger.error(`SAML session login failed: ${loginErr?.message ?? JSON.stringify(loginErr)}`);
               const failMessage = new URLSearchParams(failureRedirect.searchParams);
               failMessage.append('failMessage', 'SAML_UNKNOWN_ERROR');
               failureRedirect.search = failMessage.toString();
-              res.redirect(failureRedirect.toString());
+              return res.redirect(failureRedirect.toString());
             }
             return res.redirect(successRedirect.toString());
           });
