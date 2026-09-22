@@ -55,5 +55,5 @@ module.exports = {
     // '/node_modules/',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
-  testRegex: '(/__tests__/.*|(\\.|/)(test))\\.[jt]sx?$', // to exclude 'spec' (cypress uses these in this project)
+  testRegex: '(/__tests__/.*|(\\.|/)(test))\\.[jt]sx?$', // Playwright owns .spec.ts files under e2e.
 };

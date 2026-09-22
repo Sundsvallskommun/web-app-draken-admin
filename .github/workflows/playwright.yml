@@ -1,0 +1,73 @@
+name: Playwright Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "admin/**"
+      - ".github/workflows/playwright.yml"
+  push:
+    branches:
+      - "develop"
+      - "main"
+    paths:
+      - "admin/**"
+      - ".github/workflows/playwright.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playwright-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: E2E in Chromium on ubuntu-latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: admin
+    env:
+      CI: "true"
+      NEXT_PUBLIC_APP_NAME: Draken admin
+      NEXT_PUBLIC_API_URL: http://localhost:3003
+      NEXT_PUBLIC_API_PATH: /api
+      NEXT_PUBLIC_BASE_PATH: ""
+      NEXT_PUBLIC_ENABLE_TEMPLATE_TEST_STATUS: "false"
+      DOMAIN_NAME: localhost
+      HEALTH_AUTH: "false"
+      HEALTH_USERNAME: ""
+      HEALTH_PASSWORD: ""
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: admin/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --ignore-scripts --network-timeout 1000000
+
+      - name: Install Chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Build admin
+        run: yarn build
+
+      - name: Run Playwright tests
+        run: yarn test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: admin/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14
