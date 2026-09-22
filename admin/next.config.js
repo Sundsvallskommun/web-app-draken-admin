@@ -24,7 +24,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 module.exports = withBundleAnalyzer({
   output: 'standalone',
-  allowedDevOrgins: ['dev.test'],
+  allowedDevOrigins: ['dev.test'],
   i18n,
   images: {
     domains: [process.env.DOMAIN_NAME],
@@ -32,7 +32,7 @@ module.exports = withBundleAnalyzer({
   },
   basePath: process.env.NEXT_PUBLIC_BASE_PATH,
   sassOptions: {
-    prependData: `$basePath: '${process.env.NEXT_PUBLIC_BASE_PATH}';`,
+    prependData: `$basePath: '${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}';`,
   },
   transpilePackages: ['lucide-react'],
   async rewrites() {
