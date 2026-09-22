@@ -2,6 +2,7 @@ import qs from 'qs';
 import axios from 'axios';
 import { HttpException } from '@/exceptions/HttpException';
 import { logger } from '@utils/logger';
+import { describeAxiosError, sanitizeLogInput } from '@utils/gateway-error';
 
 export interface Token {
   access_token: string;
@@ -71,8 +72,9 @@ class ApiTokenService {
 
       return this.getToken();
     } catch (error) {
-      logger.error(`Failed to fetch JWT access token: ${JSON.stringify(error)}`);
-      throw new HttpException(502, 'Bad Gateway');
+      // NOTE: JSON.stringify on an axios error yields '{}' - describeAxiosError keeps the status and body
+      logger.error(sanitizeLogInput(`Failed to fetch JWT access token from ${this.baseUrl}/token: ${describeAxiosError(error)}`));
+      throw new HttpException(502, `Could not get an API token from ${this.baseUrl}. Check CLIENT_KEY and CLIENT_SECRET.`);
     }
   }
 }
