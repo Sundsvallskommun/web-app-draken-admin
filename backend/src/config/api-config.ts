@@ -10,7 +10,7 @@ export const APIS = [
   },
   {
     name: 'supportmanagement',
-    version: '15.6',
+    version: '15.4',
   },
   {
     name: 'jsonschema',
