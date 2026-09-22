@@ -2,7 +2,7 @@
 @use 'tailwindcss/components';
 @use 'tailwindcss/utilities';
 
-@use '../../public/fonts/fonts.css';
+@use 'fonts' with ($basePath: $basePath);
 
 /* shadcn/ui design tokens (global). Plain CSS (not @layer base) so no extra
    @tailwind base directive is required in this SCSS entry. */

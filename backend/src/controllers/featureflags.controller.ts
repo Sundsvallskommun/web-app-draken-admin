@@ -112,14 +112,12 @@ export class FeatureFlagController {
       throw new HttpException(400, 'Bad Request');
     }
 
-    if (id !== body.id) {
-      throw new HttpException(400, 'Missmatching ids');
-    }
+    const { name, description, enabled, application, namespace } = body;
 
     try {
       const data = await prisma.featureFlags.update({
         where: { id, municipalityId },
-        data: body,
+        data: { name, description, enabled, application, namespace },
       });
 
       return response.send({ data, message: 'success' });
