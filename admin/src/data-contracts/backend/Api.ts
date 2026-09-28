@@ -11,6 +11,11 @@
  */
 
 import {
+  AttachmentPurposeApiResponse,
+  AttachmentPurposeDeleteApiResponse,
+  AttachmentPurposeRequestDto,
+  AttachmentPurposesApiResponse,
+  AttachmentPurposeUpdateDto,
   CategoriesApiResponse,
   CategoryApiResponse,
   CategoryDeleteApiResponse,
@@ -350,6 +355,92 @@ export class Api<
   ) =>
     this.request<ContactReasonDeleteApiResponse, any>({
       path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * @tags Attachment Purposes
+   * @name AttachmentPurposesControllerCreateAttachmentPurpose
+   * @request POST:/api/attachment-purposes/{municipalityId}
+   */
+  attachmentPurposesControllerCreateAttachmentPurpose = (
+    municipalityId: number,
+    data?: AttachmentPurposeRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<AttachmentPurposeApiResponse, any>({
+      path: `/api/attachment-purposes/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * @tags Attachment Purposes
+   * @name AttachmentPurposesControllerGetAttachmentPurposes
+   * @request GET:/api/attachment-purposes/{municipalityId}
+   */
+  attachmentPurposesControllerGetAttachmentPurposes = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<AttachmentPurposesApiResponse, any>({
+      path: `/api/attachment-purposes/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * @tags Attachment Purposes
+   * @name AttachmentPurposesControllerGetAttachmentPurpose
+   * @request GET:/api/attachment-purposes/{municipalityId}/{namespace}/{id}
+   */
+  attachmentPurposesControllerGetAttachmentPurpose = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<AttachmentPurposeApiResponse, any>({
+      path: `/api/attachment-purposes/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * @tags Attachment Purposes
+   * @name AttachmentPurposesControllerUpdateAttachmentPurpose
+   * @request PATCH:/api/attachment-purposes/{municipalityId}/{namespace}/{id}
+   */
+  attachmentPurposesControllerUpdateAttachmentPurpose = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: AttachmentPurposeUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<AttachmentPurposeApiResponse, any>({
+      path: `/api/attachment-purposes/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * @tags Attachment Purposes
+   * @name AttachmentPurposesControllerDeleteAttachmentPurpose
+   * @request DELETE:/api/attachment-purposes/{municipalityId}/{namespace}/{id}
+   */
+  attachmentPurposesControllerDeleteAttachmentPurpose = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<AttachmentPurposeDeleteApiResponse, any>({
+      path: `/api/attachment-purposes/${municipalityId}/${namespace}/${id}`,
       method: "DELETE",
       ...params,
     });

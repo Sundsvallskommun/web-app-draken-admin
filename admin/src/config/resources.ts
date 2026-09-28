@@ -1,5 +1,8 @@
 import { Api } from '@data-contracts/backend/Api';
 import {
+  AttachmentPurpose,
+  AttachmentPurposeRequestDto,
+  AttachmentPurposeUpdateDto,
   Category,
   CategoryRequestDto,
   CategoryUpdateDto,
@@ -391,5 +394,44 @@ const categories: Resource<Category, CategoryRequestDto, CategoryUpdateDto> = {
   requiredFields: ['name', 'namespace'],
 };
 
-const resources = { featureFlags, labels, roles, statuses, contactReasons, categories, emailIntegration, namespaces, templates, jsonSchemas };
+const attachmentPurposes: Resource<AttachmentPurpose, AttachmentPurposeRequestDto, AttachmentPurposeUpdateDto> = {
+  name: 'attachmentPurposes',
+  getMany: apiService.attachmentPurposesControllerGetAttachmentPurposes,
+  getOne: (municipalityId, id) => {
+    const [namespace, purposeId] = (id as string).split('/');
+    return apiService.attachmentPurposesControllerGetAttachmentPurpose(municipalityId, namespace, purposeId);
+  },
+  create: apiService.attachmentPurposesControllerCreateAttachmentPurpose,
+  update: (municipalityId, id, data) => {
+    const [namespace, purposeId] = (id as string).split('/');
+    return apiService.attachmentPurposesControllerUpdateAttachmentPurpose(municipalityId, namespace, purposeId, data);
+  },
+  remove: (_municipalityId, _namespace, compositeId) => {
+    const [ns, purposeId] = (compositeId as string).split('/');
+    return apiService.attachmentPurposesControllerDeleteAttachmentPurpose(_municipalityId, ns, purposeId);
+  },
+
+  defaultValues: {
+    name: '',
+    displayName: '',
+    sortOrder: undefined,
+    deprecated: false,
+    namespace: '',
+  },
+  requiredFields: ['name', 'namespace'],
+};
+
+const resources = {
+  featureFlags,
+  labels,
+  roles,
+  statuses,
+  contactReasons,
+  categories,
+  attachmentPurposes,
+  emailIntegration,
+  namespaces,
+  templates,
+  jsonSchemas,
+};
 export default resources;

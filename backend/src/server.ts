@@ -8,6 +8,7 @@ import { LabelsController } from './controllers/labels.controller';
 import { NamespaceController } from './controllers/namespace.controller';
 import { RolesController } from './controllers/roles.controller';
 import { StatusesController } from './controllers/statuses.controller';
+import { AttachmentPurposesController } from './controllers/attachment-purposes.controller';
 import { CategoriesController } from './controllers/categories.controller';
 import { CompareController } from './controllers/compare.controller';
 import { ContactReasonsController } from './controllers/contact-reasons.controller';
@@ -30,6 +31,7 @@ const app = new App([
   StatusesController,
   ContactReasonsController,
   CategoriesController,
+  AttachmentPurposesController,
   EmailIntegrationController,
   EnvironmentController,
   JsonSchemaController,

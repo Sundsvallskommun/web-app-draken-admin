@@ -279,6 +279,47 @@ export interface CategoryApiResponse {
   message: string;
 }
 
+export interface AttachmentPurposeRequestDto {
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+  namespace: string;
+}
+
+export interface AttachmentPurposeUpdateDto {
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+  namespace?: string;
+}
+
+export interface AttachmentPurpose {
+  id: string;
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+  namespace?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AttachmentPurposeDeleteApiResponse {
+  data: boolean;
+  message: string;
+}
+
+export interface AttachmentPurposesApiResponse {
+  data: AttachmentPurpose[];
+  message: string;
+}
+
+export interface AttachmentPurposeApiResponse {
+  data: AttachmentPurpose;
+  message: string;
+}
+
 export interface DetailedTemplateResponseDTO {
   identifier?: string;
   version?: string;
