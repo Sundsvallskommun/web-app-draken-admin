@@ -14,7 +14,7 @@ export const APIS = [
   },
   {
     name: 'support-management-alkt-sprint',
-    version: '16.1',
+    version: '16.3',
   },
   {
     name: 'jsonschema',
