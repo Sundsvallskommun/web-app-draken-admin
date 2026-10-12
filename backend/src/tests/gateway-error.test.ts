@@ -22,6 +22,11 @@ describe('apiFromUrl', () => {
     expect(apiFromUrl('https://api-test.sundsvall.se/templating/2.1/2281/templates')).toBe('templating/2.1');
   });
 
+  it('returns only the name when the url has no version segment (USE_API_VERSION=false)', () => {
+    expect(apiFromUrl('https://api-test.sundsvall.se/supportmanagement/2281/CC/metadata/labels')).toBe('supportmanagement');
+    expect(apiFromUrl('https://api-test.sundsvall.se/templating/2281/templates')).toBe('templating');
+  });
+
   it('is undefined when no segment matches a declared API', () => {
     expect(apiFromUrl('https://api-test.sundsvall.se/somethingelse/1.0/2281')).toBeUndefined();
   });

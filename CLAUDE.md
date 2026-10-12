@@ -55,7 +55,7 @@ Browser → `admin` (session cookie, `NEXT_PUBLIC_API_URL` + `NEXT_PUBLIC_API_PA
 
 ### API versions and the alias indirection
 
-`backend/src/config/api-config.ts` lists every subscribed gateway API with its version. Controllers must build URLs via `apiServiceName('supportmanagement')`, never hardcode `supportmanagement/15.2`. `API_SERVICE_ALIASES` currently reroutes `supportmanagement` to a temporary sprint API (`support-management-alkt-sprint`) — remove the alias, not the call sites, when that ends. Changing a version here means re-running `yarn generate:contracts`.
+`backend/src/config/api-config.ts` lists every subscribed gateway API with its version. Controllers must build URLs via `apiServiceName('supportmanagement')`, never hardcode `supportmanagement/15.2`. `API_SERVICE_ALIASES` currently reroutes `supportmanagement` to a temporary sprint API (`support-management-alkt-sprint`) — remove the alias, not the call sites, when that ends. Changing a version here means re-running `yarn generate:contracts`. Setting `USE_API_VERSION=false` in the backend env makes `apiServiceName` return the bare API name so the gateway routes to the latest version; `apiFromUrl` in `gateway-error.ts` tolerates both URL shapes.
 
 ### Generated data contracts
 

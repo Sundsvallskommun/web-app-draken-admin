@@ -49,6 +49,8 @@ class ApiService {
       url,
     };
 
+    console.log(`API Service Request: ${method} ${url}`);
+
     try {
       const res = await axios(preparedConfig);
       return { data: res.data, message: 'success' };

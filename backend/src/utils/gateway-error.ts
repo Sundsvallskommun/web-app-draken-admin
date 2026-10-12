@@ -23,11 +23,15 @@ export interface GatewayFailure {
 /** Strip CR/LF so upstream-controlled strings cannot forge extra log lines. */
 export const sanitizeLogInput = (input: string): string => String(input).replace(/[\r\n]/g, ' ');
 
+// Gateway versions always carry a dot (`15.2`), which tells them apart from a municipality id (`2281`).
+const VERSION_SEGMENT = /^\d+\.\d+(\.\d+)*$/;
+
 /**
  * Pick the `<name>/<version>` pair out of a gateway URL, e.g.
  * `https://api-test.sundsvall.se/supportmanagement/15.2/2281/...` -> `supportmanagement/15.2`.
  * Matched against the names declared in api-config.ts so an ordinary path segment
- * cannot be mistaken for an API.
+ * cannot be mistaken for an API. When USE_API_VERSION=false the URL has no version segment
+ * (`.../supportmanagement/2281/...`) and only the name is returned.
  */
 export function apiFromUrl(url: string): string | undefined {
   let pathname = url;
@@ -41,7 +45,8 @@ export function apiFromUrl(url: string): string | undefined {
   const start = segments.findIndex(segment => APIS.some(api => api.name === segment.toLowerCase()));
   if (start === -1) return undefined;
 
-  return segments.slice(start, start + 2).join('/');
+  const version = segments[start + 1];
+  return version && VERSION_SEGMENT.test(version) ? `${segments[start]}/${version}` : segments[start];
 }
 
 /** Readable, length-capped rendering of an upstream response body. */
@@ -102,7 +107,7 @@ export function classifyGatewayFailure(method: string, url: string, status: numb
   if (status === 404 && isRoutingFault(fault)) {
     return {
       status: 502,
-      message: `The gateway has no ${target}. That API version does not exist - check the version in backend/src/config/api-config.ts.`,
+      message: `The gateway has no ${target}. That API version does not exist - check the version in backend/src/config/api-config.ts (or the API name, if USE_API_VERSION=false).`,
     };
   }
 

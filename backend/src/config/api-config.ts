@@ -14,7 +14,7 @@ export const APIS = [
   },
   {
     name: 'support-management-alkt-sprint',
-    version: '16.3',
+    version: '17.1',
   },
   {
     name: 'jsonschema',
@@ -22,10 +22,21 @@ export const APIS = [
   },
 ] as const;
 
+/**
+ * Whether gateway URLs include the pinned API version (`supportmanagement/15.2`) or only the
+ * API name (`supportmanagement`), which makes the gateway route to the latest version.
+ * Controlled by the USE_API_VERSION env var; anything but the literal "false" keeps versions on.
+ * Read at call time because dotenv is loaded after this module is imported.
+ */
+export function useApiVersion(): boolean {
+  return process.env.USE_API_VERSION !== 'false';
+}
+
 export function apiServiceName(name: string): string {
   const resolvedName = API_SERVICE_ALIASES[name] ?? name;
   const api = APIS.find(a => a.name === resolvedName);
-  return api ? `${api.name}/${api.version}` : name;
+  if (!api) return name;
+  return useApiVersion() ? `${api.name}/${api.version}` : api.name;
 }
 
 // Temporary routing for the Support Management development sprint.
