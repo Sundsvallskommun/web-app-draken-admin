@@ -9,6 +9,9 @@ import {
   ContactReason,
   ContactReasonRequestDto,
   ContactReasonUpdateDto,
+  DecisionOutcome,
+  DecisionOutcomeRequestDto,
+  DecisionOutcomeUpdateDto,
   EmailIntegrationData as EmailIntegration,
   EmailIntegrationDto,
   FeatureFlag,
@@ -452,6 +455,33 @@ const measureTypes: Resource<MeasureType, MeasureTypeRequestDto, MeasureTypeUpda
   requiredFields: ['name', 'measureGroups', 'namespace'],
 };
 
+const decisionOutcomes: Resource<DecisionOutcome, DecisionOutcomeRequestDto, DecisionOutcomeUpdateDto> = {
+  name: 'decisionOutcomes',
+  getMany: apiService.decisionOutcomesControllerGetDecisionOutcomes,
+  getOne: (municipalityId, id) => {
+    const [namespace, outcomeId] = (id as string).split('/');
+    return apiService.decisionOutcomesControllerGetDecisionOutcome(municipalityId, namespace, outcomeId);
+  },
+  create: apiService.decisionOutcomesControllerCreateDecisionOutcome,
+  update: (municipalityId, id, data) => {
+    const [namespace, outcomeId] = (id as string).split('/');
+    return apiService.decisionOutcomesControllerUpdateDecisionOutcome(municipalityId, namespace, outcomeId, data);
+  },
+  remove: (_municipalityId, _namespace, compositeId) => {
+    const [ns, outcomeId] = (compositeId as string).split('/');
+    return apiService.decisionOutcomesControllerDeleteDecisionOutcome(_municipalityId, ns, outcomeId);
+  },
+
+  defaultValues: {
+    name: '',
+    displayName: '',
+    sortOrder: undefined,
+    deprecated: false,
+    namespace: '',
+  },
+  requiredFields: ['name', 'namespace'],
+};
+
 const resources = {
   featureFlags,
   labels,
@@ -461,6 +491,7 @@ const resources = {
   categories,
   attachmentPurposes,
   measureTypes,
+  decisionOutcomes,
   emailIntegration,
   namespaces,
   templates,

@@ -26,6 +26,11 @@ import {
   ContactReasonRequestDto,
   ContactReasonsApiResponse,
   ContactReasonUpdateDto,
+  DecisionOutcomeApiResponse,
+  DecisionOutcomeDeleteApiResponse,
+  DecisionOutcomeRequestDto,
+  DecisionOutcomesApiResponse,
+  DecisionOutcomeUpdateDto,
   DetailedTemplateResponseDTO,
   EmailIntegrationApiResponse,
   EmailIntegrationDto,
@@ -878,6 +883,107 @@ export class Api<
   ) =>
     this.request<MeasureTypeDeleteApiResponse, any>({
       path: `/api/measure-types/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Decision Outcomes
+   * @name DecisionOutcomesControllerCreateDecisionOutcome
+   * @summary Create new decision outcome
+   * @request POST:/api/decision-outcomes/{municipalityId}
+   */
+  decisionOutcomesControllerCreateDecisionOutcome = (
+    municipalityId: number,
+    data?: DecisionOutcomeRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<DecisionOutcomeApiResponse, any>({
+      path: `/api/decision-outcomes/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Decision Outcomes
+   * @name DecisionOutcomesControllerGetDecisionOutcomes
+   * @summary Get all decision outcomes
+   * @request GET:/api/decision-outcomes/{municipalityId}
+   */
+  decisionOutcomesControllerGetDecisionOutcomes = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<DecisionOutcomesApiResponse, any>({
+      path: `/api/decision-outcomes/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Decision Outcomes
+   * @name DecisionOutcomesControllerGetDecisionOutcome
+   * @summary Get a decision outcome by UUID
+   * @request GET:/api/decision-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  decisionOutcomesControllerGetDecisionOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<DecisionOutcomeApiResponse, any>({
+      path: `/api/decision-outcomes/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Decision Outcomes
+   * @name DecisionOutcomesControllerUpdateDecisionOutcome
+   * @summary Update a decision outcome by UUID
+   * @request PATCH:/api/decision-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  decisionOutcomesControllerUpdateDecisionOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: DecisionOutcomeUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<DecisionOutcomeApiResponse, any>({
+      path: `/api/decision-outcomes/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Decision Outcomes
+   * @name DecisionOutcomesControllerDeleteDecisionOutcome
+   * @summary Delete a decision outcome by UUID
+   * @request DELETE:/api/decision-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  decisionOutcomesControllerDeleteDecisionOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<DecisionOutcomeDeleteApiResponse, any>({
+      path: `/api/decision-outcomes/${municipalityId}/${namespace}/${id}`,
       method: "DELETE",
       ...params,
     });

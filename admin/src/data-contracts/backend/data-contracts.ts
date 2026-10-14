@@ -278,6 +278,47 @@ export interface MeasureTypeApiResponse {
   message: string;
 }
 
+export interface DecisionOutcomeRequestDto {
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+  namespace: string;
+}
+
+export interface DecisionOutcomeUpdateDto {
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+  namespace?: string;
+}
+
+export interface DecisionOutcome {
+  id: string;
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+  namespace?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DecisionOutcomeDeleteApiResponse {
+  data: boolean;
+  message: string;
+}
+
+export interface DecisionOutcomesApiResponse {
+  data: DecisionOutcome[];
+  message: string;
+}
+
+export interface DecisionOutcomeApiResponse {
+  data: DecisionOutcome;
+  message: string;
+}
+
 export interface CategoryTypeDto {
   name: string;
   displayName?: string;
