@@ -11,6 +11,7 @@ import { StatusesController } from './controllers/statuses.controller';
 import { AttachmentPurposesController } from './controllers/attachment-purposes.controller';
 import { MeasureTypesController } from './controllers/measure-types.controller';
 import { DecisionOutcomesController } from './controllers/decision-outcomes.controller';
+import { StatementOutcomesController } from './controllers/statement-outcomes.controller';
 import { CategoriesController } from './controllers/categories.controller';
 import { CompareController } from './controllers/compare.controller';
 import { ContactReasonsController } from './controllers/contact-reasons.controller';
@@ -36,6 +37,7 @@ const app = new App([
   AttachmentPurposesController,
   MeasureTypesController,
   DecisionOutcomesController,
+  StatementOutcomesController,
   EmailIntegrationController,
   EnvironmentController,
   JsonSchemaController,

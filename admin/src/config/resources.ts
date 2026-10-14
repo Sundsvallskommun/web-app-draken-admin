@@ -24,6 +24,9 @@ import {
   Role,
   RoleRequestDto,
   RoleUpdateDto,
+  StatementOutcome,
+  StatementOutcomeRequestDto,
+  StatementOutcomeUpdateDto,
   Status,
   StatusRequestDto,
   StatusUpdateDto,
@@ -482,6 +485,34 @@ const decisionOutcomes: Resource<DecisionOutcome, DecisionOutcomeRequestDto, Dec
   requiredFields: ['name', 'namespace'],
 };
 
+const statementOutcomes: Resource<StatementOutcome, StatementOutcomeRequestDto, StatementOutcomeUpdateDto> = {
+  name: 'statementOutcomes',
+  getMany: apiService.statementOutcomesControllerGetStatementOutcomes,
+  getOne: (municipalityId, id) => {
+    const [namespace, outcomeId] = (id as string).split('/');
+    return apiService.statementOutcomesControllerGetStatementOutcome(municipalityId, namespace, outcomeId);
+  },
+  create: apiService.statementOutcomesControllerCreateStatementOutcome,
+  update: (municipalityId, id, data) => {
+    const [namespace, outcomeId] = (id as string).split('/');
+    return apiService.statementOutcomesControllerUpdateStatementOutcome(municipalityId, namespace, outcomeId, data);
+  },
+  remove: (_municipalityId, _namespace, compositeId) => {
+    const [ns, outcomeId] = (compositeId as string).split('/');
+    return apiService.statementOutcomesControllerDeleteStatementOutcome(_municipalityId, ns, outcomeId);
+  },
+
+  defaultValues: {
+    name: '',
+    displayName: '',
+    sortOrder: undefined,
+    responded: true,
+    deprecated: false,
+    namespace: '',
+  },
+  requiredFields: ['name', 'namespace'],
+};
+
 const resources = {
   featureFlags,
   labels,
@@ -492,6 +523,7 @@ const resources = {
   attachmentPurposes,
   measureTypes,
   decisionOutcomes,
+  statementOutcomes,
   emailIntegration,
   namespaces,
   templates,

@@ -53,6 +53,11 @@ import {
   RoleRequestDto,
   RolesApiResponse,
   RoleUpdateDto,
+  StatementOutcomeApiResponse,
+  StatementOutcomeDeleteApiResponse,
+  StatementOutcomeRequestDto,
+  StatementOutcomesApiResponse,
+  StatementOutcomeUpdateDto,
   StatusApiResponse,
   StatusDeleteApiResponse,
   StatusesApiResponse,
@@ -984,6 +989,107 @@ export class Api<
   ) =>
     this.request<DecisionOutcomeDeleteApiResponse, any>({
       path: `/api/decision-outcomes/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statement Outcomes
+   * @name StatementOutcomesControllerCreateStatementOutcome
+   * @summary Create new statement outcome
+   * @request POST:/api/statement-outcomes/{municipalityId}
+   */
+  statementOutcomesControllerCreateStatementOutcome = (
+    municipalityId: number,
+    data?: StatementOutcomeRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatementOutcomeApiResponse, any>({
+      path: `/api/statement-outcomes/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statement Outcomes
+   * @name StatementOutcomesControllerGetStatementOutcomes
+   * @summary Get all statement outcomes
+   * @request GET:/api/statement-outcomes/{municipalityId}
+   */
+  statementOutcomesControllerGetStatementOutcomes = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<StatementOutcomesApiResponse, any>({
+      path: `/api/statement-outcomes/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statement Outcomes
+   * @name StatementOutcomesControllerGetStatementOutcome
+   * @summary Get a statement outcome by UUID
+   * @request GET:/api/statement-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  statementOutcomesControllerGetStatementOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatementOutcomeApiResponse, any>({
+      path: `/api/statement-outcomes/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statement Outcomes
+   * @name StatementOutcomesControllerUpdateStatementOutcome
+   * @summary Update a statement outcome by UUID
+   * @request PATCH:/api/statement-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  statementOutcomesControllerUpdateStatementOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: StatementOutcomeUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatementOutcomeApiResponse, any>({
+      path: `/api/statement-outcomes/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statement Outcomes
+   * @name StatementOutcomesControllerDeleteStatementOutcome
+   * @summary Delete a statement outcome by UUID
+   * @request DELETE:/api/statement-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  statementOutcomesControllerDeleteStatementOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatementOutcomeDeleteApiResponse, any>({
+      path: `/api/statement-outcomes/${municipalityId}/${namespace}/${id}`,
       method: "DELETE",
       ...params,
     });

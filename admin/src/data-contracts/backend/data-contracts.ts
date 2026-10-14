@@ -319,6 +319,50 @@ export interface DecisionOutcomeApiResponse {
   message: string;
 }
 
+export interface StatementOutcomeRequestDto {
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  responded?: boolean;
+  deprecated?: boolean;
+  namespace: string;
+}
+
+export interface StatementOutcomeUpdateDto {
+  displayName?: string;
+  sortOrder?: number;
+  responded?: boolean;
+  deprecated?: boolean;
+  namespace?: string;
+}
+
+export interface StatementOutcome {
+  id: string;
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  responded: boolean;
+  deprecated?: boolean;
+  namespace?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StatementOutcomeDeleteApiResponse {
+  data: boolean;
+  message: string;
+}
+
+export interface StatementOutcomesApiResponse {
+  data: StatementOutcome[];
+  message: string;
+}
+
+export interface StatementOutcomeApiResponse {
+  data: StatementOutcome;
+  message: string;
+}
+
 export interface CategoryTypeDto {
   name: string;
   displayName?: string;
