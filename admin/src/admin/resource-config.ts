@@ -15,6 +15,7 @@ import {
   Paperclip,
   Tags,
   Users,
+  Wrench,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -27,9 +28,16 @@ export interface FieldDef {
   required?: boolean;
   /** Disabled when editing an existing record (e.g. name / namespace keys). */
   lockedOnEdit?: boolean;
+  /** Server-owned value (e.g. timestamps): shown but never editable or submitted. */
+  readOnly?: boolean;
   /** Options for non-namespace selects (namespace options are fetched live). */
   options?: { value: string; label: string }[];
   help?: string;
+  /**
+   * The API value is a string array; the form edits it as comma-separated text
+   * and the table shows it joined.
+   */
+  list?: boolean;
   /** Show this field as a column in the list table. */
   inTable?: boolean;
   /** Show an exact-value filter for this field above the list table. */
@@ -214,6 +222,45 @@ export const resourceConfigs: ResourceConfig[] = [
       },
       nsField(),
       { key: 'updatedAt', label: 'Uppdaterad', type: 'text', inTable: true },
+    ],
+  },
+  {
+    name: 'measureTypes',
+    label: 'Åtgärdstyper',
+    description: 'Typer av åtgärder på ärenden, grupperade i åtgärdsgrupper, per namespace.',
+    icon: Wrench,
+    canCreate: true,
+    canRemove: true,
+    fields: [
+      {
+        key: 'name',
+        label: 'Namn',
+        type: 'text',
+        required: true,
+        lockedOnEdit: true,
+        help: 'Tekniskt namn som används som nyckel. Kan inte ändras efter skapande.',
+        inTable: true,
+      },
+      { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
+      {
+        key: 'measureGroups',
+        label: 'Åtgärdsgrupper (kommaseparerat)',
+        type: 'text',
+        list: true,
+        required: true,
+        help: 'En åtgärdstyp tillhör minst en grupp. T.ex. "INSPECTION, FOLLOW_UP".',
+        inTable: true,
+      },
+      { key: 'sortOrder', label: 'Sorteringsordning', type: 'number', inTable: true },
+      {
+        key: 'deprecated',
+        label: 'Utfasad',
+        type: 'switch',
+        help: 'Utfasade åtgärdstyper kan inte väljas för nya åtgärder men finns kvar på befintliga.',
+        inTable: true,
+      },
+      nsField(),
+      { key: 'updatedAt', label: 'Uppdaterad', type: 'text', readOnly: true, inTable: true },
     ],
   },
   {

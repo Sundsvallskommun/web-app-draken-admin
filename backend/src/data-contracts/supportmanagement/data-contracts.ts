@@ -29,8 +29,8 @@ export interface ConstraintViolationProblem {
   title?: string;
   /** @format uri */
   instance?: string;
-  causeAsProblem?: ThrowableProblem;
   detail?: string;
+  causeAsProblem?: ThrowableProblem;
 }
 
 export interface ThrowableProblem {
@@ -42,7 +42,7 @@ export interface ThrowableProblem {
   detail?: string;
   /** @format uri */
   instance?: string;
-  causeAsProblem?: any;
+  causeAsProblem?: ThrowableProblem;
 }
 
 export interface Violation {
@@ -52,8 +52,8 @@ export interface Violation {
 
 /** Field of an errand exposed to a role */
 export interface FieldAccess {
-  /** Field to expose */
-  field: FieldAccessFieldEnum;
+  /** Field to expose. The values accepted are published by the access definition of the namespace configuration */
+  field: string;
   /** Keys to expose when the field is a keyed collection. The whole collection is exposed when left empty */
   keys?: string[];
   /** What the holder may do with the field, narrowing it below the level the errand itself is held at. Left unset the field simply follows the errand, which is what every grant did before this was added, and a level may only ever restrict further - it can never make a readable errand writable. Only a field holding a keyed collection may carry one, and limited read is not a level a field can be held at */
@@ -62,8 +62,8 @@ export interface FieldAccess {
 
 /** What limited read means within the namespace */
 export interface LimitedReadAccess {
-  /** Resources reachable on an errand the labels of the user only grant them limited read for. The errand itself is always reachable, listing resources here extends limited read beyond it. Read only, so no access level is given per resource */
-  resources?: LimitedReadAccessResourcesEnum[];
+  /** Resources reachable on an errand the labels of the user only grant them limited read for. The errand itself is always reachable, listing resources here extends limited read beyond it. Read only, so no access level is given per resource. The values accepted are published by the access definition of the namespace configuration */
+  resources?: string[];
   /** Fields of the errand exposed, applying instead of the fields of any role the user holds, when role based mapping is active */
   fields?: FieldAccess[];
 }
@@ -121,8 +121,8 @@ export interface ReporterAccess {
 
 /** Resource a role may reach, and what it may do with it */
 export interface ResourceAccess {
-  /** Resource to grant access to */
-  resource: ResourceAccessResourceEnum;
+  /** Resource to grant access to. The values accepted are published by the access definition of the namespace configuration */
+  resource: string;
   /** Access level granted for the resource */
   level: ResourceAccessLevelEnum;
 }
@@ -175,6 +175,16 @@ export interface Config {
   parameters: ActionParameter[];
   /** Display value for this action. Will be mapped to each action on errands */
   displayValue?: string;
+  /** The operations on an errand that this config reacts to. Left empty the config reacts to every operation the action supports, which is how a config without this behaves. It may only narrow what the action supports, never widen it - the action definition publishes what that is. */
+  operationTypes?: OperationType[];
+}
+
+/** Type of operation */
+export enum OperationType {
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+  READ = 'READ',
 }
 
 /** Label model */
@@ -191,6 +201,8 @@ export interface Label {
    * @minLength 1
    */
   classification: string;
+  /** Display name for the label classification, as registered for the namespace */
+  classificationDisplayName?: string;
   /** Display name for the label */
   displayName?: string;
   /** Resource path */
@@ -249,13 +261,12 @@ export interface JsonNode {
   null?: boolean;
   object?: boolean;
   float?: boolean;
+  number?: boolean;
   string?: boolean;
   boolean?: boolean;
-  number?: boolean;
   missingNode?: boolean;
   valueNode?: boolean;
   container?: boolean;
-  nodeType?: JsonNodeNodeTypeEnum;
   pojo?: boolean;
   floatingPointNumber?: boolean;
   short?: boolean;
@@ -267,6 +278,7 @@ export interface JsonNode {
   /** @deprecated */
   textual?: boolean;
   binary?: boolean;
+  nodeType?: JsonNodeNodeTypeEnum;
   integralNumber?: boolean;
   embeddedValue?: boolean;
 }
@@ -668,11 +680,8 @@ export interface MeasureType {
   name: string;
   /** Display name for the measure type */
   displayName?: string | null;
-  /**
-   * Group that this measure type belongs to
-   * @minLength 1
-   */
-  measureGroup: string;
+  /** Groups that this measure type belongs to. A group may be named once only, and a measure type belongs to at least one - a creation has to name them and an update may leave them out, but may not empty them */
+  measureGroups?: string[];
   /**
    * Sort order for the measure type
    * @format int32
@@ -690,6 +699,200 @@ export interface MeasureType {
   created?: string;
   /**
    * Timestamp when the measure type was last modified
+   * @format date-time
+   */
+  modified?: string;
+}
+
+/** An action that references labels affected by a label move */
+export interface AffectedAction {
+  /**
+   * Action ID
+   * @example "5f79a808-0ef3-4985-99b9-b12f23e202a7"
+   */
+  id?: string;
+  /**
+   * Action name
+   * @example "SEND_EMAIL"
+   */
+  name?: string;
+  /**
+   * Human-readable display value for the action
+   * @example "Send email to assignee"
+   */
+  displayValue?: string;
+}
+
+/** Result of a label move dry-run — no changes are made */
+export interface LabelMoveDryRunResponse {
+  /**
+   * Number of errands that reference the label or any of its descendants
+   * @format int64
+   */
+  affectedErrandCount?: number;
+  /** Actions that have hasLabel conditions referencing the moved label or its descendants */
+  affectedActions?: AffectedAction[];
+}
+
+/** Job response */
+export interface JobResponse {
+  /** Job ID */
+  jobId?: string;
+  /** Job type */
+  type?: JobResponseTypeEnum;
+  /** Job status */
+  status?: JobResponseStatusEnum;
+  /**
+   * Progress percentage (0-100)
+   * @format int32
+   */
+  progress?: number;
+  /**
+   * Total number of items to process
+   * @format int32
+   */
+  total?: number;
+  /**
+   * Number of items processed so far
+   * @format int32
+   */
+  processed?: number;
+  /** Error message, populated on FAILED status */
+  message?: string;
+  /**
+   * When the job was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * When the job was last updated
+   * @format date-time
+   */
+  modified?: string;
+}
+
+/** Request for moving a label to a new parent */
+export interface LabelMoveRequest {
+  /**
+   * ID of the new parent label. Null means move to root.
+   * @example "5f79a808-0ef3-4985-99b9-b12f23e202a7"
+   */
+  newParentId?: string | null;
+  /** When true, return affected counts without making any changes. When false, starts the move as an asynchronous job. */
+  dryRun: boolean;
+}
+
+/** Result of a label merge dry-run — no changes are made */
+export interface LabelMergeDryRunResponse {
+  /**
+   * Number of errands that reference one or more of the source labels
+   * @format int64
+   */
+  affectedErrandCount?: number;
+  /** Actions that have hasLabel conditions referencing one or more of the source labels */
+  affectedActions?: AffectedAction[];
+}
+
+/** Request for merging one or more source labels into a destination label */
+export interface LabelMergeRequest {
+  /**
+   * IDs of the source labels to merge into the destination label
+   * @minItems 1
+   */
+  sourceLabelIds: string[];
+  /** When true, return affected counts without making any changes. When false, starts the merge as an asynchronous job. */
+  dryRun: boolean;
+}
+
+/** Result of a label-tree restructure dry-run — no changes are made */
+export interface LabelRestructureDryRunResponse {
+  /**
+   * Sum of affectedErrandCount across all steps. An errand touched by more than one step is counted once per step that touches it, not deduplicated across steps
+   * @format int64
+   */
+  totalAffectedErrandCount?: number;
+  /** Per-step results, in the same order as the request's steps */
+  steps?: LabelRestructureStepResult[];
+}
+
+/** Dry-run result for one step of a label-tree restructure */
+export interface LabelRestructureStepResult {
+  /**
+   * Index of the step in the request's steps list
+   * @format int32
+   */
+  index?: number;
+  /** The step's type */
+  type?: LabelRestructureStepResultTypeEnum;
+  /** The step's path, as submitted */
+  path?: string[];
+  /**
+   * Number of errands that reference the label or, for MOVE/MERGE, any of its descendants/sources. Always 0 for ADD/RENAME, and for a step whose path was only created by an earlier step in the same request
+   * @format int64
+   */
+  affectedErrandCount?: number;
+  /** Actions that have hasLabel conditions referencing a label this step affects */
+  affectedActions?: AffectedAction[];
+}
+
+/** Request for restructuring the label tree as one ordered sequence of add/rename/delete/move/merge steps */
+export interface LabelRestructureRequest {
+  /**
+   * Steps to apply, in order. A later step may reference a label an earlier step in this same request added or moved
+   * @minItems 1
+   */
+  steps: LabelRestructureStep[];
+  /** When true, return affected counts for every step without making any changes. When false, starts the restructure as an asynchronous job. */
+  dryRun: boolean;
+}
+
+/** One step of a label-tree restructure */
+export interface LabelRestructureStep {
+  /** The kind of change this step makes */
+  type: LabelRestructureStepTypeEnum;
+  /**
+   * Path (resourceName segments from the root) of the label this step acts on. The label added, renamed or deleted for ADD/RENAME/DELETE; the label moved for MOVE; the merge destination for MERGE
+   * @minItems 1
+   */
+  path: string[];
+  /** MOVE only: path of the new parent, or null/absent to move to root */
+  destinationParentPath?: string[];
+  /** MERGE only: paths of the source labels merged into path */
+  sourcePaths?: string[][];
+  /** ADD: display name of the new label. RENAME: the new display name. MOVE: an optional new display name to set at the same time */
+  displayName?: string;
+  /** ADD only: classification of the new label */
+  classification?: string;
+  /**
+   * MOVE only: an optional new resourceName to set at the same time (used for a combined move+rename)
+   * @pattern [A-Z0-9_]+
+   */
+  newResourceName?: string;
+}
+
+/** Label classification model */
+export interface LabelClassification {
+  /** Label classification ID */
+  id?: string;
+  /**
+   * Label classification. Used as key and matched against the classification of the labels. Ignored on update
+   * @minLength 0
+   * @maxLength 255
+   * @pattern (?!\.{1,2}$)[^/\\;%]+
+   */
+  classification: string;
+  /**
+   * Display name for the label classification
+   * @maxLength 255
+   */
+  displayName?: string | null;
+  /**
+   * Timestamp when the label classification was created
+   * @format date-time
+   */
+  created?: string;
+  /**
+   * Timestamp when the label classification was last modified
    * @format date-time
    */
   modified?: string;
@@ -1056,6 +1259,8 @@ export interface ErrandLabel {
   version?: number;
   /** Label classification */
   classification?: string;
+  /** Display name for the label classification, as registered for the namespace */
+  classificationDisplayName?: string;
   /** Display name for the label */
   displayName?: string;
   /** Resource path */
@@ -1119,18 +1324,22 @@ export interface Measure {
   addedByUser?: string;
   /** Role of the user who added the measure */
   addedByRole?: string;
-  /** Goal of the measure */
+  /**
+   * Goal of the measure
+   * @minLength 0
+   * @maxLength 3000
+   */
   goal?: string;
-  /** Description of the measure */
+  /**
+   * Description of the measure
+   * @minLength 0
+   * @maxLength 3000
+   */
   description?: string;
   /** Accept status */
   accept?: string | null;
   /** Motivation for the accept decision */
   acceptMotivation?: string;
-  /** Rework goal */
-  reworkGoal?: string;
-  /** Rework description */
-  reworkDescription?: string;
   /**
    * Timestamp when the measure was created
    * @format date-time
@@ -2196,43 +2405,6 @@ export interface ErrandPurgeRequest {
   maxErrands?: number;
 }
 
-/** Job response */
-export interface JobResponse {
-  /** Job ID */
-  jobId?: string;
-  /** Job type */
-  type?: JobResponseTypeEnum;
-  /** Job status */
-  status?: JobResponseStatusEnum;
-  /**
-   * Progress percentage (0-100)
-   * @format int32
-   */
-  progress?: number;
-  /**
-   * Total number of items to process
-   * @format int32
-   */
-  total?: number;
-  /**
-   * Number of items processed so far
-   * @format int32
-   */
-  processed?: number;
-  /** Error message, populated on FAILED status */
-  message?: string;
-  /**
-   * When the job was created
-   * @format date-time
-   */
-  created?: string;
-  /**
-   * When the job was last updated
-   * @format date-time
-   */
-  modified?: string;
-}
-
 /** Validation model */
 export interface Validation {
   /** Type of metadata that the validation applies to */
@@ -2347,19 +2519,19 @@ export interface PageSubscriberNotification {
 export interface PageableObject {
   /** @format int64 */
   offset?: number;
-  sort?: SortObject;
-  unpaged?: boolean;
   paged?: boolean;
   /** @format int32 */
   pageNumber?: number;
   /** @format int32 */
   pageSize?: number;
+  sort?: SortObject;
+  unpaged?: boolean;
 }
 
 export interface SortObject {
   empty?: boolean;
-  unsorted?: boolean;
   sorted?: boolean;
+  unsorted?: boolean;
 }
 
 export interface SubscriberNotification {
@@ -2450,6 +2622,8 @@ export interface ActionDefinition {
   conditionDefinitions?: Definition[];
   /** Definitions of parameters for this action */
   parameterDefinitions?: Definition[];
+  /** The operations on an errand this action runs on. A config of this action may name a subset of these and nothing outside them */
+  operationTypes?: OperationType[];
 }
 
 /** Definition of a condition or parameter for an action */
@@ -2473,6 +2647,38 @@ export interface PossibleValue {
   value?: string;
   /** Display name for the value */
   displayName?: string;
+}
+
+/**
+ * The values the access configuration of a namespace accepts.
+ *
+ * Published as data rather than as an enum of this API, so that exposing a new field or guarding a new resource does not alter the contract. A client configuring access reads the values from here instead of from the schema.
+ */
+export interface AccessDefinition {
+  /** Fields access may be configured for */
+  fields?: AccessFieldDefinition[];
+  /** Resources access may be configured for */
+  resources?: AccessResourceDefinition[];
+}
+
+/** Field of an errand that access may be configured for */
+export interface AccessFieldDefinition {
+  /** Value to configure the field with */
+  field?: string;
+  /** Property the field names on the errand, which is how the access of an errand reports it */
+  property?: string;
+  /** If the field holds a keyed collection, in which case keys and a level may be configured for it */
+  keyed?: boolean;
+}
+
+/** Resource that access may be configured for */
+export interface AccessResourceDefinition {
+  /** Value to configure the resource with */
+  resource?: string;
+  /** Path the resource is guarded on. Access patterns of the access mapper are matched against it, and the access of an errand reports it */
+  path?: string;
+  /** If the resource belongs to an errand rather than to the namespace itself */
+  errandScoped?: boolean;
 }
 
 /** Labels model */
@@ -2839,41 +3045,51 @@ export interface ReadByCountEntry {
   count?: number;
 }
 
+/**
+ * What the requesting user may do with one errand, so that a client can render only the controls their next request would be allowed to make.
+ *
+ * 'level' is what a patch of the errand itself accepts. 'fields' reports each field at what serves it, which is the errand for all of them but the two keyed fields carrying a write endpoint of their own - so a field may be wider than the errand. 'resources' reports the endpoints serving a resource of the errand on its own. External tags have no resource of their own and are reached through the errand alone.
+ */
+export interface ErrandAccess {
+  /** What the user may do with the errand itself. Reaching this endpoint at all means at least limited read */
+  level?: ErrandAccessLevelEnum;
+  /** What the user may do with each field of the errand they reach. A field that is not listed is not returned in the errand payload, which says nothing about an endpoint of its own serving it - that is what 'resources' answers. Every field a response carries is listed, the phase a request names to move the errand into excepted, which no response carries */
+  fields?: ErrandFieldAccess[];
+  /** What the user may do with each resource of the errand they reach. A resource that is not listed is not reachable by them. The errand itself is reported as 'level' rather than listed here */
+  resources?: ErrandResourceAccess[];
+}
+
+/** What the requesting user may do with one field of an errand */
+export interface ErrandFieldAccess {
+  /** Property of the errand, named as it is written in the errand payload. A field the user does not reach at all is not listed */
+  field?: string;
+  /** What the user may do with the field. The errand answers for every field written through it, and for the two keyed fields with a write endpoint of their own - 'parameters' and 'jsonParameters' - the resource serving that endpoint answers instead, so this may be wider than the level of the errand */
+  level?: ErrandFieldAccessLevelEnum;
+  /** If the field is reached without any key restriction, in which case every key of it follows the level of the field and 'keys' is empty. False means the namespace restricts the field to the keys listed. Only set for the keyed fields PARAMETERS, JSON_PARAMETERS and EXTERNAL_TAGS */
+  allKeys?: boolean;
+  /** Every key of the collection the user reaches, and what they may do with each. A key that is not listed is not reachable at all, whether it is stored on the errand yet or not - so a key listed as 'RW' may be created as well as changed. Empty when 'allKeys' is true. Only set for keyed fields */
+  keys?: ErrandFieldKeyAccess[];
+}
+
+/** What the requesting user may do with one key of a keyed field of an errand */
+export interface ErrandFieldKeyAccess {
+  /** Key of the keyed collection */
+  key?: string;
+  /** What the user may do with the key. Never wider than what they may do with the field carrying it, which is the errand itself unless the field has a write endpoint of its own */
+  level?: ErrandFieldKeyAccessLevelEnum;
+}
+
+/** What the requesting user may do with one resource of an errand */
+export interface ErrandResourceAccess {
+  /** Resource of the errand, named by the path access is granted on. A resource the user does not reach at all is not listed */
+  resource?: string;
+  /** What the user may do with the resource */
+  level?: ErrandResourceAccessLevelEnum;
+}
+
 export interface CountResponse {
   /** @format int64 */
   count?: number;
-}
-
-/** Field to expose */
-export enum FieldAccessFieldEnum {
-  ID = 'ID',
-  ERRAND_NUMBER = 'ERRAND_NUMBER',
-  TITLE = 'TITLE',
-  STATUS = 'STATUS',
-  RESOLUTION = 'RESOLUTION',
-  CHANNEL = 'CHANNEL',
-  CREATED = 'CREATED',
-  MODIFIED = 'MODIFIED',
-  TOUCHED = 'TOUCHED',
-  PRIORITY = 'PRIORITY',
-  DESCRIPTION = 'DESCRIPTION',
-  CLASSIFICATION = 'CLASSIFICATION',
-  REPORTER_USER_ID = 'REPORTER_USER_ID',
-  ASSIGNED_USER_ID = 'ASSIGNED_USER_ID',
-  ASSIGNED_GROUP_ID = 'ASSIGNED_GROUP_ID',
-  BUSINESS_RELATED = 'BUSINESS_RELATED',
-  SUSPENSION = 'SUSPENSION',
-  CONTACT_REASON = 'CONTACT_REASON',
-  CONTACT_REASON_DESCRIPTION = 'CONTACT_REASON_DESCRIPTION',
-  ESCALATION_EMAIL = 'ESCALATION_EMAIL',
-  LABELS = 'LABELS',
-  STAKEHOLDERS = 'STAKEHOLDERS',
-  MEASURES = 'MEASURES',
-  ACTIVE_NOTIFICATIONS = 'ACTIVE_NOTIFICATIONS',
-  VERSION = 'VERSION',
-  PARAMETERS = 'PARAMETERS',
-  JSON_PARAMETERS = 'JSON_PARAMETERS',
-  EXTERNAL_TAGS = 'EXTERNAL_TAGS',
 }
 
 /** What the holder may do with the field, narrowing it below the level the errand itself is held at. Left unset the field simply follows the errand, which is what every grant did before this was added, and a level may only ever restrict further - it can never make a readable errand writable. Only a field holding a keyed collection may carry one, and limited read is not a level a field can be held at */
@@ -2881,85 +3097,6 @@ export enum FieldAccessLevelEnum {
   LR = 'LR',
   R = 'R',
   RW = 'RW',
-}
-
-export enum LimitedReadAccessResourcesEnum {
-  ERRAND = 'ERRAND',
-  ATTACHMENT = 'ATTACHMENT',
-  COMMUNICATION = 'COMMUNICATION',
-  COMMUNICATION_ATTACHMENT = 'COMMUNICATION_ATTACHMENT',
-  CONVERSATION = 'CONVERSATION',
-  CONVERSATION_MESSAGE = 'CONVERSATION_MESSAGE',
-  CONVERSATION_ATTACHMENT = 'CONVERSATION_ATTACHMENT',
-  EVENT = 'EVENT',
-  NOTE = 'NOTE',
-  NOTE_REVISION = 'NOTE_REVISION',
-  PARAMETER = 'PARAMETER',
-  JSON_PARAMETER = 'JSON_PARAMETER',
-  MEASURE = 'MEASURE',
-  STATEMENT = 'STATEMENT',
-  INVESTIGATION = 'INVESTIGATION',
-  DECISION = 'DECISION',
-  NOTIFICATION = 'NOTIFICATION',
-  REVISION = 'REVISION',
-  TIME_MEASURE = 'TIME_MEASURE',
-  NAMESPACE_CONFIG = 'NAMESPACE_CONFIG',
-  EMAIL_INTEGRATION_CONFIG = 'EMAIL_INTEGRATION_CONFIG',
-  MESSAGE_EXCHANGE_INTEGRATION_CONFIG = 'MESSAGE_EXCHANGE_INTEGRATION_CONFIG',
-  METADATA_ATTACHMENT_PURPOSE = 'METADATA_ATTACHMENT_PURPOSE',
-  METADATA_CATEGORY = 'METADATA_CATEGORY',
-  METADATA_CONTACT_REASON = 'METADATA_CONTACT_REASON',
-  METADATA_DECISION_OUTCOME = 'METADATA_DECISION_OUTCOME',
-  METADATA_EXTERNAL_ID_TYPE = 'METADATA_EXTERNAL_ID_TYPE',
-  METADATA_LABEL = 'METADATA_LABEL',
-  METADATA_MEASURE_TYPE = 'METADATA_MEASURE_TYPE',
-  METADATA_PHASE = 'METADATA_PHASE',
-  METADATA_ROLE = 'METADATA_ROLE',
-  METADATA_STATEMENT_OUTCOME = 'METADATA_STATEMENT_OUTCOME',
-  METADATA_STATUS = 'METADATA_STATUS',
-  SUBSCRIBER = 'SUBSCRIBER',
-  SUBSCRIPTION = 'SUBSCRIPTION',
-  SUBSCRIBER_NOTIFICATION = 'SUBSCRIBER_NOTIFICATION',
-}
-
-/** Resource to grant access to */
-export enum ResourceAccessResourceEnum {
-  ERRAND = 'ERRAND',
-  ATTACHMENT = 'ATTACHMENT',
-  COMMUNICATION = 'COMMUNICATION',
-  COMMUNICATION_ATTACHMENT = 'COMMUNICATION_ATTACHMENT',
-  CONVERSATION = 'CONVERSATION',
-  CONVERSATION_MESSAGE = 'CONVERSATION_MESSAGE',
-  CONVERSATION_ATTACHMENT = 'CONVERSATION_ATTACHMENT',
-  EVENT = 'EVENT',
-  NOTE = 'NOTE',
-  NOTE_REVISION = 'NOTE_REVISION',
-  PARAMETER = 'PARAMETER',
-  JSON_PARAMETER = 'JSON_PARAMETER',
-  MEASURE = 'MEASURE',
-  STATEMENT = 'STATEMENT',
-  INVESTIGATION = 'INVESTIGATION',
-  DECISION = 'DECISION',
-  NOTIFICATION = 'NOTIFICATION',
-  REVISION = 'REVISION',
-  TIME_MEASURE = 'TIME_MEASURE',
-  NAMESPACE_CONFIG = 'NAMESPACE_CONFIG',
-  EMAIL_INTEGRATION_CONFIG = 'EMAIL_INTEGRATION_CONFIG',
-  MESSAGE_EXCHANGE_INTEGRATION_CONFIG = 'MESSAGE_EXCHANGE_INTEGRATION_CONFIG',
-  METADATA_ATTACHMENT_PURPOSE = 'METADATA_ATTACHMENT_PURPOSE',
-  METADATA_CATEGORY = 'METADATA_CATEGORY',
-  METADATA_CONTACT_REASON = 'METADATA_CONTACT_REASON',
-  METADATA_DECISION_OUTCOME = 'METADATA_DECISION_OUTCOME',
-  METADATA_EXTERNAL_ID_TYPE = 'METADATA_EXTERNAL_ID_TYPE',
-  METADATA_LABEL = 'METADATA_LABEL',
-  METADATA_MEASURE_TYPE = 'METADATA_MEASURE_TYPE',
-  METADATA_PHASE = 'METADATA_PHASE',
-  METADATA_ROLE = 'METADATA_ROLE',
-  METADATA_STATEMENT_OUTCOME = 'METADATA_STATEMENT_OUTCOME',
-  METADATA_STATUS = 'METADATA_STATUS',
-  SUBSCRIBER = 'SUBSCRIBER',
-  SUBSCRIPTION = 'SUBSCRIPTION',
-  SUBSCRIBER_NOTIFICATION = 'SUBSCRIBER_NOTIFICATION',
 }
 
 /** Access level granted for the resource */
@@ -3020,18 +3157,12 @@ export enum SubscriptionTargetTypeEnum {
   NAMESPACE = 'NAMESPACE',
 }
 
-/** The channel the attachment was received via */
-export enum ErrandAttachmentChannelEnum {
-  EMAIL = 'EMAIL',
-  ESERVICE = 'ESERVICE',
-  WEB_UI = 'WEB_UI',
-  MY_PAGES = 'MY_PAGES',
-}
-
 /** Job type */
 export enum JobResponseTypeEnum {
   MOVE_LABEL = 'MOVE_LABEL',
+  MERGE_LABELS = 'MERGE_LABELS',
   ERRAND_PURGE = 'ERRAND_PURGE',
+  RESTRUCTURE_LABEL_TREE = 'RESTRUCTURE_LABEL_TREE',
 }
 
 /** Job status */
@@ -3041,6 +3172,32 @@ export enum JobResponseStatusEnum {
   COMPLETED = 'COMPLETED',
   STOPPED = 'STOPPED',
   FAILED = 'FAILED',
+}
+
+/** The step's type */
+export enum LabelRestructureStepResultTypeEnum {
+  ADD = 'ADD',
+  RENAME = 'RENAME',
+  DELETE = 'DELETE',
+  MOVE = 'MOVE',
+  MERGE = 'MERGE',
+}
+
+/** The kind of change this step makes */
+export enum LabelRestructureStepTypeEnum {
+  ADD = 'ADD',
+  RENAME = 'RENAME',
+  DELETE = 'DELETE',
+  MOVE = 'MOVE',
+  MERGE = 'MERGE',
+}
+
+/** The channel the attachment was received via */
+export enum ErrandAttachmentChannelEnum {
+  EMAIL = 'EMAIL',
+  ESERVICE = 'ESERVICE',
+  WEB_UI = 'WEB_UI',
+  MY_PAGES = 'MY_PAGES',
 }
 
 /** Type of metadata that the validation applies to */
@@ -3070,6 +3227,34 @@ export enum CommunicationCommunicationTypeEnum {
 export enum MessageTypeEnum {
   USER_CREATED = 'USER_CREATED',
   SYSTEM_CREATED = 'SYSTEM_CREATED',
+}
+
+/** What the user may do with the errand itself. Reaching this endpoint at all means at least limited read */
+export enum ErrandAccessLevelEnum {
+  LR = 'LR',
+  R = 'R',
+  RW = 'RW',
+}
+
+/** What the user may do with the field. The errand answers for every field written through it, and for the two keyed fields with a write endpoint of their own - 'parameters' and 'jsonParameters' - the resource serving that endpoint answers instead, so this may be wider than the level of the errand */
+export enum ErrandFieldAccessLevelEnum {
+  LR = 'LR',
+  R = 'R',
+  RW = 'RW',
+}
+
+/** What the user may do with the key. Never wider than what they may do with the field carrying it, which is the errand itself unless the field has a write endpoint of its own */
+export enum ErrandFieldKeyAccessLevelEnum {
+  LR = 'LR',
+  R = 'R',
+  RW = 'RW',
+}
+
+/** What the user may do with the resource */
+export enum ErrandResourceAccessLevelEnum {
+  LR = 'LR',
+  R = 'R',
+  RW = 'RW',
 }
 
 /**

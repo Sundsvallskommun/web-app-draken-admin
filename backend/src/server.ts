@@ -9,6 +9,7 @@ import { NamespaceController } from './controllers/namespace.controller';
 import { RolesController } from './controllers/roles.controller';
 import { StatusesController } from './controllers/statuses.controller';
 import { AttachmentPurposesController } from './controllers/attachment-purposes.controller';
+import { MeasureTypesController } from './controllers/measure-types.controller';
 import { CategoriesController } from './controllers/categories.controller';
 import { CompareController } from './controllers/compare.controller';
 import { ContactReasonsController } from './controllers/contact-reasons.controller';
@@ -32,6 +33,7 @@ const app = new App([
   ContactReasonsController,
   CategoriesController,
   AttachmentPurposesController,
+  MeasureTypesController,
   EmailIntegrationController,
   EnvironmentController,
   JsonSchemaController,

@@ -68,7 +68,7 @@ function renderCell(field: FieldDef, value: unknown, emphasize: boolean) {
   if (field.type === 'select') {
     return value ? <Badge variant="secondary">{String(value)}</Badge> : null;
   }
-  const text = value == null ? '' : String(value);
+  const text = Array.isArray(value) ? value.join(', ') : value == null ? '' : String(value);
   if (emphasize) return <span className="font-medium">{text}</span>;
   return <span className="text-muted-foreground">{text}</span>;
 }

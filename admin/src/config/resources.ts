@@ -9,10 +9,13 @@ import {
   ContactReason,
   ContactReasonRequestDto,
   ContactReasonUpdateDto,
-  EmailIntegration,
+  EmailIntegrationData as EmailIntegration,
   EmailIntegrationDto,
   FeatureFlag,
   FeatureFlagRequestDto,
+  MeasureType,
+  MeasureTypeRequestDto,
+  MeasureTypeUpdateDto,
   Namespace,
   NamespaceRequestDto,
   Role,
@@ -421,6 +424,34 @@ const attachmentPurposes: Resource<AttachmentPurpose, AttachmentPurposeRequestDt
   requiredFields: ['name', 'namespace'],
 };
 
+const measureTypes: Resource<MeasureType, MeasureTypeRequestDto, MeasureTypeUpdateDto> = {
+  name: 'measureTypes',
+  getMany: apiService.measureTypesControllerGetMeasureTypes,
+  getOne: (municipalityId, id) => {
+    const [namespace, measureTypeId] = (id as string).split('/');
+    return apiService.measureTypesControllerGetMeasureType(municipalityId, namespace, measureTypeId);
+  },
+  create: apiService.measureTypesControllerCreateMeasureType,
+  update: (municipalityId, id, data) => {
+    const [namespace, measureTypeId] = (id as string).split('/');
+    return apiService.measureTypesControllerUpdateMeasureType(municipalityId, namespace, measureTypeId, data);
+  },
+  remove: (_municipalityId, _namespace, compositeId) => {
+    const [ns, measureTypeId] = (compositeId as string).split('/');
+    return apiService.measureTypesControllerDeleteMeasureType(_municipalityId, ns, measureTypeId);
+  },
+
+  defaultValues: {
+    name: '',
+    displayName: '',
+    measureGroups: [],
+    sortOrder: undefined,
+    deprecated: false,
+    namespace: '',
+  },
+  requiredFields: ['name', 'measureGroups', 'namespace'],
+};
+
 const resources = {
   featureFlags,
   labels,
@@ -429,6 +460,7 @@ const resources = {
   contactReasons,
   categories,
   attachmentPurposes,
+  measureTypes,
   emailIntegration,
   namespaces,
   templates,

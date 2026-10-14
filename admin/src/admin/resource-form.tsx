@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
 import { MonacoField } from '@admin/monaco-field';
+import { listToText, textToList } from '@admin/list-field';
 import { type FieldDef, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
 import { requiredRuleFor } from '@admin/resource-form-validation';
 import { useNamespaces } from '@admin/use-namespaces';
@@ -63,6 +64,7 @@ type RichTextValue = NonNullable<TextEditorProps['value']>;
 
 function defaultFor(field: FieldDef, initial: ResourceRow | undefined, defaults: Record<string, unknown>) {
   const v = initial?.[field.key];
+  if (field.list) return listToText(v ?? defaults[field.key]);
   if (v !== undefined) return v;
   if (field.richTextTargets) {
     const plainText = initial?.[field.richTextTargets.plainText] ?? defaults[field.richTextTargets.plainText];
@@ -87,6 +89,10 @@ function defaultFor(field: FieldDef, initial: ResourceRow | undefined, defaults:
 function normalizeValues(resource: ResourceConfig, values: Record<string, unknown>) {
   const normalized = { ...values };
   for (const field of resource.fields) {
+    if (field.readOnly) {
+      delete normalized[field.key];
+      continue;
+    }
     if (field.richTextTargets) {
       const value = normalized[field.key] as RichTextValue | string | undefined;
       const plainText = typeof value === 'object' ? value.plainText : typeof value === 'string' ? value : '';
@@ -101,6 +107,9 @@ function normalizeValues(resource: ResourceConfig, values: Record<string, unknow
         normalized[key] = value;
       });
       delete normalized[field.key];
+    }
+    if (field.list) {
+      normalized[field.key] = textToList(normalized[field.key]);
     }
     if (field.type === 'number') {
       const value = normalized[field.key];
@@ -165,7 +174,8 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="flex max-w-xl flex-col gap-6">
         {resource.fields.map((field) => {
-          const disabled = !isNew && field.lockedOnEdit;
+          if (field.readOnly && isNew) return null;
+          const disabled = field.readOnly || (!isNew && field.lockedOnEdit);
           const required = field.required || requiredFields.includes(field.key);
           return (
             <FormField
