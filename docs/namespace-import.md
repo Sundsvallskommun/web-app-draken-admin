@@ -134,8 +134,8 @@ updated) are skipped and the rest are created.
 ### Deleting a namespace
 
 `DELETE /namespaces/:municipalityId/:namespace?dryRun=true` inspects, `DELETE` without `dryRun`
-deletes. UI: the "Ta bort namespace" card on the same page, which requires typing the namespace
-name to confirm. The report has `outcome` `ready` / `not_found` / `has_errands` /
+deletes. UI: the "Ta bort" button on the namespace edit page (next to "Spara ändringar" /
+"Avbryt"). Opening it runs the inspection first; confirming requires typing the namespace name. The report has `outcome` `ready` / `not_found` / `has_errands` /
 `completed` / `partial_failure`, the `errandCount`, a `plan` (every item per section) and, after
 execution, `steps`.
 
