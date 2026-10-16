@@ -2,6 +2,8 @@ export type AdminEnvironmentKind = 'production' | 'test';
 
 export interface AdminEnvironment {
   environment: AdminEnvironmentKind;
+  /** Whether the backend allows deleting whole namespaces (NAMESPACE_DELETE_ENABLED). */
+  namespaceDeleteEnabled?: boolean;
 }
 
 export function adminEnvironmentFromApiBaseUrl(apiBaseUrl?: string): AdminEnvironment {

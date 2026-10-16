@@ -182,8 +182,20 @@ describe('NamespaceImportController.deleteNamespace', () => {
 
   beforeEach(() => {
     DeleteMock.mockClear();
+    DeleteMock.prototype.isDeleteEnabled = jest.fn().mockReturnValue(true);
     DeleteMock.prototype.inspect = jest.fn().mockResolvedValue({ errandCount: 0, plan: emptyPlan() });
     DeleteMock.prototype.execute = jest.fn().mockResolvedValue({ steps: [], completed: true });
+  });
+
+  it('returns disabled without inspecting when NAMESPACE_DELETE_ENABLED is off', async () => {
+    DeleteMock.prototype.isDeleteEnabled = jest.fn().mockReturnValue(false);
+    const res = makeRes();
+
+    await new NamespaceImportController().deleteNamespace(req, res, 2281, 'NS', false);
+
+    expect(sent(res)).toMatchObject({ outcome: 'disabled', namespace: 'NS', plan: [], steps: [] });
+    expect(DeleteMock.prototype.inspect).not.toHaveBeenCalled();
+    expect(DeleteMock.prototype.execute).not.toHaveBeenCalled();
   });
 
   it('returns not_found when the namespace does not exist', async () => {

@@ -154,6 +154,10 @@ explicitly, most dependent first:
 
 Safety rules:
 
+- The delete is **off unless the backend runs with `NAMESPACE_DELETE_ENABLED=true`** (see
+  `.env.example.local`). Without it the endpoint answers `disabled` and the admin hides the "Ta bort"
+  button; the setting is exposed to the admin through `GET /admin/environment` as `namespaceDeleteEnabled`.
+  Keep it `false` in production unless a namespace is actually being decommissioned.
 - The delete is **refused while the namespace has errands** (`GET .../errands/count` above zero), regardless of `dryRun`. Errands must be handled first; there is no force flag.
 - Like the import it stops at the first failure and never retries. What was already deleted stays deleted; run the inspection again to see what remains, then delete again.
 - Phases, action configs, label classifications and external id types are deleted even though the admin does not otherwise manage them, so that nothing is left behind.

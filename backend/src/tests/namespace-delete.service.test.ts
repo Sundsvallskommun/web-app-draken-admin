@@ -8,6 +8,7 @@ import prisma from '@/utils/prisma';
 jest.mock('@/utils/logger', () => ({ logger: { info: jest.fn(), error: jest.fn() }, stream: { write: jest.fn() } }));
 jest.mock('@/utils/prisma', () => ({ __esModule: true, default: { featureFlags: { findMany: jest.fn(), deleteMany: jest.fn() } } }));
 jest.mock('@/config/api-config', () => ({ apiServiceName: (name: string) => `${name}/1.0` }));
+jest.mock('@config', () => ({ NAMESPACE_DELETE_ENABLED: true }));
 
 const findMany = prisma.featureFlags.findMany as unknown as jest.Mock;
 const deleteMany = prisma.featureFlags.deleteMany as unknown as jest.Mock;
@@ -49,6 +50,13 @@ const makeApi = () => {
   const api = { get: jest.fn(gatewayGet), delete: jest.fn().mockResolvedValue({ data: undefined }) };
   return api;
 };
+
+describe('NamespaceDeleteService.isDeleteEnabled', () => {
+  it('reflects the NAMESPACE_DELETE_ENABLED config value', () => {
+    const service = new NamespaceDeleteService(makeApi() as unknown as ApiService, user, 2281);
+    expect(service.isDeleteEnabled()).toBe(true);
+  });
+});
 
 describe('NamespaceDeleteService.inspect', () => {
   beforeEach(() => {
