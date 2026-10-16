@@ -118,6 +118,208 @@ export interface NamespacesApiResponse {
   message: string;
 }
 
+export interface NamespaceConfigImportDto {
+  displayName: string;
+  shortCode: string;
+  /** @min 0 */
+  notificationTTLInDays?: number;
+  accessControl?: boolean;
+  notifyReporter?: boolean;
+}
+
+export interface StatusImportDto {
+  name: string;
+  displayName?: string;
+  externalDisplayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+}
+
+export interface RoleImportDto {
+  name: string;
+  displayName: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+}
+
+export interface CategoryTypeImportDto {
+  name: string;
+  displayName?: string;
+  escalationEmail?: string;
+  deprecated?: boolean;
+}
+
+export interface CategoryImportDto {
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+  types?: CategoryTypeImportDto[];
+}
+
+export interface ContactReasonImportDto {
+  reason: string;
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+}
+
+export interface AttachmentPurposeImportDto {
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+}
+
+export interface MeasureTypeImportDto {
+  name: string;
+  displayName?: string;
+  /** @minItems 1 */
+  measureGroups: string[];
+  sortOrder?: number;
+  deprecated?: boolean;
+}
+
+export interface DecisionOutcomeImportDto {
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+}
+
+export interface StatementOutcomeImportDto {
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  responded?: boolean;
+  deprecated?: boolean;
+}
+
+export interface LabelAttributeImportDto {
+  key: string;
+  value: string;
+}
+
+export interface LabelImportDto {
+  classification: string;
+  resourceName: string;
+  displayName?: string;
+  deprecated?: boolean;
+  labels?: LabelImportDto[];
+  attributes?: LabelAttributeImportDto[];
+}
+
+export interface EmailIntegrationImportDto {
+  enabled: boolean;
+  errandClosedEmailSender?: string;
+  errandClosedEmailTemplate?: string;
+  errandClosedEmailHTMLTemplate?: string;
+  errandNewEmailSender?: string;
+  errandNewEmailTemplate?: string;
+  errandNewEmailHTMLTemplate?: string;
+  daysOfInactivityBeforeReject?: number;
+  statusForNew: string;
+  triggerStatusChangeOn?: string;
+  statusChangeTo?: string;
+  inactiveStatus?: string;
+  addSenderAsStakeholder?: boolean;
+  stakeholderRole?: string;
+  errandChannel?: string;
+  ignoreAutoReply: boolean;
+  ignoreNoReply: boolean;
+}
+
+export interface FeatureFlagImportDto {
+  name: string;
+  description: string;
+  enabled: boolean;
+  application: string;
+}
+
+export interface NamespaceImportDto {
+  formatVersion: "1";
+  exportedAt?: string;
+  /** @pattern ^[A-Za-z0-9_-]{1,64}$ */
+  namespace: string;
+  config: NamespaceConfigImportDto;
+  statuses?: StatusImportDto[];
+  roles?: RoleImportDto[];
+  categories?: CategoryImportDto[];
+  contactReasons?: ContactReasonImportDto[];
+  attachmentPurposes?: AttachmentPurposeImportDto[];
+  measureTypes?: MeasureTypeImportDto[];
+  decisionOutcomes?: DecisionOutcomeImportDto[];
+  statementOutcomes?: StatementOutcomeImportDto[];
+  labels?: LabelImportDto[];
+  emailIntegration?: EmailIntegrationImportDto;
+  featureFlags?: FeatureFlagImportDto[];
+}
+
+export interface ImportIssueResponse {
+  path: string;
+  message: string;
+  severity: "error" | "warning";
+}
+
+export interface ImportPlanEntryResponse {
+  section:
+    | "namespaceConfig"
+    | "statuses"
+    | "roles"
+    | "categories"
+    | "contactReasons"
+    | "attachmentPurposes"
+    | "measureTypes"
+    | "decisionOutcomes"
+    | "statementOutcomes"
+    | "labels"
+    | "emailIntegration"
+    | "featureFlags";
+  create: number;
+  skip: number;
+  skipped: string[];
+}
+
+export interface ImportStepResult {
+  section:
+    | "namespaceConfig"
+    | "statuses"
+    | "roles"
+    | "categories"
+    | "contactReasons"
+    | "attachmentPurposes"
+    | "measureTypes"
+    | "decisionOutcomes"
+    | "statementOutcomes"
+    | "labels"
+    | "emailIntegration"
+    | "featureFlags";
+  status: "done" | "skipped" | "failed" | "not_run";
+  created: string[];
+  skipped: string[];
+  error?: string;
+}
+
+export interface NamespaceImportReport {
+  outcome: "valid" | "invalid" | "conflict" | "completed" | "partial_failure";
+  dryRun: boolean;
+  allowExisting: boolean;
+  namespace: string;
+  issues: ImportIssueResponse[];
+  plan: ImportPlanEntryResponse[];
+  steps: ImportStepResult[];
+}
+
+export interface NamespaceImportApiResponse {
+  data: NamespaceImportReport;
+  message: string;
+}
+
+export interface NamespaceExportApiResponse {
+  data: NamespaceImportDto;
+  message: string;
+}
+
 export interface RoleRequestDto {
   name: string;
   displayName: string;

@@ -377,6 +377,7 @@ export const resourceConfigs: ResourceConfig[] = [
     icon: Boxes,
     canCreate: true,
     canRemove: false,
+    extraNav: [{ label: 'Importera / exportera', href: '/namespaces/import' }],
     fields: [
       { key: 'namespace', label: 'Namespace', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'displayName', label: 'Visningsnamn', type: 'text', required: true, inTable: true },
