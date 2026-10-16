@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
 import { MonacoField } from '@admin/monaco-field';
+import { NamespaceDeleteButton } from '@admin/namespace-delete-dialog';
 import { listToText, textToList } from '@admin/list-field';
 import { type FieldDef, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
 import { requiredRuleFor } from '@admin/resource-form-validation';
@@ -272,6 +273,10 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
           <Button type="button" variant="outline" onClick={() => router.push(`/${resource.name}`)}>
             Avbryt
           </Button>
+
+          {!isNew && resource.name === 'namespaces' && typeof initial?.namespace === 'string' && (
+            <NamespaceDeleteButton namespace={String(initial.namespace)} onDeleted={() => router.push('/namespaces')} />
+          )}
 
           {!isNew && resource.canRemove && (
             <AlertDialog>
