@@ -94,6 +94,7 @@ describe('NamespaceImportService.executeImport', () => {
       `${base}/metadata/decisionoutcomes`,
       `${base}/metadata/statementoutcomes`,
       `${base}/metadata/labels`,
+      `${base}/email-integration-config`,
     ]);
     expect(api.post.mock.calls[0][0].data).toEqual({
       displayName: 'Nytt',
@@ -104,11 +105,20 @@ describe('NamespaceImportService.executeImport', () => {
     });
     // Labels go as the bare array, like labels.controller.ts.
     expect(api.post.mock.calls[11][0].data).toEqual([{ classification: 'CATEGORY', resourceName: 'ROOT' }]);
-    // Email integration is a PUT with the string conversions from email-integration.controller.ts.
-    expect(api.put).toHaveBeenCalledTimes(1);
-    expect(api.put.mock.calls[0][0]).toMatchObject({
+    // Email integration is created with POST (the gateway's PUT is update-only), with the
+    // string conversions from email-integration.controller.ts.
+    expect(api.put).not.toHaveBeenCalled();
+    expect(api.post.mock.calls[12][0]).toMatchObject({
       url: `${base}/email-integration-config`,
       data: { daysOfInactivityBeforeReject: '3', addSenderAsStakeholder: 'true', statusForNew: 'NEW' },
+    });
+    // Optional gateway fields are forwarded so the import is lossless.
+    expect(api.post.mock.calls[1][0].data).toEqual({
+      name: 'NEW',
+      displayName: undefined,
+      externalDisplayName: undefined,
+      sortOrder: undefined,
+      deprecated: false,
     });
     expect(transaction).toHaveBeenCalledTimes(1);
     expect(create).toHaveBeenCalledTimes(2);
@@ -138,7 +148,7 @@ describe('NamespaceImportService.executeImport', () => {
     expect(byName.roles).toMatchObject({ status: 'failed', created: ['A'], error: 'roles/B: Gateway call failed: duplicate' });
     expect(byName.categories.status).toBe('not_run');
     expect(byName.featureFlags.status).toBe('not_run');
-    expect(api.put).not.toHaveBeenCalled();
+    expect(api.post.mock.calls.map(([config]) => config.url)).not.toContain(`${base}/email-integration-config`);
     expect(transaction).not.toHaveBeenCalled();
   });
 
@@ -175,7 +185,7 @@ describe('NamespaceImportService.executeImport', () => {
     expect(postUrls).not.toContain(`${base}/namespace-config`);
     expect(postUrls).not.toContain(`${base}/metadata/labels`);
     expect(postUrls.filter(url => url.endsWith('/metadata/statuses'))).toHaveLength(1);
-    expect(api.put).not.toHaveBeenCalled();
+    expect(postUrls).not.toContain(`${base}/email-integration-config`);
     expect(create).toHaveBeenCalledTimes(1);
   });
 });

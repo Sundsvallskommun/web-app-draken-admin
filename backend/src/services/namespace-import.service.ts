@@ -194,11 +194,17 @@ export class NamespaceImportService {
     switch (section) {
       case 'statuses': {
         const status = item as Status;
-        return { name: status.name, displayName: status.displayName, externalDisplayName: status.externalDisplayName } satisfies Status;
+        return {
+          name: status.name,
+          displayName: status.displayName,
+          externalDisplayName: status.externalDisplayName,
+          sortOrder: status.sortOrder,
+          deprecated: status.deprecated ?? false,
+        } satisfies Status;
       }
       case 'roles': {
         const role = item as Role;
-        return { name: role.name, displayName: role.displayName } satisfies Role;
+        return { name: role.name, displayName: role.displayName, sortOrder: role.sortOrder, deprecated: role.deprecated ?? false } satisfies Role;
       }
       case 'categories': {
         const category = item as Category;
@@ -206,12 +212,18 @@ export class NamespaceImportService {
           name: category.name,
           displayName: category.displayName,
           sortOrder: category.sortOrder,
+          deprecated: category.deprecated ?? false,
           types: category.types ?? [],
         } satisfies Category;
       }
       case 'contactReasons': {
         const reason = item as ContactReason;
-        return { reason: reason.reason, displayName: reason.displayName } satisfies ContactReason;
+        return {
+          reason: reason.reason,
+          displayName: reason.displayName,
+          sortOrder: reason.sortOrder,
+          deprecated: reason.deprecated ?? false,
+        } satisfies ContactReason;
       }
       case 'measureTypes': {
         const measureType = item as MeasureType;
@@ -251,10 +263,11 @@ export class NamespaceImportService {
     await this.api.post<void>({ url: this.metadataUrl(doc.namespace, 'labels'), data: doc.labels as Label[] }, this.user);
   }
 
-  private async putEmailIntegration(doc: NamespaceImportDto): Promise<void> {
+  private async createEmailIntegration(doc: NamespaceImportDto): Promise<void> {
     const email = doc.emailIntegration;
-    // Twin of email-integration.controller.ts updateEmailIntegration: the contract types
-    // these two as string|null, so number/boolean are serialised before sending.
+    // Same body as email-integration.controller.ts updateEmailIntegration (the contract types
+    // these two as string|null, so number/boolean are serialised before sending), but sent
+    // with POST: the gateway's PUT is "update" and the import only writes when none exists.
     const body: EmailIntegration = {
       enabled: email.enabled,
       errandClosedEmailSender: email.errandClosedEmailSender,
@@ -274,7 +287,7 @@ export class NamespaceImportService {
       ignoreAutoReply: email.ignoreAutoReply,
       ignoreNoReply: email.ignoreNoReply,
     };
-    await this.api.put<EmailIntegration>({ url: this.emailUrl(doc.namespace), data: body }, this.user);
+    await this.api.post<EmailIntegration>({ url: this.emailUrl(doc.namespace), data: body }, this.user);
   }
 
   private async createFeatureFlags(doc: NamespaceImportDto, skipped: Set<string>): Promise<string[]> {
@@ -299,7 +312,8 @@ export class NamespaceImportService {
 
   /**
    * Applies the plan in SECTION_ORDER, one item at a time. Stops at the first failure and
-   * marks the remaining sections not_run; there is no rollback (the gateway has none), so
+   * marks the remaining sections not_run; nothing is rolled back (the gateway can delete a
+   * namespace config, but the import deliberately never deletes anything), so
    * the caller re-runs with allowExisting to resume.
    */
   async executeImport(doc: NamespaceImportDto, plan: ImportPlanEntry[]): Promise<ExecuteImportResult> {
@@ -330,7 +344,7 @@ export class NamespaceImportService {
             step.created.push('labels');
             break;
           case 'emailIntegration':
-            await this.putEmailIntegration(doc);
+            await this.createEmailIntegration(doc);
             step.created.push('emailIntegration');
             break;
           case 'featureFlags':
