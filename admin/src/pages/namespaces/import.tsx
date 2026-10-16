@@ -298,8 +298,8 @@ export default function NamespaceImportPage() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {isProduction ?
-                'Du är på väg att skapa data i produktionsmiljön. Det finns ingen ångra-funktion: ett namespace kan inte tas bort i efterhand.'
-              : 'Sektionerna i planen skapas i ordning. Det finns ingen ångra-funktion, men du kan köra om importen med "Tillåt befintligt namespace" om något går fel.'
+                'Du är på väg att skapa data i produktionsmiljön. Importen kan inte ångras automatiskt.'
+              : 'Sektionerna i planen skapas i ordning. Importen kan inte ångras automatiskt, men du kan köra om den med "Tillåt befintligt namespace" om något går fel.'
               }
             </AlertDialogDescription>
           </AlertDialogHeader>

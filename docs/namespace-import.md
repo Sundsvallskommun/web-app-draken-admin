@@ -126,9 +126,10 @@ Sections are created sequentially in this order:
 
 `namespaceConfig → statuses → roles → categories → contactReasons → attachmentPurposes → measureTypes → decisionOutcomes → statementOutcomes → labels → emailIntegration → featureFlags`
 
-The import stops at the first failing gateway call. There is no rollback and the gateway has no
-namespace DELETE, so what was created stays. To resume, fix the cause and run the same document
-again with `allowExisting=true`: items that already exist (matched **by name only**, never diffed or
+The import stops at the first failing gateway call. Nothing is rolled back: the import never
+deletes anything (the gateway does offer `DELETE .../namespace-config`, but cleaning up is a
+deliberate manual step). To resume, fix the cause and run the same document again with
+`allowExisting=true`: items that already exist (matched **by name only**, never diffed or
 updated) are skipped and the rest are created.
 
 Two sections are all-or-nothing:
@@ -137,8 +138,21 @@ Two sections are all-or-nothing:
   namespace already has any labels, the section is skipped and must be merged by hand on the labels page.
 - **emailIntegration** – skipped if the namespace already has one.
 
+## Gateway calls (supportmanagement 17.2)
+
+| Section | Call |
+| --- | --- |
+| namespaceConfig | `POST /{muni}/{ns}/namespace-config` |
+| statuses … statementOutcomes | `POST /{muni}/{ns}/metadata/<kind>` per item |
+| labels | `POST /{muni}/{ns}/metadata/labels` with the bare array (never `PUT`, which replaces the tree) |
+| emailIntegration | `POST /{muni}/{ns}/email-integration-config` (`PUT` is update-only in the gateway) |
+| featureFlags | Prisma `featureFlags.create` in one transaction |
+
+Existing state and export use the corresponding `GET`s; a gateway 404 is treated as "nothing there".
+
 ## Known limitations
 
 - Existing items are not compared or updated; only missing ones are created.
+- `config` carries only the five fields the admin manages (`displayName`, `shortCode`, `notificationTTLInDays`, `accessControl`, `notifyReporter`). The gateway's `NamespaceConfig` has more (`roleBasedMapping`, `resourceAccessControl`, `singleDecisionPerErrand`, `processConsumer`, `processTriggers`, `excludeEventDescriptionsInEmail`, `baseUrl`, `limitedReadAccess`, `reporterAccess`, `roleFieldRestrictions`), which an export does not include.
 - Gateway rejections surface as the gateway's message text in `steps[].error`, not as structured codes.
 - `externalIdTypes` and `phases` exist in the gateway's metadata but are not managed by the admin, so they are not part of the document.
