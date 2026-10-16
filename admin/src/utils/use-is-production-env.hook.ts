@@ -11,10 +11,18 @@ const templateTestStatusEnabled = process.env.NEXT_PUBLIC_ENABLE_TEMPLATE_TEST_S
 
 // The lookup is cached at module level so the consumers share a single
 // /admin/environment request per session instead of each firing their own.
-let cachedEnvironment: Promise<AdminEnvironmentState> | null = null;
-const getAdminEnvironment = (): Promise<AdminEnvironmentState> => {
+interface ResolvedEnvironment {
+  state: AdminEnvironmentState;
+  namespaceDeleteEnabled: boolean;
+}
+
+let cachedEnvironment: Promise<ResolvedEnvironment> | null = null;
+const getAdminEnvironment = (): Promise<ResolvedEnvironment> => {
   if (!cachedEnvironment) {
-    cachedEnvironment = fetchAdminEnvironment().then(adminEnvironmentFromKind);
+    cachedEnvironment = fetchAdminEnvironment().then((info) => ({
+      state: adminEnvironmentFromKind(info.kind),
+      namespaceDeleteEnabled: info.namespaceDeleteEnabled,
+    }));
   }
   return cachedEnvironment;
 };
@@ -24,14 +32,18 @@ export function useAdminEnvironment(): {
   isProduction: boolean;
   loaded: boolean;
   showTestFeatures: boolean;
+  /** Backend switch NAMESPACE_DELETE_ENABLED; false until the environment has loaded. */
+  namespaceDeleteEnabled: boolean;
 } {
   const [environment, setEnvironment] = useState<AdminEnvironmentState>(checkingAdminEnvironment());
+  const [namespaceDeleteEnabled, setNamespaceDeleteEnabled] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    getAdminEnvironment().then((nextEnvironment) => {
+    getAdminEnvironment().then((resolved) => {
       if (cancelled) return;
-      setEnvironment(nextEnvironment);
+      setEnvironment(resolved.state);
+      setNamespaceDeleteEnabled(resolved.namespaceDeleteEnabled);
     });
     return () => {
       cancelled = true;
@@ -48,6 +60,7 @@ export function useAdminEnvironment(): {
     isProduction,
     loaded,
     showTestFeatures: templateTestStatusEnabled && environment.kind === 'test',
+    namespaceDeleteEnabled,
   };
 }
 
@@ -56,6 +69,7 @@ export function useIsProductionEnv(): {
   isProduction: boolean;
   loaded: boolean;
   showTestFeatures: boolean;
+  namespaceDeleteEnabled: boolean;
 } {
   return useAdminEnvironment();
 }

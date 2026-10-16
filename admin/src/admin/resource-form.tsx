@@ -27,6 +27,7 @@ import { toCategoryTypePayload, toCategoryTypeRows } from '@admin/category-types
 import { CategoryTypesField } from '@admin/category-types-field';
 import { MonacoField } from '@admin/monaco-field';
 import { NamespaceDeleteButton } from '@admin/namespace-delete-dialog';
+import { useAdminEnvironment } from '@utils/use-is-production-env.hook';
 import { listToText, textToList } from '@admin/list-field';
 import { type FieldDef, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
 import { validationRulesFor } from '@admin/resource-form-validation';
@@ -134,6 +135,8 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
   const isDirty = form.formState.isDirty;
 
   const title = String(initial?.[resource.fields[0].key] ?? '');
+  const namespaceToDelete = !isNew && resource.name === 'namespaces' && typeof initial?.namespace === 'string' ? initial.namespace : null;
+  const { namespaceDeleteEnabled } = useAdminEnvironment();
 
   const onSubmit = async (values: Record<string, unknown>) => {
     const name = String(values[resource.fields[0].key] ?? '');
@@ -273,8 +276,8 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
             Avbryt
           </Button>
 
-          {!isNew && resource.name === 'namespaces' && typeof initial?.namespace === 'string' && (
-            <NamespaceDeleteButton namespace={String(initial.namespace)} onDeleted={() => router.push('/namespaces')} />
+          {namespaceToDelete && namespaceDeleteEnabled && (
+            <NamespaceDeleteButton namespace={namespaceToDelete} onDeleted={() => router.push('/namespaces')} />
           )}
 
           {!isNew && resource.canRemove && (

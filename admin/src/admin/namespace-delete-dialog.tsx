@@ -43,6 +43,11 @@ const STEP_STATUS: Record<DeleteStepResult['status'], { label: string; className
 };
 
 const OUTCOME: Record<NamespaceDeleteReport['outcome'], { title: string; description: string; ok: boolean }> = {
+  disabled: {
+    title: 'Borttagning är avstängd',
+    description: 'Backend körs utan NAMESPACE_DELETE_ENABLED=true. Slå på inställningen och starta om backend för att kunna ta bort namespaces.',
+    ok: false,
+  },
   ready: { title: 'Namespacet kan tas bort', description: 'Inget har tagits bort ännu. Granska listan och bekräfta.', ok: true },
   not_found: { title: 'Namespacet finns inte', description: 'Det finns ingen namespace-konfiguration med det namnet.', ok: false },
   has_errands: {

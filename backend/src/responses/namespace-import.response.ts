@@ -89,7 +89,7 @@ export class NamespaceExportApiResponse implements ApiResponse<NamespaceImportDt
   message: string;
 }
 
-export const DELETE_OUTCOMES = ['ready', 'not_found', 'has_errands', 'completed', 'partial_failure'] as const;
+export const DELETE_OUTCOMES = ['disabled', 'ready', 'not_found', 'has_errands', 'completed', 'partial_failure'] as const;
 export type DeleteOutcome = (typeof DELETE_OUTCOMES)[number];
 
 export class DeletePlanEntryResponse {
@@ -114,7 +114,10 @@ export class DeleteStepResult {
 }
 
 export class NamespaceDeleteReport {
-  /** ready/not_found/has_errands come from the inspection; completed/partial_failure describe an executed delete. */
+  /**
+   * disabled: the backend runs without NAMESPACE_DELETE_ENABLED=true. ready/not_found/has_errands come
+   * from the inspection; completed/partial_failure describe an executed delete.
+   */
   @IsIn([...DELETE_OUTCOMES])
   outcome: DeleteOutcome;
   @IsBoolean()

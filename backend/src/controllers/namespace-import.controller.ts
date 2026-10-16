@@ -125,8 +125,8 @@ export class NamespaceImportController {
     summary: 'Inspect (dryRun=true) or delete a whole namespace',
     description:
       'Deletes the email integration, action configs, phases, labels, every metadata kind, the namespace config and the ' +
-      "admin's feature flags, most dependent first. Refused while the namespace still has errands. " +
-      'Always answers 200 with a NamespaceDeleteReport.',
+      "admin's feature flags, most dependent first. Only available when the backend runs with NAMESPACE_DELETE_ENABLED=true, " +
+      'and refused while the namespace still has errands. Always answers 200 with a NamespaceDeleteReport.',
   })
   @UseBefore(authMiddleware, hasPermissions(['canUseAdminPanel']))
   @ResponseSchema(NamespaceDeleteApiResponse)
@@ -149,6 +149,10 @@ export class NamespaceImportController {
 
     try {
       const service = new NamespaceDeleteService(this.apiService, req.user, municipalityId);
+      if (!service.isDeleteEnabled()) {
+        report.outcome = 'disabled';
+        return send();
+      }
       const inspection = await service.inspect(namespace);
       if (!inspection) return send();
 

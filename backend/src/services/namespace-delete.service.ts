@@ -1,3 +1,4 @@
+import { NAMESPACE_DELETE_ENABLED } from '@config';
 import { apiServiceName } from '@/config/api-config';
 import {
   AttachmentPurpose,
@@ -123,6 +124,11 @@ export class NamespaceDeleteService {
 
   private byId(path: string, items: Named[], labelOf: (item: Named) => string = item => item.name ?? item.id): DeleteItem[] {
     return items.filter(item => item.id).map(item => ({ path: `${path}/${item.id}`, label: labelOf(item) }));
+  }
+
+  /** Global switch: the backend env variable NAMESPACE_DELETE_ENABLED. */
+  isDeleteEnabled(): boolean {
+    return NAMESPACE_DELETE_ENABLED;
   }
 
   /** Null when the namespace does not exist. Otherwise everything a delete would remove. */

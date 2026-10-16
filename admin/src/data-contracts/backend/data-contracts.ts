@@ -368,6 +368,7 @@ export interface DeleteStepResult {
 
 export interface NamespaceDeleteReport {
   outcome:
+    | "disabled"
     | "ready"
     | "not_found"
     | "has_errands"
