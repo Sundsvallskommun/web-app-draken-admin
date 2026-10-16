@@ -320,6 +320,71 @@ export interface NamespaceExportApiResponse {
   message: string;
 }
 
+export interface DeletePlanEntryResponse {
+  section:
+    | "emailIntegration"
+    | "actionConfigs"
+    | "phaseTransitions"
+    | "phases"
+    | "labels"
+    | "labelClassifications"
+    | "externalIdTypes"
+    | "statementOutcomes"
+    | "decisionOutcomes"
+    | "measureTypes"
+    | "attachmentPurposes"
+    | "contactReasons"
+    | "categories"
+    | "roles"
+    | "statuses"
+    | "namespaceConfig"
+    | "featureFlags";
+  items: string[];
+}
+
+export interface DeleteStepResult {
+  section:
+    | "emailIntegration"
+    | "actionConfigs"
+    | "phaseTransitions"
+    | "phases"
+    | "labels"
+    | "labelClassifications"
+    | "externalIdTypes"
+    | "statementOutcomes"
+    | "decisionOutcomes"
+    | "measureTypes"
+    | "attachmentPurposes"
+    | "contactReasons"
+    | "categories"
+    | "roles"
+    | "statuses"
+    | "namespaceConfig"
+    | "featureFlags";
+  status: "done" | "skipped" | "failed" | "not_run";
+  deleted: string[];
+  error?: string;
+}
+
+export interface NamespaceDeleteReport {
+  outcome:
+    | "ready"
+    | "not_found"
+    | "has_errands"
+    | "completed"
+    | "partial_failure";
+  dryRun: boolean;
+  namespace: string;
+  errandCount: number;
+  plan: DeletePlanEntryResponse[];
+  steps: DeleteStepResult[];
+}
+
+export interface NamespaceDeleteApiResponse {
+  data: NamespaceDeleteReport;
+  message: string;
+}
+
 export interface RoleRequestDto {
   name: string;
   displayName: string;

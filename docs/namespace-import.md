@@ -127,10 +127,36 @@ Sections are created sequentially in this order:
 `namespaceConfig → statuses → roles → categories → contactReasons → attachmentPurposes → measureTypes → decisionOutcomes → statementOutcomes → labels → emailIntegration → featureFlags`
 
 The import stops at the first failing gateway call. Nothing is rolled back: the import never
-deletes anything (the gateway does offer `DELETE .../namespace-config`, but cleaning up is a
-deliberate manual step). To resume, fix the cause and run the same document again with
+deletes anything. To resume, fix the cause and run the same document again with
 `allowExisting=true`: items that already exist (matched **by name only**, never diffed or
 updated) are skipped and the rest are created.
+
+### Deleting a namespace
+
+`DELETE /namespaces/:municipalityId/:namespace?dryRun=true` inspects, `DELETE` without `dryRun`
+deletes. UI: the "Ta bort namespace" card on the same page, which requires typing the namespace
+name to confirm. The report has `outcome` `ready` / `not_found` / `has_errands` /
+`completed` / `partial_failure`, the `errandCount`, a `plan` (every item per section) and, after
+execution, `steps`.
+
+The gateway does **not** cascade: deleting only `namespace-config` leaves stray metadata and
+config behind (confirmed with the supportmanagement team), so the delete removes everything
+explicitly, most dependent first:
+
+1. `DELETE .../email-integration-config`
+2. `DELETE .../namespace-config/action-config/{id}` per action config
+3. `DELETE .../metadata/phases/{phaseId}/transitions/{transitionId}` per transition, then `.../phases/{phaseId}` per phase
+4. `DELETE .../metadata/labels` (whole tree)
+5. `.../metadata/label-classifications/{classification}` and `.../metadata/external-id-types/{id}` per item
+6. each item of `statementoutcomes`, `decisionoutcomes`, `measuretypes`, `attachmentpurposes`, `contactreasons`, `categories`, `roles`, `statuses` via `DELETE .../metadata/<kind>/{id}`
+7. `DELETE .../namespace-config`
+8. the admin's own feature flags for the namespace (Prisma `deleteMany`)
+
+Safety rules:
+
+- The delete is **refused while the namespace has errands** (`GET .../errands/count` above zero), regardless of `dryRun`. Errands must be handled first; there is no force flag.
+- Like the import it stops at the first failure and never retries. What was already deleted stays deleted; run the inspection again to see what remains, then delete again.
+- Phases, action configs, label classifications and external id types are deleted even though the admin does not otherwise manage them, so that nothing is left behind.
 
 Two sections are all-or-nothing:
 

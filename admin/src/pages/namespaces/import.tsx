@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@components/ui/switch';
 import { AdminLayout } from '@admin/admin-layout';
 import { MonacoField } from '@admin/monaco-field';
+import { NamespaceDeleteCard } from '@admin/namespace-delete-card';
 import { NamespaceImportReportView } from '@admin/namespace-import-report';
 import type { Namespace, NamespaceImportDto, NamespaceImportReport } from '@data-contracts/backend/data-contracts';
 import { exportNamespace, importNamespace, listSupportManagementNamespaces } from '@services/namespace-import-service';
@@ -74,7 +75,7 @@ export default function NamespaceImportPage() {
   const [busy, setBusy] = React.useState<'validate' | 'import' | null>(null);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
 
-  React.useEffect(() => {
+  const loadNamespaces = React.useCallback(() => {
     let cancelled = false;
     listSupportManagementNamespaces(municipalityId)
       .then((list) => {
@@ -87,6 +88,8 @@ export default function NamespaceImportPage() {
       cancelled = true;
     };
   }, [municipalityId]);
+
+  React.useEffect(loadNamespaces, [loadNamespaces]);
 
   // Anything that changes what would be sent invalidates the dry run.
   const currentKey = JSON.stringify({ text, namespaceOverride, allowExisting, municipalityId });
@@ -288,6 +291,16 @@ export default function NamespaceImportPage() {
             {report && <NamespaceImportReportView report={report} />}
           </CardContent>
         </Card>
+
+        <NamespaceDeleteCard
+          municipalityId={municipalityId}
+          namespaces={namespaces}
+          isProduction={isProduction}
+          onDeleted={() => {
+            setExportNs('');
+            loadNamespaces();
+          }}
+        />
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

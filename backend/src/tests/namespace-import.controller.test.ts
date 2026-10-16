@@ -1,14 +1,20 @@
 import 'reflect-metadata';
 import { NamespaceImportController } from '@controllers/namespace-import.controller';
 import type { NamespaceImportDto } from '@/dtos/namespace-import.dto';
+import { NamespaceDeleteService } from '@/services/namespace-delete.service';
 import { NamespaceImportService } from '@/services/namespace-import.service';
 
 jest.mock('@/utils/logger', () => ({ logger: { info: jest.fn(), error: jest.fn() }, stream: { write: jest.fn() } }));
 jest.mock('@/utils/prisma', () => ({ __esModule: true, default: {} }));
 jest.mock('@/services/api.service', () => ({ __esModule: true, default: jest.fn().mockImplementation(() => ({})) }));
 jest.mock('@/services/namespace-import.service');
+jest.mock('@/services/namespace-delete.service', () => {
+  const actual = jest.requireActual('@/services/namespace-delete.service');
+  return { ...actual, NamespaceDeleteService: jest.fn() };
+});
 
 const ServiceMock = NamespaceImportService as jest.MockedClass<typeof NamespaceImportService>;
+const DeleteMock = NamespaceDeleteService as jest.MockedClass<typeof NamespaceDeleteService>;
 
 const makeRes = () => {
   const res: any = {};
@@ -150,5 +156,77 @@ describe('NamespaceImportController.exportNamespace', () => {
     ServiceMock.prototype.exportNamespace = jest.fn().mockResolvedValue(null);
 
     await expect(new NamespaceImportController().exportNamespace(req, makeRes(), 2281, 'NOPE')).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe('NamespaceImportController.deleteNamespace', () => {
+  const emptyPlan = () => ({
+    emailIntegration: [],
+    actionConfigs: [],
+    phaseTransitions: [],
+    phases: [],
+    labels: [],
+    labelClassifications: [],
+    externalIdTypes: [],
+    statementOutcomes: [],
+    decisionOutcomes: [],
+    measureTypes: [],
+    attachmentPurposes: [],
+    contactReasons: [],
+    categories: [],
+    roles: [],
+    statuses: [{ path: 'metadata/statuses/s1', label: 'NEW' }],
+    namespaceConfig: [{ path: 'namespace-config', label: 'NS' }],
+    featureFlags: [],
+  });
+
+  beforeEach(() => {
+    DeleteMock.mockClear();
+    DeleteMock.prototype.inspect = jest.fn().mockResolvedValue({ errandCount: 0, plan: emptyPlan() });
+    DeleteMock.prototype.execute = jest.fn().mockResolvedValue({ steps: [], completed: true });
+  });
+
+  it('returns not_found when the namespace does not exist', async () => {
+    DeleteMock.prototype.inspect = jest.fn().mockResolvedValue(null);
+    const res = makeRes();
+
+    await new NamespaceImportController().deleteNamespace(req, res, 2281, 'NOPE', true);
+
+    expect(sent(res)).toMatchObject({ outcome: 'not_found', namespace: 'NOPE', plan: [] });
+  });
+
+  it('refuses with has_errands and does not execute, even without dryRun', async () => {
+    DeleteMock.prototype.inspect = jest.fn().mockResolvedValue({ errandCount: 3, plan: emptyPlan() });
+    const res = makeRes();
+
+    await new NamespaceImportController().deleteNamespace(req, res, 2281, 'NS', false);
+
+    const report = sent(res);
+    expect(report).toMatchObject({ outcome: 'has_errands', errandCount: 3 });
+    expect(report.plan.find((entry: { section: string }) => entry.section === 'statuses')).toEqual({ section: 'statuses', items: ['NEW'] });
+    expect(DeleteMock.prototype.execute).not.toHaveBeenCalled();
+  });
+
+  it('returns ready with the plan on a dry run', async () => {
+    const res = makeRes();
+
+    await new NamespaceImportController().deleteNamespace(req, res, 2281, 'NS', true);
+
+    expect(sent(res)).toMatchObject({ outcome: 'ready', dryRun: true, steps: [] });
+    expect(DeleteMock.prototype.execute).not.toHaveBeenCalled();
+  });
+
+  it('executes and reports completed', async () => {
+    const steps = [{ section: 'statuses', status: 'done', deleted: ['NEW'] }];
+    DeleteMock.prototype.execute = jest.fn().mockResolvedValue({ steps, completed: true });
+    const res = makeRes();
+
+    await new NamespaceImportController().deleteNamespace(req, res, 2281, 'NS', false);
+
+    expect(sent(res)).toMatchObject({ outcome: 'completed', steps });
+    expect(DeleteMock.prototype.execute).toHaveBeenCalledWith(
+      'NS',
+      expect.objectContaining({ statuses: [{ path: 'metadata/statuses/s1', label: 'NEW' }] }),
+    );
   });
 });
