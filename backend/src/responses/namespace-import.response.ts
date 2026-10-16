@@ -1,5 +1,6 @@
 import { NamespaceImportDto } from '@/dtos/namespace-import.dto';
 import ApiResponse from '@/interfaces/api-service.interface';
+import { DELETE_SECTION_ORDER, DeleteSection } from '@/services/namespace-delete.service';
 import { ImportSection, IssueSeverity, SECTION_ORDER } from '@/utils/namespace-import-validation';
 import { Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
@@ -84,6 +85,58 @@ export class NamespaceExportApiResponse implements ApiResponse<NamespaceImportDt
   @ValidateNested()
   @Type(() => NamespaceImportDto)
   data: NamespaceImportDto;
+  @IsString()
+  message: string;
+}
+
+export const DELETE_OUTCOMES = ['ready', 'not_found', 'has_errands', 'completed', 'partial_failure'] as const;
+export type DeleteOutcome = (typeof DELETE_OUTCOMES)[number];
+
+export class DeletePlanEntryResponse {
+  @IsIn([...DELETE_SECTION_ORDER])
+  section: DeleteSection;
+  @IsArray()
+  @IsString({ each: true })
+  items: string[];
+}
+
+export class DeleteStepResult {
+  @IsIn([...DELETE_SECTION_ORDER])
+  section: DeleteSection;
+  @IsIn([...IMPORT_STEP_STATUSES])
+  status: ImportStepStatus;
+  @IsArray()
+  @IsString({ each: true })
+  deleted: string[];
+  @IsString()
+  @IsOptional()
+  error?: string;
+}
+
+export class NamespaceDeleteReport {
+  /** ready/not_found/has_errands come from the inspection; completed/partial_failure describe an executed delete. */
+  @IsIn([...DELETE_OUTCOMES])
+  outcome: DeleteOutcome;
+  @IsBoolean()
+  dryRun: boolean;
+  @IsString()
+  namespace: string;
+  /** Errands in the namespace. A delete is refused while this is above zero. */
+  @IsInt()
+  errandCount: number;
+  @ValidateNested({ each: true })
+  @Type(() => DeletePlanEntryResponse)
+  plan: DeletePlanEntryResponse[];
+  /** Empty on a dry run. */
+  @ValidateNested({ each: true })
+  @Type(() => DeleteStepResult)
+  steps: DeleteStepResult[];
+}
+
+export class NamespaceDeleteApiResponse implements ApiResponse<NamespaceDeleteReport> {
+  @ValidateNested()
+  @Type(() => NamespaceDeleteReport)
+  data: NamespaceDeleteReport;
   @IsString()
   message: string;
 }

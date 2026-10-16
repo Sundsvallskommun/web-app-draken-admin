@@ -1,5 +1,10 @@
 import { Api } from '@data-contracts/backend/Api';
-import type { Namespace, NamespaceImportDto, NamespaceImportReport } from '@data-contracts/backend/data-contracts';
+import type {
+  Namespace,
+  NamespaceDeleteReport,
+  NamespaceImportDto,
+  NamespaceImportReport,
+} from '@data-contracts/backend/data-contracts';
 
 const api = new Api({ baseURL: process.env.NEXT_PUBLIC_API_URL, withCredentials: true });
 
@@ -27,4 +32,10 @@ export async function exportNamespace(municipalityId: number, namespace: string)
 export async function listSupportManagementNamespaces(municipalityId: number): Promise<Namespace[]> {
   const res = await api.namespaceControllerGetSupportManagementNamespaces(municipalityId);
   return res.data.data ?? [];
+}
+
+/** Inspects (dryRun) or deletes a whole namespace. The backend refuses while errands remain. */
+export async function deleteNamespace(municipalityId: number, namespace: string, dryRun: boolean): Promise<NamespaceDeleteReport> {
+  const res = await api.namespaceImportControllerDeleteNamespace(municipalityId, namespace, { dryRun });
+  return res.data.data;
 }

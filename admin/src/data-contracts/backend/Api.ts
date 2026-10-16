@@ -48,6 +48,7 @@ import {
   NamespaceApiResponse,
   NamespaceRequestDto,
   NamespacesApiResponse,
+  NamespaceDeleteApiResponse,
   NamespaceExportApiResponse,
   NamespaceImportApiResponse,
   NamespaceImportDto,
@@ -531,6 +532,28 @@ export class Api<
     this.request<NamespaceExportApiResponse, any>({
       path: `/api/namespaces/${municipalityId}/${namespace}/export`,
       method: "GET",
+      ...params,
+    });
+  /**
+   * @description Deletes the email integration, action configs, phases, labels, every metadata kind, the namespace config and the admin's feature flags, most dependent first. Refused while the namespace still has errands. Always answers 200 with a NamespaceDeleteReport.
+   *
+   * @tags Namespace Import
+   * @name NamespaceImportControllerDeleteNamespace
+   * @summary Inspect (dryRun=true) or delete a whole namespace
+   * @request DELETE:/api/namespaces/{municipalityId}/{namespace}
+   */
+  namespaceImportControllerDeleteNamespace = (
+    municipalityId: number,
+    namespace: string,
+    query?: {
+      dryRun?: boolean;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespaceDeleteApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}/${namespace}`,
+      method: "DELETE",
+      query: query,
       ...params,
     });
   /**

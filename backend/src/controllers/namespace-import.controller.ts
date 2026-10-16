@@ -2,14 +2,21 @@ import { NamespaceImportDto } from '@/dtos/namespace-import.dto';
 import { HttpException } from '@/exceptions/HttpException';
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import { hasPermissions } from '@/middlewares/permissions.middleware';
-import { NamespaceExportApiResponse, NamespaceImportApiResponse, NamespaceImportReport } from '@/responses/namespace-import.response';
+import {
+  NamespaceDeleteApiResponse,
+  NamespaceDeleteReport,
+  NamespaceExportApiResponse,
+  NamespaceImportApiResponse,
+  NamespaceImportReport,
+} from '@/responses/namespace-import.response';
 import ApiService from '@/services/api.service';
+import { DELETE_SECTION_ORDER, NamespaceDeleteService } from '@/services/namespace-delete.service';
 import { NamespaceImportService } from '@/services/namespace-import.service';
 import { logger } from '@/utils/logger';
 import { buildImportPlan, hasErrors, validateNamespaceImport, validateStructure } from '@/utils/namespace-import-validation';
 import authMiddleware from '@middlewares/auth.middleware';
 import { Response } from 'express';
-import { Body, Controller, Get, Param, Post, QueryParam, Req, Res, UseBefore } from 'routing-controllers';
+import { Body, Controller, Delete, Get, Param, Post, QueryParam, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 
 /**
@@ -109,6 +116,57 @@ export class NamespaceImportController {
       if (error?.status !== 404) {
         logger.error('Error exporting namespace', error);
       }
+      throw new HttpException(error?.status ?? 500, error?.message ?? 'Internal Server Error');
+    }
+  }
+
+  @Delete('/namespaces/:municipalityId/:namespace')
+  @OpenAPI({
+    summary: 'Inspect (dryRun=true) or delete a whole namespace',
+    description:
+      'Deletes the email integration, action configs, phases, labels, every metadata kind, the namespace config and the ' +
+      "admin's feature flags, most dependent first. Refused while the namespace still has errands. " +
+      'Always answers 200 with a NamespaceDeleteReport.',
+  })
+  @UseBefore(authMiddleware, hasPermissions(['canUseAdminPanel']))
+  @ResponseSchema(NamespaceDeleteApiResponse)
+  async deleteNamespace(
+    @Req() req: RequestWithUser,
+    @Res() response: Response<NamespaceDeleteApiResponse>,
+    @Param('municipalityId') municipalityId: number,
+    @Param('namespace') namespace: string,
+    @QueryParam('dryRun') dryRun = false,
+  ): Promise<Response<NamespaceDeleteApiResponse>> {
+    const report: NamespaceDeleteReport = {
+      outcome: 'not_found',
+      dryRun: Boolean(dryRun),
+      namespace,
+      errandCount: 0,
+      plan: [],
+      steps: [],
+    };
+    const send = () => response.send({ data: report, message: report.outcome });
+
+    try {
+      const service = new NamespaceDeleteService(this.apiService, req.user, municipalityId);
+      const inspection = await service.inspect(namespace);
+      if (!inspection) return send();
+
+      report.errandCount = inspection.errandCount;
+      report.plan = DELETE_SECTION_ORDER.map(section => ({ section, items: inspection.plan[section].map(item => item.label) }));
+      if (inspection.errandCount > 0) {
+        report.outcome = 'has_errands';
+        return send();
+      }
+      report.outcome = 'ready';
+      if (report.dryRun) return send();
+
+      const result = await service.execute(namespace, inspection.plan);
+      report.steps = result.steps;
+      report.outcome = result.completed ? 'completed' : 'partial_failure';
+      return send();
+    } catch (error) {
+      logger.error('Error deleting namespace', error);
       throw new HttpException(error?.status ?? 500, error?.message ?? 'Internal Server Error');
     }
   }
