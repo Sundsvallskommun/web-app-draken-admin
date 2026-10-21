@@ -106,6 +106,40 @@ const deprecatedField = (): FieldDef => ({
 // Status values for the e-post-integration selects (a small config enum).
 const statusOptions = ['NEW', 'ONGOING', 'SOLVED', 'SUSPENDED'].map((s) => ({ value: s, label: s }));
 
+/**
+ * Shared field set for the Support Management namespace-metadata resources
+ * (attachment purposes, measure types, decision/statement outcomes). They all
+ * carry name/displayName/sortOrder/deprecated/namespace/updatedAt; resource-
+ * specific fields are spliced in at fixed positions so the form/table order
+ * stays predictable.
+ */
+const metadataFields = (opts: {
+  /** Example technical name shown in the help text for `name`. */
+  nameExample?: string;
+  deprecatedHelp: string;
+  /** Extra fields placed between displayName and sortOrder. */
+  afterDisplayName?: FieldDef[];
+  /** Extra fields placed between sortOrder and deprecated. */
+  afterSortOrder?: FieldDef[];
+}): FieldDef[] => [
+  {
+    key: 'name',
+    label: 'Namn',
+    type: 'text',
+    required: true,
+    lockedOnEdit: true,
+    help: `Tekniskt namn som används som nyckel${opts.nameExample ? `, t.ex. "${opts.nameExample}"` : ''}. Kan inte ändras efter skapande.`,
+    inTable: true,
+  },
+  { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
+  ...(opts.afterDisplayName ?? []),
+  { key: 'sortOrder', label: 'Sorteringsordning', type: 'number', inTable: true },
+  ...(opts.afterSortOrder ?? []),
+  { key: 'deprecated', label: 'Utfasad', type: 'switch', help: opts.deprecatedHelp, inTable: true },
+  nsField(),
+  { key: 'updatedAt', label: 'Uppdaterad', type: 'text', readOnly: true, inTable: true },
+];
+
 export const resourceConfigs: ResourceConfig[] = [
   {
     name: 'featureFlags',
@@ -223,28 +257,10 @@ export const resourceConfigs: ResourceConfig[] = [
     icon: Paperclip,
     canCreate: true,
     canRemove: true,
-    fields: [
-      {
-        key: 'name',
-        label: 'Namn',
-        type: 'text',
-        required: true,
-        lockedOnEdit: true,
-        help: 'Tekniskt namn som används som nyckel, t.ex. "RESPONSE". Kan inte ändras efter skapande.',
-        inTable: true,
-      },
-      { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
-      { key: 'sortOrder', label: 'Sorteringsordning', type: 'number', inTable: true },
-      {
-        key: 'deprecated',
-        label: 'Utfasad',
-        type: 'switch',
-        help: 'Utfasade kategorier kan inte väljas för nya bilagor men finns kvar på befintliga.',
-        inTable: true,
-      },
-      nsField(),
-      { key: 'updatedAt', label: 'Uppdaterad', type: 'text', inTable: true },
-    ],
+    fields: metadataFields({
+      nameExample: 'RESPONSE',
+      deprecatedHelp: 'Utfasade kategorier kan inte väljas för nya bilagor men finns kvar på befintliga.',
+    }),
   },
   {
     name: 'measureTypes',
@@ -253,37 +269,20 @@ export const resourceConfigs: ResourceConfig[] = [
     icon: Wrench,
     canCreate: true,
     canRemove: true,
-    fields: [
-      {
-        key: 'name',
-        label: 'Namn',
-        type: 'text',
-        required: true,
-        lockedOnEdit: true,
-        help: 'Tekniskt namn som används som nyckel. Kan inte ändras efter skapande.',
-        inTable: true,
-      },
-      { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
-      {
-        key: 'measureGroups',
-        label: 'Åtgärdsgrupper (kommaseparerat)',
-        type: 'text',
-        list: true,
-        required: true,
-        help: 'En åtgärdstyp tillhör minst en grupp. T.ex. "INSPECTION, FOLLOW_UP".',
-        inTable: true,
-      },
-      { key: 'sortOrder', label: 'Sorteringsordning', type: 'number', inTable: true },
-      {
-        key: 'deprecated',
-        label: 'Utfasad',
-        type: 'switch',
-        help: 'Utfasade åtgärdstyper kan inte väljas för nya åtgärder men finns kvar på befintliga.',
-        inTable: true,
-      },
-      nsField(),
-      { key: 'updatedAt', label: 'Uppdaterad', type: 'text', readOnly: true, inTable: true },
-    ],
+    fields: metadataFields({
+      deprecatedHelp: 'Utfasade åtgärdstyper kan inte väljas för nya åtgärder men finns kvar på befintliga.',
+      afterDisplayName: [
+        {
+          key: 'measureGroups',
+          label: 'Åtgärdsgrupper (kommaseparerat)',
+          type: 'text',
+          list: true,
+          required: true,
+          help: 'En åtgärdstyp tillhör minst en grupp. T.ex. "INSPECTION, FOLLOW_UP".',
+          inTable: true,
+        },
+      ],
+    }),
   },
   {
     name: 'decisionOutcomes',
@@ -292,28 +291,10 @@ export const resourceConfigs: ResourceConfig[] = [
     icon: Gavel,
     canCreate: true,
     canRemove: true,
-    fields: [
-      {
-        key: 'name',
-        label: 'Namn',
-        type: 'text',
-        required: true,
-        lockedOnEdit: true,
-        help: 'Tekniskt namn som används som nyckel, t.ex. "APPROVED". Kan inte ändras efter skapande.',
-        inTable: true,
-      },
-      { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
-      { key: 'sortOrder', label: 'Sorteringsordning', type: 'number', inTable: true },
-      {
-        key: 'deprecated',
-        label: 'Utfasad',
-        type: 'switch',
-        help: 'Utfasade utfall kan inte väljas för nya beslut men finns kvar på befintliga.',
-        inTable: true,
-      },
-      nsField(),
-      { key: 'updatedAt', label: 'Uppdaterad', type: 'text', readOnly: true, inTable: true },
-    ],
+    fields: metadataFields({
+      nameExample: 'APPROVED',
+      deprecatedHelp: 'Utfasade utfall kan inte väljas för nya beslut men finns kvar på befintliga.',
+    }),
   },
   {
     name: 'statementOutcomes',
@@ -322,35 +303,19 @@ export const resourceConfigs: ResourceConfig[] = [
     icon: MessageSquareQuote,
     canCreate: true,
     canRemove: true,
-    fields: [
-      {
-        key: 'name',
-        label: 'Namn',
-        type: 'text',
-        required: true,
-        lockedOnEdit: true,
-        help: 'Tekniskt namn som används som nyckel, t.ex. "NO_RESPONSE". Kan inte ändras efter skapande.',
-        inTable: true,
-      },
-      { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
-      { key: 'sortOrder', label: 'Sorteringsordning', type: 'number', inTable: true },
-      {
-        key: 'responded',
-        label: 'Motparten svarade',
-        type: 'switch',
-        help: 'På: utfallet innebär att motparten svarade och ett svarsdatum krävs. Av: t.ex. inget svar inom tidsfristen.',
-        inTable: true,
-      },
-      {
-        key: 'deprecated',
-        label: 'Utfasad',
-        type: 'switch',
-        help: 'Utfasade utfall kan inte väljas för nya yttranden men finns kvar på befintliga.',
-        inTable: true,
-      },
-      nsField(),
-      { key: 'updatedAt', label: 'Uppdaterad', type: 'text', readOnly: true, inTable: true },
-    ],
+    fields: metadataFields({
+      nameExample: 'NO_RESPONSE',
+      deprecatedHelp: 'Utfasade utfall kan inte väljas för nya yttranden men finns kvar på befintliga.',
+      afterSortOrder: [
+        {
+          key: 'responded',
+          label: 'Motparten svarade',
+          type: 'switch',
+          help: 'På: utfallet innebär att motparten svarade och ett svarsdatum krävs. Av: t.ex. inget svar inom tidsfristen.',
+          inTable: true,
+        },
+      ],
+    }),
   },
   {
     name: 'emailIntegration',
