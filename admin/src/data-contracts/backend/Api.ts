@@ -48,6 +48,10 @@ import {
   NamespaceApiResponse,
   NamespaceRequestDto,
   NamespacesApiResponse,
+  NamespaceDeleteApiResponse,
+  NamespaceExportApiResponse,
+  NamespaceImportApiResponse,
+  NamespaceImportDto,
   RoleApiResponse,
   RoleDeleteApiResponse,
   RoleRequestDto,
@@ -485,6 +489,71 @@ export class Api<
     this.request<NamespacesApiResponse, any>({
       path: `/api/namespaces/${municipalityId}/all`,
       method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Namespace Import
+   * @name NamespaceImportControllerImportNamespace
+   * @summary Validate (dryRun=true) or import a whole namespace from a document
+   * @request POST:/api/namespaces/{municipalityId}/import
+   */
+  namespaceImportControllerImportNamespace = (
+    municipalityId: number,
+    query?: {
+      dryRun?: boolean;
+      allowExisting?: boolean;
+    },
+    data?: NamespaceImportDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespaceImportApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}/import`,
+      method: "POST",
+      query: query,
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Namespace Import
+   * @name NamespaceImportControllerExportNamespace
+   * @summary Export a namespace with its metadata, labels, email integration and feature flags as an import document
+   * @request GET:/api/namespaces/{municipalityId}/{namespace}/export
+   */
+  namespaceImportControllerExportNamespace = (
+    municipalityId: number,
+    namespace: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespaceExportApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}/${namespace}/export`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * @description Deletes the email integration, action configs, phases, labels, every metadata kind, the namespace config and the admin's feature flags, most dependent first. Refused while the namespace still has errands. Always answers 200 with a NamespaceDeleteReport.
+   *
+   * @tags Namespace Import
+   * @name NamespaceImportControllerDeleteNamespace
+   * @summary Inspect (dryRun=true) or delete a whole namespace
+   * @request DELETE:/api/namespaces/{municipalityId}/{namespace}
+   */
+  namespaceImportControllerDeleteNamespace = (
+    municipalityId: number,
+    namespace: string,
+    query?: {
+      dryRun?: boolean;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespaceDeleteApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}/${namespace}`,
+      method: "DELETE",
+      query: query,
       ...params,
     });
   /**
