@@ -33,7 +33,7 @@ export function useApiVersion(): boolean {
 }
 
 export function apiServiceName(name: string): string {
-  const resolvedName = API_SERVICE_ALIASES[name] ?? name;
+  const resolvedName = process.env.USE_SERVICE_ALIASES === 'true' ? (API_SERVICE_ALIASES[name] ?? name) : name;
   const api = APIS.find(a => a.name === resolvedName);
   if (!api) return name;
   return useApiVersion() ? `${api.name}/${api.version}` : api.name;
