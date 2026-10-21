@@ -23,10 +23,12 @@ export class CategoriesController {
       name: category.name,
       displayName: category.displayName,
       sortOrder: category.sortOrder,
+      deprecated: category.deprecated ?? false,
       types: (category.types ?? []).map(type => ({
         name: type.name,
         displayName: type.displayName,
         escalationEmail: type.escalationEmail,
+        deprecated: type.deprecated ?? false,
         createdAt: type.created,
         updatedAt: type.modified,
       })),
@@ -53,6 +55,7 @@ export class CategoriesController {
         name: body.name,
         displayName: body.displayName,
         sortOrder: body.sortOrder,
+        deprecated: body.deprecated,
         types: body.types ?? [],
       };
 
@@ -163,6 +166,10 @@ export class CategoriesController {
       if (body.sortOrder !== undefined) {
         patchData.sortOrder = body.sortOrder;
       }
+      if (body.deprecated !== undefined) {
+        patchData.deprecated = body.deprecated;
+      }
+      // Types are replaced as a whole, so each type must carry its own deprecated flag or it is reset
       if (body.types !== undefined) {
         patchData.types = body.types;
       }

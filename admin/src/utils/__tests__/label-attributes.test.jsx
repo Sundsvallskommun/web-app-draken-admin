@@ -1,11 +1,13 @@
 import { getEscalationEmail, isEscalationEmailApplicable, setEscalationEmail } from '../label-attributes';
 
 describe('label attributes', () => {
-  it('limits the migrated category/type field to TYPE labels', () => {
+  it('limits the migrated category/type field to CATEGORY and TYPE labels', () => {
     expect(isEscalationEmailApplicable('TYPE')).toBe(true);
     expect(isEscalationEmailApplicable(' type ')).toBe(true);
-    expect(isEscalationEmailApplicable('CATEGORY')).toBe(false);
+    expect(isEscalationEmailApplicable('CATEGORY')).toBe(true);
+    expect(isEscalationEmailApplicable(' category ')).toBe(true);
     expect(isEscalationEmailApplicable('SUBTYPE')).toBe(false);
+    expect(isEscalationEmailApplicable('DEPARTMENT')).toBe(false);
   });
 
   it('reads escalationEmail from free-form label attributes', () => {

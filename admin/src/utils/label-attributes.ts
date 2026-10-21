@@ -3,9 +3,11 @@ import { LabelAttribute, LabelNode } from '@interfaces/label';
 /** Conventional attribute key agreed between clients for the escalation email address. */
 export const ESCALATION_EMAIL_KEY = 'escalationEmail';
 
-/** Escalation recipients replace the legacy category/type value and belong to TYPE labels. */
+/** Classifications that can carry an escalation recipient, mirroring the legacy category/type escalation email. */
+const ESCALATION_EMAIL_CLASSIFICATIONS = ['CATEGORY', 'TYPE'];
+
 export const isEscalationEmailApplicable = (classification: string): boolean =>
-  classification.trim().toUpperCase() === 'TYPE';
+  ESCALATION_EMAIL_CLASSIFICATIONS.includes(classification.trim().toUpperCase());
 
 /** Read the escalationEmail value from a label's free-form attributes, or '' if not set. */
 export const getEscalationEmail = (label: LabelNode): string =>

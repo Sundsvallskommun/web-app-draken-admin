@@ -23,6 +23,7 @@ export class StatusesController {
       name: status.name,
       displayName: status.displayName,
       externalDisplayName: status.externalDisplayName,
+      deprecated: status.deprecated ?? false,
       namespace,
       createdAt: status.created,
       updatedAt: status.modified,
@@ -46,6 +47,7 @@ export class StatusesController {
         name: body.name,
         displayName: body.displayName,
         externalDisplayName: body.externalDisplayName,
+        deprecated: body.deprecated,
       };
 
       const postRes = await this.apiService.post<supportmanagementStatus>({ url, data: statusData }, req.user);
@@ -162,6 +164,9 @@ export class StatusesController {
       }
       if (body.externalDisplayName !== undefined) {
         patchData.externalDisplayName = body.externalDisplayName;
+      }
+      if (body.deprecated !== undefined) {
+        patchData.deprecated = body.deprecated;
       }
 
       await this.apiService.patch<supportmanagementStatus>({ url, data: patchData }, req.user);

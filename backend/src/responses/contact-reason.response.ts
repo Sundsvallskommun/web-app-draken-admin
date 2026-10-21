@@ -11,6 +11,9 @@ export class ContactReason implements supportmanagementContactReason {
   @IsString()
   @IsOptional()
   displayName?: string;
+  @IsBoolean()
+  @IsOptional()
+  deprecated?: boolean;
   @IsString()
   @IsOptional()
   namespace?: string;

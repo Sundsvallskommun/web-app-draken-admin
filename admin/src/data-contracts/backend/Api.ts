@@ -28,19 +28,22 @@ import {
   FeatureFlagDeleteApiResponse,
   FeatureFlagRequestDto,
   FeatureFlagsApiResponse,
+  JsonSchemaRequestDto,
+  LabelsApiResponse,
   NamespaceApiResponse,
   NamespaceRequestDto,
   NamespacesApiResponse,
   RoleApiResponse,
   RoleDeleteApiResponse,
   RoleRequestDto,
-  RoleUpdateDto,
   RolesApiResponse,
+  RoleUpdateDto,
   StatusApiResponse,
   StatusDeleteApiResponse,
   StatusesApiResponse,
   StatusRequestDto,
   StatusUpdateDto,
+  UiSchemaRequestDto,
   UpdateFeatureFlagDto,
   UserApiResponse,
 } from "./data-contracts";
@@ -179,6 +182,201 @@ export class Api<
   /**
    * No description
    *
+   * @tags Json Schema
+   * @name JsonSchemaControllerGetAllSchemas
+   * @summary Get all JSON schemas
+   * @request GET:/api/jsonschemas/{municipalityId}
+   */
+  jsonSchemaControllerGetAllSchemas = (
+    municipalityId: number,
+    query?: {
+      page?: number;
+      size?: number;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/jsonschemas/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Json Schema
+   * @name JsonSchemaControllerCreateSchema
+   * @summary Create a new JSON schema
+   * @request POST:/api/jsonschemas/{municipalityId}
+   */
+  jsonSchemaControllerCreateSchema = (
+    municipalityId: number,
+    data?: JsonSchemaRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/jsonschemas/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Json Schema
+   * @name JsonSchemaControllerGetSchema
+   * @summary Get a JSON schema by ID
+   * @request GET:/api/jsonschemas/{municipalityId}/{id}
+   */
+  jsonSchemaControllerGetSchema = (
+    municipalityId: number,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/jsonschemas/${municipalityId}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Json Schema
+   * @name JsonSchemaControllerDeleteSchema
+   * @summary Delete a JSON schema
+   * @request DELETE:/api/jsonschemas/{municipalityId}/{id}
+   */
+  jsonSchemaControllerDeleteSchema = (
+    municipalityId: number,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/jsonschemas/${municipalityId}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Json Schema
+   * @name JsonSchemaControllerGetUiSchema
+   * @summary Get UI schema for a JSON schema
+   * @request GET:/api/jsonschemas/{municipalityId}/{id}/ui-schema
+   */
+  jsonSchemaControllerGetUiSchema = (
+    municipalityId: number,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/jsonschemas/${municipalityId}/${id}/ui-schema`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Json Schema
+   * @name JsonSchemaControllerUpdateUiSchema
+   * @summary Create or update UI schema
+   * @request PUT:/api/jsonschemas/{municipalityId}/{id}/ui-schema
+   */
+  jsonSchemaControllerUpdateUiSchema = (
+    municipalityId: number,
+    id: string,
+    data?: UiSchemaRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/jsonschemas/${municipalityId}/${id}/ui-schema`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Json Schema
+   * @name JsonSchemaControllerDeleteUiSchema
+   * @summary Delete UI schema
+   * @request DELETE:/api/jsonschemas/{municipalityId}/{id}/ui-schema
+   */
+  jsonSchemaControllerDeleteUiSchema = (
+    municipalityId: number,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/jsonschemas/${municipalityId}/${id}/ui-schema`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Labels
+   * @name LabelsControllerGetLabels
+   * @summary Get labels for a namespace
+   * @request GET:/api/labels/{municipalityId}/{namespace}
+   */
+  labelsControllerGetLabels = (
+    municipalityId: number,
+    namespace: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<LabelsApiResponse, any>({
+      path: `/api/labels/${municipalityId}/${namespace}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Labels
+   * @name LabelsControllerCreateLabels
+   * @summary Create labels for a namespace
+   * @request POST:/api/labels/{municipalityId}/{namespace}
+   */
+  labelsControllerCreateLabels = (
+    municipalityId: number,
+    namespace: string,
+    data?: any,
+    params: RequestParams = {},
+  ) =>
+    this.request<LabelsApiResponse, any>({
+      path: `/api/labels/${municipalityId}/${namespace}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Labels
+   * @name LabelsControllerUpdateLabels
+   * @summary Update labels for a namespace
+   * @request PUT:/api/labels/{municipalityId}/{namespace}
+   */
+  labelsControllerUpdateLabels = (
+    municipalityId: number,
+    namespace: string,
+    data?: any,
+    params: RequestParams = {},
+  ) =>
+    this.request<LabelsApiResponse, any>({
+      path: `/api/labels/${municipalityId}/${namespace}`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
    * @tags Namespace
    * @name NamespaceControllerCreateNamespace
    * @summary Create a namespace
@@ -270,213 +468,6 @@ export class Api<
       ...params,
     });
   /**
-   * @tags ContactReasons
-   * @name ContactReasonsControllerCreateContactReason
-   * @request POST:/api/contact-reasons/{municipalityId}
-   */
-  contactReasonsControllerCreateContactReason = (
-    municipalityId: number,
-    data?: ContactReasonRequestDto,
-    params: RequestParams = {},
-  ) =>
-    this.request<ContactReasonApiResponse, any>({
-      path: `/api/contact-reasons/${municipalityId}`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      ...params,
-    });
-  /**
-   * @tags ContactReasons
-   * @name ContactReasonsControllerGetContactReasons
-   * @request GET:/api/contact-reasons/{municipalityId}
-   */
-  contactReasonsControllerGetContactReasons = (
-    municipalityId: number,
-    query?: { namespace?: string },
-    params: RequestParams = {},
-  ) =>
-    this.request<ContactReasonsApiResponse, any>({
-      path: `/api/contact-reasons/${municipalityId}`,
-      method: "GET",
-      query: query,
-      ...params,
-    });
-  /**
-   * @tags ContactReasons
-   * @name ContactReasonsControllerGetContactReason
-   * @request GET:/api/contact-reasons/{municipalityId}/{namespace}/{id}
-   */
-  contactReasonsControllerGetContactReason = (
-    municipalityId: number,
-    namespace: string,
-    id: string,
-    params: RequestParams = {},
-  ) =>
-    this.request<ContactReasonApiResponse, any>({
-      path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
-      method: "GET",
-      ...params,
-    });
-  /**
-   * @tags ContactReasons
-   * @name ContactReasonsControllerUpdateContactReason
-   * @request PATCH:/api/contact-reasons/{municipalityId}/{namespace}/{id}
-   */
-  contactReasonsControllerUpdateContactReason = (
-    municipalityId: number,
-    namespace: string,
-    id: string,
-    data?: ContactReasonUpdateDto,
-    params: RequestParams = {},
-  ) =>
-    this.request<ContactReasonApiResponse, any>({
-      path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
-      method: "PATCH",
-      body: data,
-      type: ContentType.Json,
-      ...params,
-    });
-  /**
-   * @tags ContactReasons
-   * @name ContactReasonsControllerDeleteContactReason
-   * @request DELETE:/api/contact-reasons/{municipalityId}/{namespace}/{id}
-   */
-  contactReasonsControllerDeleteContactReason = (
-    municipalityId: number,
-    namespace: string,
-    id: string,
-    params: RequestParams = {},
-  ) =>
-    this.request<ContactReasonDeleteApiResponse, any>({
-      path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
-      method: "DELETE",
-      ...params,
-    });
-  /**
-   * @tags Categories
-   * @name CategoriesControllerCreateCategory
-   * @request POST:/api/categories/{municipalityId}
-   */
-  categoriesControllerCreateCategory = (
-    municipalityId: number,
-    data?: CategoryRequestDto,
-    params: RequestParams = {},
-  ) =>
-    this.request<CategoryApiResponse, any>({
-      path: `/api/categories/${municipalityId}`,
-      method: "POST",
-      body: data,
-      type: ContentType.Json,
-      ...params,
-    });
-  /**
-   * @tags Categories
-   * @name CategoriesControllerGetCategories
-   * @request GET:/api/categories/{municipalityId}
-   */
-  categoriesControllerGetCategories = (
-    municipalityId: number,
-    query?: { namespace?: string },
-    params: RequestParams = {},
-  ) =>
-    this.request<CategoriesApiResponse, any>({
-      path: `/api/categories/${municipalityId}`,
-      method: "GET",
-      query: query,
-      ...params,
-    });
-  /**
-   * @tags Categories
-   * @name CategoriesControllerGetCategory
-   * @request GET:/api/categories/{municipalityId}/{namespace}/{id}
-   */
-  categoriesControllerGetCategory = (
-    municipalityId: number,
-    namespace: string,
-    id: string,
-    params: RequestParams = {},
-  ) =>
-    this.request<CategoryApiResponse, any>({
-      path: `/api/categories/${municipalityId}/${namespace}/${id}`,
-      method: "GET",
-      ...params,
-    });
-  /**
-   * @tags Categories
-   * @name CategoriesControllerUpdateCategory
-   * @request PATCH:/api/categories/{municipalityId}/{namespace}/{id}
-   */
-  categoriesControllerUpdateCategory = (
-    municipalityId: number,
-    namespace: string,
-    id: string,
-    data?: CategoryUpdateDto,
-    params: RequestParams = {},
-  ) =>
-    this.request<CategoryApiResponse, any>({
-      path: `/api/categories/${municipalityId}/${namespace}/${id}`,
-      method: "PATCH",
-      body: data,
-      type: ContentType.Json,
-      ...params,
-    });
-  /**
-   * @tags Categories
-   * @name CategoriesControllerDeleteCategory
-   * @request DELETE:/api/categories/{municipalityId}/{namespace}/{id}
-   */
-  categoriesControllerDeleteCategory = (
-    municipalityId: number,
-    namespace: string,
-    id: string,
-    params: RequestParams = {},
-  ) =>
-    this.request<CategoryDeleteApiResponse, any>({
-      path: `/api/categories/${municipalityId}/${namespace}/${id}`,
-      method: "DELETE",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags EmailIntegration
-   * @name EmailIntegrationControllerGetEmailIntegration
-   * @summary Get email integration config
-   * @request GET:/api/email-integration/{municipalityId}/{namespace}
-   */
-  emailIntegrationControllerGetEmailIntegration = (
-    municipalityId: number,
-    namespace: string,
-    params: RequestParams = {},
-  ) =>
-    this.request<EmailIntegrationApiResponse, any>({
-      path: `/api/email-integration/${municipalityId}/${namespace}`,
-      method: "GET",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags EmailIntegration
-   * @name EmailIntegrationControllerUpdateEmailIntegration
-   * @summary Update email integration config
-   * @request PUT:/api/email-integration/{municipalityId}/{namespace}
-   */
-  emailIntegrationControllerUpdateEmailIntegration = (
-    municipalityId: number,
-    namespace: string,
-    data?: EmailIntegrationDto,
-    params: RequestParams = {},
-  ) =>
-    this.request<EmailIntegrationApiResponse, any>({
-      path: `/api/email-integration/${municipalityId}/${namespace}`,
-      method: "PUT",
-      body: data,
-      type: ContentType.Json,
-      ...params,
-    });
-  /**
    * No description
    *
    * @tags Roles
@@ -521,37 +512,18 @@ export class Api<
    * No description
    *
    * @tags Roles
-   * @name RolesControllerDeleteRole
-   * @summary Delete role
-   * @request DELETE:/api/roles/{municipalityId}/{namespace}/{role}
-   */
-  rolesControllerDeleteRole = (
-    municipalityId: number,
-    namespace: string,
-    role: string,
-    params: RequestParams = {},
-  ) =>
-    this.request<RoleDeleteApiResponse, any>({
-      path: `/api/roles/${municipalityId}/${namespace}/${role}`,
-      method: "DELETE",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Roles
    * @name RolesControllerGetRole
-   * @summary Get a role
-   * @request GET:/api/roles/{municipalityId}/{namespace}/{role}
+   * @summary Get a role by UUID
+   * @request GET:/api/roles/{municipalityId}/{namespace}/{id}
    */
   rolesControllerGetRole = (
     municipalityId: number,
     namespace: string,
-    role: string,
+    id: string,
     params: RequestParams = {},
   ) =>
     this.request<RoleApiResponse, any>({
-      path: `/api/roles/${municipalityId}/${namespace}/${role}`,
+      path: `/api/roles/${municipalityId}/${namespace}/${id}`,
       method: "GET",
       ...params,
     });
@@ -560,21 +532,40 @@ export class Api<
    *
    * @tags Roles
    * @name RolesControllerUpdateRole
-   * @summary Update a role
-   * @request PATCH:/api/roles/{municipalityId}/{namespace}/{role}
+   * @summary Update a role by UUID
+   * @request PATCH:/api/roles/{municipalityId}/{namespace}/{id}
    */
   rolesControllerUpdateRole = (
     municipalityId: number,
     namespace: string,
-    role: string,
+    id: string,
     data?: RoleUpdateDto,
     params: RequestParams = {},
   ) =>
     this.request<RoleApiResponse, any>({
-      path: `/api/roles/${municipalityId}/${namespace}/${role}`,
+      path: `/api/roles/${municipalityId}/${namespace}/${id}`,
       method: "PATCH",
       body: data,
       type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Roles
+   * @name RolesControllerDeleteRole
+   * @summary Delete role
+   * @request DELETE:/api/roles/{municipalityId}/{namespace}/{id}
+   */
+  rolesControllerDeleteRole = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<RoleDeleteApiResponse, any>({
+      path: `/api/roles/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
       ...params,
     });
   /**
@@ -622,37 +613,18 @@ export class Api<
    * No description
    *
    * @tags Statuses
-   * @name StatusesControllerDeleteStatus
-   * @summary Delete status
-   * @request DELETE:/api/statuses/{municipalityId}/{namespace}/{status}
-   */
-  statusesControllerDeleteStatus = (
-    municipalityId: number,
-    namespace: string,
-    status: string,
-    params: RequestParams = {},
-  ) =>
-    this.request<StatusDeleteApiResponse, any>({
-      path: `/api/statuses/${municipalityId}/${namespace}/${status}`,
-      method: "DELETE",
-      ...params,
-    });
-  /**
-   * No description
-   *
-   * @tags Statuses
    * @name StatusesControllerGetStatus
-   * @summary Get a status
-   * @request GET:/api/statuses/{municipalityId}/{namespace}/{status}
+   * @summary Get a status by UUID
+   * @request GET:/api/statuses/{municipalityId}/{namespace}/{id}
    */
   statusesControllerGetStatus = (
     municipalityId: number,
     namespace: string,
-    status: string,
+    id: string,
     params: RequestParams = {},
   ) =>
     this.request<StatusApiResponse, any>({
-      path: `/api/statuses/${municipalityId}/${namespace}/${status}`,
+      path: `/api/statuses/${municipalityId}/${namespace}/${id}`,
       method: "GET",
       ...params,
     });
@@ -661,21 +633,330 @@ export class Api<
    *
    * @tags Statuses
    * @name StatusesControllerUpdateStatus
-   * @summary Update a status
-   * @request PATCH:/api/statuses/{municipalityId}/{namespace}/{status}
+   * @summary Update a status by UUID
+   * @request PATCH:/api/statuses/{municipalityId}/{namespace}/{id}
    */
   statusesControllerUpdateStatus = (
     municipalityId: number,
     namespace: string,
-    status: string,
+    id: string,
     data?: StatusUpdateDto,
     params: RequestParams = {},
   ) =>
     this.request<StatusApiResponse, any>({
-      path: `/api/statuses/${municipalityId}/${namespace}/${status}`,
+      path: `/api/statuses/${municipalityId}/${namespace}/${id}`,
       method: "PATCH",
       body: data,
       type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statuses
+   * @name StatusesControllerDeleteStatus
+   * @summary Delete status
+   * @request DELETE:/api/statuses/{municipalityId}/{namespace}/{id}
+   */
+  statusesControllerDeleteStatus = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatusDeleteApiResponse, any>({
+      path: `/api/statuses/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Categories
+   * @name CategoriesControllerCreateCategory
+   * @summary Create new category
+   * @request POST:/api/categories/{municipalityId}
+   */
+  categoriesControllerCreateCategory = (
+    municipalityId: number,
+    data?: CategoryRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<CategoryApiResponse, any>({
+      path: `/api/categories/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Categories
+   * @name CategoriesControllerGetCategories
+   * @summary Get all categories
+   * @request GET:/api/categories/{municipalityId}
+   */
+  categoriesControllerGetCategories = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<CategoriesApiResponse, any>({
+      path: `/api/categories/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Categories
+   * @name CategoriesControllerGetCategory
+   * @summary Get a category by name
+   * @request GET:/api/categories/{municipalityId}/{namespace}/{id}
+   */
+  categoriesControllerGetCategory = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<CategoryApiResponse, any>({
+      path: `/api/categories/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Categories
+   * @name CategoriesControllerUpdateCategory
+   * @summary Update a category by name
+   * @request PATCH:/api/categories/{municipalityId}/{namespace}/{id}
+   */
+  categoriesControllerUpdateCategory = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: CategoryUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<CategoryApiResponse, any>({
+      path: `/api/categories/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Categories
+   * @name CategoriesControllerDeleteCategory
+   * @summary Delete category
+   * @request DELETE:/api/categories/{municipalityId}/{namespace}/{id}
+   */
+  categoriesControllerDeleteCategory = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<CategoryDeleteApiResponse, any>({
+      path: `/api/categories/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Compare
+   * @name CompareControllerCheckAvailable
+   * @summary Check if environment comparison is configured
+   * @request GET:/api/compare/available
+   */
+  compareControllerCheckAvailable = (params: RequestParams = {}) =>
+    this.request<void, any>({
+      path: `/api/compare/available`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Compare
+   * @name CompareControllerCompareTemplates
+   * @summary Compare templates between local and compare environment
+   * @request GET:/api/compare/templates/{municipalityId}
+   */
+  compareControllerCompareTemplates = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<void, any>({
+      path: `/api/compare/templates/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Contact Reasons
+   * @name ContactReasonsControllerCreateContactReason
+   * @summary Create new contact reason
+   * @request POST:/api/contact-reasons/{municipalityId}
+   */
+  contactReasonsControllerCreateContactReason = (
+    municipalityId: number,
+    data?: ContactReasonRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<ContactReasonApiResponse, any>({
+      path: `/api/contact-reasons/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Contact Reasons
+   * @name ContactReasonsControllerGetContactReasons
+   * @summary Get all contact reasons
+   * @request GET:/api/contact-reasons/{municipalityId}
+   */
+  contactReasonsControllerGetContactReasons = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<ContactReasonsApiResponse, any>({
+      path: `/api/contact-reasons/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Contact Reasons
+   * @name ContactReasonsControllerGetContactReason
+   * @summary Get a contact reason by UUID
+   * @request GET:/api/contact-reasons/{municipalityId}/{namespace}/{id}
+   */
+  contactReasonsControllerGetContactReason = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<ContactReasonApiResponse, any>({
+      path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Contact Reasons
+   * @name ContactReasonsControllerUpdateContactReason
+   * @summary Update a contact reason by UUID
+   * @request PATCH:/api/contact-reasons/{municipalityId}/{namespace}/{id}
+   */
+  contactReasonsControllerUpdateContactReason = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: ContactReasonUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<ContactReasonApiResponse, any>({
+      path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Contact Reasons
+   * @name ContactReasonsControllerDeleteContactReason
+   * @summary Delete contact reason
+   * @request DELETE:/api/contact-reasons/{municipalityId}/{namespace}/{id}
+   */
+  contactReasonsControllerDeleteContactReason = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<ContactReasonDeleteApiResponse, any>({
+      path: `/api/contact-reasons/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Email Integration
+   * @name EmailIntegrationControllerGetEmailIntegration
+   * @summary Get email integration config for a namespace
+   * @request GET:/api/email-integration/{municipalityId}/{namespace}
+   */
+  emailIntegrationControllerGetEmailIntegration = (
+    municipalityId: number,
+    namespace: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<EmailIntegrationApiResponse, any>({
+      path: `/api/email-integration/${municipalityId}/${namespace}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Email Integration
+   * @name EmailIntegrationControllerUpdateEmailIntegration
+   * @summary Update email integration config for a namespace
+   * @request PUT:/api/email-integration/{municipalityId}/{namespace}
+   */
+  emailIntegrationControllerUpdateEmailIntegration = (
+    municipalityId: number,
+    namespace: string,
+    data?: EmailIntegrationDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<EmailIntegrationApiResponse, any>({
+      path: `/api/email-integration/${municipalityId}/${namespace}`,
+      method: "PUT",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Environment
+   * @name EnvironmentControllerGetAdminEnvironment
+   * @summary Get current admin environment
+   * @request GET:/api/admin/environment
+   */
+  environmentControllerGetAdminEnvironment = (params: RequestParams = {}) =>
+    this.request<void, any>({
+      path: `/api/admin/environment`,
+      method: "GET",
       ...params,
     });
   /**
