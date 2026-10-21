@@ -192,7 +192,7 @@ export function LabelCreateDialog({
                 disabled={saving}
               />
               <p className="text-xs text-muted-foreground">
-                Valfritt. Förifylls som mottagare när ett ärende med typen överlämnas via e-post.
+                Valfritt. Förifylls som mottagare när ett ärende med etiketten överlämnas via e-post.
               </p>
             </div>
           )}
