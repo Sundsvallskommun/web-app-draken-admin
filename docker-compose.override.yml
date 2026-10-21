@@ -33,6 +33,8 @@ services:
       LOG_FORMAT: ${LOG_FORMAT-dev}
       LOG_DIR: ${LOG_DIR-../../data/logs}
       CREDENTIALS: ${CREDENTIALS-true}
+      # Set to false to call APIs without a version in the URL (latest version)
+      USE_API_VERSION: ${USE_API_VERSION-true}
   frontend:
     environment:
       # URL to backend

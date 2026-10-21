@@ -8,17 +8,66 @@ import {
   removeLabel,
   resourceNameFromDisplayName,
   ROOT_PARENT_VALUE,
+  setLabelAttributes,
   setLabelDeprecated,
   setLabelDisplayName,
   setLabelEscalationEmail,
 } from '../label-editor';
 
 describe('label-editor', () => {
-  it('only defaults to SUBTYPE below a TYPE parent', () => {
-    expect(defaultClassificationForParent({ value: ROOT_PARENT_VALUE, label: 'Rotnivå' })).toBe('');
-    expect(defaultClassificationForParent({ value: '0', label: 'Kategori', classification: 'CATEGORY' })).toBe('');
-    expect(defaultClassificationForParent({ value: '0.0', label: 'Typ', classification: 'TYPE' })).toBe('SUBTYPE');
-    expect(defaultClassificationForParent({ value: '0.0', label: 'Typ', classification: 'type' })).toBe('SUBTYPE');
+  it('defaults to the next classification level below the selected parent', () => {
+    expect(defaultClassificationForParent({ value: '0', label: 'Rot', classification: 'ROOT' })).toBe('CATEGORY');
+    expect(defaultClassificationForParent({ value: '0.0', label: 'Kategori', classification: 'CATEGORY' })).toBe(
+      'TYPE'
+    );
+    expect(defaultClassificationForParent({ value: '0.0.0', label: 'Typ', classification: 'TYPE' })).toBe('SUBTYPE');
+    expect(defaultClassificationForParent({ value: '0.0.0', label: 'Typ', classification: 'type' })).toBe('SUBTYPE');
+  });
+
+  it('suggests nothing below the deepest level or an unknown classification', () => {
+    expect(defaultClassificationForParent({ value: '0', label: 'Undertyp', classification: 'SUBTYPE' })).toBe('');
+    expect(defaultClassificationForParent({ value: '0', label: 'Eget', classification: 'CUSTOM' })).toBe('');
+    expect(defaultClassificationForParent({ value: '0', label: 'Tom' })).toBe('');
+  });
+
+  it('takes the root level default from the existing root labels', () => {
+    const root = { value: ROOT_PARENT_VALUE, label: 'Rotnivå' };
+
+    expect(defaultClassificationForParent(root, [])).toBe('');
+    expect(
+      defaultClassificationForParent(root, [
+        { classification: 'CATEGORY', resourceName: 'BOENDE' },
+        { classification: 'CATEGORY', resourceName: 'OMSORG' },
+      ])
+    ).toBe('CATEGORY');
+    expect(
+      defaultClassificationForParent(root, [
+        { classification: 'ROOT', resourceName: 'TAGROOT' },
+        { classification: 'ROOT', resourceName: 'CATEGORYROOT' },
+      ])
+    ).toBe('ROOT');
+    expect(
+      defaultClassificationForParent(root, [
+        { classification: 'ROOT', resourceName: 'TAGROOT' },
+        { classification: 'CATEGORY', resourceName: 'BOENDE' },
+      ])
+    ).toBe('');
+  });
+
+  it('appends a ROOT label at root level and categories below it', () => {
+    const withRoot = appendLabel([], ROOT_PARENT_VALUE, {
+      classification: 'ROOT',
+      resourceName: 'TAGROOT',
+      labels: [],
+    });
+    expect(withRoot).toHaveLength(1);
+
+    const withCategory = appendLabel(withRoot, '0', {
+      classification: 'CATEGORY',
+      resourceName: 'BOENDE',
+      labels: [],
+    });
+    expect(withCategory[0].labels).toEqual([{ classification: 'CATEGORY', resourceName: 'BOENDE', labels: [] }]);
   });
 
   it('builds API-compatible resource names from display names', () => {
@@ -287,6 +336,43 @@ describe('label-editor', () => {
     });
     expect(next[0].labels[1]).toBe(labels[0].labels[1]);
     expect(labels[0].labels[0].displayName).toBe('Hyra');
+  });
+
+  it('replaces the attributes of the selected label only, keeping the escalation address applied after', () => {
+    const labels = [
+      {
+        classification: 'CATEGORY',
+        resourceName: 'HOUSING',
+        labels: [
+          {
+            classification: 'TYPE',
+            resourceName: 'RENT',
+            attributes: [
+              { key: 'owner', value: 'service-center' },
+              { key: 'escalationEmail', value: 'rent@example.com' },
+            ],
+            labels: [],
+          },
+          {
+            classification: 'TYPE',
+            resourceName: 'QUEUE',
+            attributes: [{ key: 'owner', value: 'housing' }],
+            labels: [],
+          },
+        ],
+      },
+    ];
+
+    const withAttributes = setLabelAttributes(labels, '0.0', [{ key: 'sla', value: '48h' }]);
+    const next = setLabelEscalationEmail(withAttributes, '0.0', 'housing@example.com');
+
+    expect(next[0].labels[0].attributes).toEqual([
+      { key: 'sla', value: '48h' },
+      { key: 'escalationEmail', value: 'housing@example.com' },
+    ]);
+    expect(next[0].labels[1]).toBe(labels[0].labels[1]);
+    expect(labels[0].labels[0].attributes).toHaveLength(2);
+    expect(labelsForSave(next)[0].labels[0].attributes).toEqual(next[0].labels[0].attributes);
   });
 
   it('removes the selected label subtree by path', () => {

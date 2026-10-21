@@ -26,7 +26,7 @@ export class JsonSchemaController {
     @QueryParam('size') size?: number,
   ): Promise<ApiResponse<JsonSchemaResponseDTO[]>> {
     const url = `${this.SERVICE}/${municipalityId}/schemas`;
-    const params = { page: page ?? 0, size: size ?? 100 };
+    const params = { page: page ?? 0, size: size ?? 200 };
 
     const res = await this.apiService.get<PageJsonSchema>({ url, params }, req.user);
 

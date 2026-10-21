@@ -1,6 +1,7 @@
 import {
   appendLabel,
   canCreateLabelBelow,
+  CLASSIFICATION_LEVELS,
   defaultClassificationForParent,
   flattenLabelParents,
   resourceNameFromDisplayName,
@@ -16,8 +17,6 @@ import { isValidEmail } from '@utils/email';
 import { isEscalationEmailApplicable, setEscalationEmail } from '@utils/label-attributes';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
-
-const CLASSIFICATION_OPTIONS = ['CATEGORY', 'TYPE', 'SUBTYPE'];
 
 interface LabelCreateDialogProps {
   data: LabelNode[];
@@ -50,20 +49,20 @@ export function LabelCreateDialog({
     if (!open) return;
     const nextParent = parentOptions.find((option) => option.value === initialParentValue) ?? parentOptions[0];
     setParentValue(nextParent.value);
-    setClassification(defaultClassificationForParent(nextParent));
+    setClassification(defaultClassificationForParent(nextParent, data));
     setDisplayName('');
     setResourceName('');
     setResourceNameTouched(false);
     setEscalationEmailValue('');
     setError('');
-  }, [initialParentValue, open, parentOptions]);
+  }, [data, initialParentValue, open, parentOptions]);
 
   const selectedParent = parentOptions.find((option) => option.value === parentValue) ?? parentOptions[0];
 
   const updateParent = (value: string) => {
     const nextParent = parentOptions.find((option) => option.value === value) ?? parentOptions[0];
     setParentValue(nextParent.value);
-    setClassification(defaultClassificationForParent(nextParent));
+    setClassification(defaultClassificationForParent(nextParent, data));
   };
 
   const updateDisplayName = (value: string) => {
@@ -153,7 +152,7 @@ export function LabelCreateDialog({
               required
             />
             <datalist id={classificationListId}>
-              {CLASSIFICATION_OPTIONS.map((option) => (
+              {CLASSIFICATION_LEVELS.map((option) => (
                 <option key={option} value={option} />
               ))}
             </datalist>

@@ -10,10 +10,14 @@ import {
   FileText,
   Flag,
   FolderTree,
+  Gavel,
   Mail,
+  MessageSquareQuote,
   MessageSquare,
+  Paperclip,
   Tags,
   Users,
+  Wrench,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -26,11 +30,18 @@ export interface FieldDef {
   required?: boolean;
   /** Disabled when editing an existing record (e.g. name / namespace keys). */
   lockedOnEdit?: boolean;
+  /** Server-owned value (e.g. timestamps): shown but never editable or submitted. */
+  readOnly?: boolean;
   /** Only shown when editing an existing record (e.g. deprecated). */
   hiddenOnCreate?: boolean;
   /** Options for non-namespace selects (namespace options are fetched live). */
   options?: { value: string; label: string }[];
   help?: string;
+  /**
+   * The API value is a string array; the form edits it as comma-separated text
+   * and the table shows it joined.
+   */
+  list?: boolean;
   /** Show this field as a column in the list table. */
   inTable?: boolean;
   /** Show an exact-value filter for this field above the list table. */
@@ -94,6 +105,40 @@ const deprecatedField = (): FieldDef => ({
 
 // Status values for the e-post-integration selects (a small config enum).
 const statusOptions = ['NEW', 'ONGOING', 'SOLVED', 'SUSPENDED'].map((s) => ({ value: s, label: s }));
+
+/**
+ * Shared field set for the Support Management namespace-metadata resources
+ * (attachment purposes, measure types, decision/statement outcomes). They all
+ * carry name/displayName/sortOrder/deprecated/namespace/updatedAt; resource-
+ * specific fields are spliced in at fixed positions so the form/table order
+ * stays predictable.
+ */
+const metadataFields = (opts: {
+  /** Example technical name shown in the help text for `name`. */
+  nameExample?: string;
+  deprecatedHelp: string;
+  /** Extra fields placed between displayName and sortOrder. */
+  afterDisplayName?: FieldDef[];
+  /** Extra fields placed between sortOrder and deprecated. */
+  afterSortOrder?: FieldDef[];
+}): FieldDef[] => [
+  {
+    key: 'name',
+    label: 'Namn',
+    type: 'text',
+    required: true,
+    lockedOnEdit: true,
+    help: `Tekniskt namn som används som nyckel${opts.nameExample ? `, t.ex. "${opts.nameExample}"` : ''}. Kan inte ändras efter skapande.`,
+    inTable: true,
+  },
+  { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
+  ...(opts.afterDisplayName ?? []),
+  { key: 'sortOrder', label: 'Sorteringsordning', type: 'number', inTable: true },
+  ...(opts.afterSortOrder ?? []),
+  { key: 'deprecated', label: 'Utfasad', type: 'switch', help: opts.deprecatedHelp, inTable: true },
+  nsField(),
+  { key: 'updatedAt', label: 'Uppdaterad', type: 'text', readOnly: true, inTable: true },
+];
 
 export const resourceConfigs: ResourceConfig[] = [
   {
@@ -186,7 +231,7 @@ export const resourceConfigs: ResourceConfig[] = [
   },
   {
     name: 'categories',
-    label: 'Kategorier',
+    label: 'Ärendekategorier',
     description: 'Ärendekategorier och typer.',
     icon: FolderTree,
     canCreate: true,
@@ -204,6 +249,73 @@ export const resourceConfigs: ResourceConfig[] = [
         help: 'Eskaleringsadressen förifylls som mottagare när ett ärende med typen överlämnas via e-post.',
       },
     ],
+  },
+  {
+    name: 'attachmentPurposes',
+    label: 'Bilagekategorier',
+    description: 'Kategorier som bilagor på ärenden kan märkas med, per namespace.',
+    icon: Paperclip,
+    canCreate: true,
+    canRemove: true,
+    fields: metadataFields({
+      nameExample: 'RESPONSE',
+      deprecatedHelp: 'Utfasade kategorier kan inte väljas för nya bilagor men finns kvar på befintliga.',
+    }),
+  },
+  {
+    name: 'measureTypes',
+    label: 'Åtgärdstyper',
+    description: 'Typer av åtgärder på ärenden, grupperade i åtgärdsgrupper, per namespace.',
+    icon: Wrench,
+    canCreate: true,
+    canRemove: true,
+    fields: metadataFields({
+      deprecatedHelp: 'Utfasade åtgärdstyper kan inte väljas för nya åtgärder men finns kvar på befintliga.',
+      afterDisplayName: [
+        {
+          key: 'measureGroups',
+          label: 'Åtgärdsgrupper (kommaseparerat)',
+          type: 'text',
+          list: true,
+          required: true,
+          help: 'En åtgärdstyp tillhör minst en grupp. T.ex. "INSPECTION, FOLLOW_UP".',
+          inTable: true,
+        },
+      ],
+    }),
+  },
+  {
+    name: 'decisionOutcomes',
+    label: 'Beslutsutfall',
+    description: 'Utfall som ett beslut på ett ärende kan få, per namespace.',
+    icon: Gavel,
+    canCreate: true,
+    canRemove: true,
+    fields: metadataFields({
+      nameExample: 'APPROVED',
+      deprecatedHelp: 'Utfasade utfall kan inte väljas för nya beslut men finns kvar på befintliga.',
+    }),
+  },
+  {
+    name: 'statementOutcomes',
+    label: 'Yttrandeutfall',
+    description: 'Utfall som en begäran om yttrande på ett ärende kan få, per namespace.',
+    icon: MessageSquareQuote,
+    canCreate: true,
+    canRemove: true,
+    fields: metadataFields({
+      nameExample: 'NO_RESPONSE',
+      deprecatedHelp: 'Utfasade utfall kan inte väljas för nya yttranden men finns kvar på befintliga.',
+      afterSortOrder: [
+        {
+          key: 'responded',
+          label: 'Motparten svarade',
+          type: 'switch',
+          help: 'På: utfallet innebär att motparten svarade och ett svarsdatum krävs. Av: t.ex. inget svar inom tidsfristen.',
+          inTable: true,
+        },
+      ],
+    }),
   },
   {
     name: 'emailIntegration',
@@ -250,6 +362,7 @@ export const resourceConfigs: ResourceConfig[] = [
     icon: Boxes,
     canCreate: true,
     canRemove: false,
+    extraNav: [{ label: 'Importera / exportera', href: '/namespaces/import' }],
     fields: [
       { key: 'namespace', label: 'Namespace', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'displayName', label: 'Visningsnamn', type: 'text', required: true, inTable: true },

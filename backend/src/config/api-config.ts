@@ -10,7 +10,11 @@ export const APIS = [
   },
   {
     name: 'supportmanagement',
-    version: '15.6',
+    version: '15.2',
+  },
+  {
+    name: 'support-management-alkt-sprint',
+    version: '17.2',
   },
   {
     name: 'jsonschema',
@@ -18,7 +22,25 @@ export const APIS = [
   },
 ] as const;
 
-export function apiServiceName(name: string): string {
-  const api = APIS.find(a => a.name === name);
-  return api ? `${api.name}/${api.version}` : name;
+/**
+ * Whether gateway URLs include the pinned API version (`supportmanagement/15.2`) or only the
+ * API name (`supportmanagement`), which makes the gateway route to the latest version.
+ * Controlled by the USE_API_VERSION env var; anything but the literal "false" keeps versions on.
+ * Read at call time because dotenv is loaded after this module is imported.
+ */
+export function useApiVersion(): boolean {
+  return process.env.USE_API_VERSION !== 'false';
 }
+
+export function apiServiceName(name: string): string {
+  const resolvedName = process.env.USE_SERVICE_ALIASES === 'true' ? (API_SERVICE_ALIASES[name] ?? name) : name;
+  const api = APIS.find(a => a.name === resolvedName);
+  if (!api) return name;
+  return useApiVersion() ? `${api.name}/${api.version}` : api.name;
+}
+
+// Temporary routing for the Support Management development sprint.
+// Remove this alias and rename the APIS entry when the sprint API is retired.
+const API_SERVICE_ALIASES: Readonly<Record<string, string>> = {
+  supportmanagement: 'support-management-alkt-sprint',
+};

@@ -220,23 +220,6 @@ class App {
     this.app.use(passport.session());
     passport.use('saml', samlStrategy);
 
-    this.app.use(
-      cors({
-        credentials: CREDENTIALS,
-        origin: function (origin, callback) {
-          if (origin === undefined || corsWhitelist.indexOf(origin) !== -1 || corsWhitelist.indexOf('*') !== -1) {
-            callback(null, true);
-          } else {
-            if (NODE_ENV == 'development') {
-              callback(null, true);
-            } else {
-              callback(new Error('Not allowed by CORS'));
-            }
-          }
-        },
-      }),
-    );
-
     this.app.get(
       `${BASE_URL_PREFIX}/saml/login`,
       (req, res, next) => {
@@ -374,6 +357,27 @@ class App {
         }
       })(req, res, next);
     });
+
+    // CORS is registered after the SAML routes on purpose. The IdP delivers the SAML response as a
+    // cross-site form POST, and a page served with "Referrer-Policy: no-referrer" (the new fake IdP)
+    // makes the browser send "Origin: null", which no whitelist can match. Those routes are top-level
+    // navigations that need no CORS headers, so they must not be subject to the whitelist at all.
+    this.app.use(
+      cors({
+        credentials: CREDENTIALS,
+        origin: function (origin, callback) {
+          if (origin === undefined || corsWhitelist.indexOf(origin) !== -1 || corsWhitelist.indexOf('*') !== -1) {
+            callback(null, true);
+          } else {
+            if (NODE_ENV == 'development') {
+              callback(null, true);
+            } else {
+              callback(new Error('Not allowed by CORS'));
+            }
+          }
+        },
+      }),
+    );
   }
 
   private initializeRoutes(controllers: ControllerClass[]) {

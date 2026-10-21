@@ -1,13 +1,17 @@
 import { config } from 'dotenv';
-import { APIS } from './api-config';
+import { APIS, useApiVersion } from './api-config';
 
-export { APIS };
+export { APIS, useApiVersion };
 
 config({ path: `.env.${process.env.NODE_ENV || 'development'}.local` });
 
 export const CREDENTIALS = process.env.CREDENTIALS === 'true';
 export const SWAGGER_ENABLED = process.env.SWAGGER_ENABLED === 'true';
 export const SESSION_MEMORY = process.env.SESSION_MEMORY === 'true';
+// Global switch for the whole-namespace delete (DELETE /namespaces/:municipalityId/:namespace). Off unless "true".
+export const NAMESPACE_DELETE_ENABLED = process.env.NAMESPACE_DELETE_ENABLED === 'true';
+// Set to "false" to drop the API version from gateway URLs so the latest version is called.
+export const USE_API_VERSION = useApiVersion();
 
 export const {
   MUNICIPALITY_ID,
