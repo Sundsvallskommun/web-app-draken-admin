@@ -14,6 +14,9 @@ export class Status implements supportmanagementStatus {
   @IsString()
   @IsOptional()
   externalDisplayName?: string;
+  @IsBoolean()
+  @IsOptional()
+  deprecated?: boolean;
   @IsString()
   @IsOptional()
   namespace?: string;

@@ -11,7 +11,6 @@
  */
 
 export interface FeatureFlagRequestDto {
-  id?: number;
   name: string;
   description: string;
   enabled: boolean;
@@ -20,7 +19,6 @@ export interface FeatureFlagRequestDto {
 }
 
 export interface UpdateFeatureFlagDto {
-  id?: number;
   name?: string;
   description?: string;
   enabled?: boolean;
@@ -51,6 +49,42 @@ export interface FeatureFlagsApiResponse {
 
 export interface FeatureFlagApiResponse {
   data: FeatureFlag;
+  message: string;
+}
+
+export interface JsonSchemaRequestDto {
+  /** @minLength 1 */
+  name: string;
+  /** @pattern ^(\d+\.)?(\d+)$ */
+  version: string;
+  value: object;
+  description?: string;
+}
+
+export interface UiSchemaRequestDto {
+  value: object;
+  description?: string;
+}
+
+export interface LabelAttribute {
+  key: string;
+  value: string;
+}
+
+export interface Label {
+  id?: string;
+  classification: string;
+  displayName?: string;
+  resourceName: string;
+  resourcePath?: string;
+  deprecated?: boolean;
+  isLeaf?: boolean;
+  labels?: Label[];
+  attributes?: LabelAttribute[];
+}
+
+export interface LabelsApiResponse {
+  data: Label[];
   message: string;
 }
 
@@ -87,11 +121,13 @@ export interface NamespacesApiResponse {
 export interface RoleRequestDto {
   name: string;
   displayName: string;
+  deprecated?: boolean;
   namespace: string;
 }
 
 export interface RoleUpdateDto {
   displayName?: string;
+  deprecated?: boolean;
   namespace?: string;
 }
 
@@ -99,6 +135,7 @@ export interface Role {
   id: string;
   name: string;
   displayName?: string;
+  deprecated?: boolean;
   namespace?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -124,11 +161,13 @@ export interface StatusRequestDto {
   namespace: string;
   displayName?: string;
   externalDisplayName?: string;
+  deprecated?: boolean;
 }
 
 export interface StatusUpdateDto {
   displayName?: string;
   externalDisplayName?: string;
+  deprecated?: boolean;
   namespace?: string;
 }
 
@@ -137,6 +176,7 @@ export interface Status {
   name: string;
   displayName?: string;
   externalDisplayName?: string;
+  deprecated?: boolean;
   namespace?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -157,46 +197,78 @@ export interface StatusApiResponse {
   message: string;
 }
 
-export interface EmailIntegrationDto {
-  enabled?: boolean;
-  errandClosedEmailSender?: string;
-  errandClosedEmailTemplate?: string;
-  errandClosedEmailHTMLTemplate?: string;
-  errandNewEmailSender?: string;
-  errandNewEmailTemplate?: string;
-  errandNewEmailHTMLTemplate?: string;
-  daysOfInactivityBeforeReject?: number;
-  statusForNew?: string;
-  triggerStatusChangeOn?: string;
-  statusChangeTo?: string;
-  inactiveStatus?: string;
-  addSenderAsStakeholder?: boolean;
-  stakeholderRole?: string;
-  errandChannel?: string;
-  ignoreAutoReply?: boolean;
-  ignoreNoReply?: boolean;
+export interface CategoryTypeDto {
+  name: string;
+  displayName?: string;
+  /** @format email */
+  escalationEmail?: string;
+  deprecated?: boolean;
 }
 
-export interface EmailIntegration extends EmailIntegrationDto {
+export interface CategoryRequestDto {
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+  types?: CategoryTypeDto[];
+  namespace: string;
+}
+
+export interface CategoryUpdateDto {
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+  types?: CategoryTypeDto[];
+  namespace?: string;
+}
+
+export interface CategoryType {
+  name: string;
+  displayName?: string;
+  escalationEmail?: string;
+  deprecated?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  displayName?: string;
+  sortOrder?: number;
+  deprecated?: boolean;
+  types?: CategoryType[];
   namespace?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface EmailIntegrationApiResponse {
-  data: EmailIntegration;
+export interface CategoryDeleteApiResponse {
+  data: boolean;
+  message: string;
+}
+
+export interface CategoriesApiResponse {
+  data: Category[];
+  message: string;
+}
+
+export interface CategoryApiResponse {
+  data: Category;
   message: string;
 }
 
 export interface ContactReasonRequestDto {
   reason: string;
   displayName?: string;
+  deprecated?: boolean;
   namespace: string;
 }
 
 export interface ContactReasonUpdateDto {
   reason?: string;
   displayName?: string;
+  deprecated?: boolean;
   namespace?: string;
 }
 
@@ -204,6 +276,7 @@ export interface ContactReason {
   id: string;
   reason: string;
   displayName?: string;
+  deprecated?: boolean;
   namespace?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -224,58 +297,51 @@ export interface ContactReasonApiResponse {
   message: string;
 }
 
-export interface CategoryTypeDto {
-  name: string;
-  displayName?: string;
-  escalationEmail?: string;
+export interface EmailIntegrationDto {
+  enabled: boolean;
+  errandClosedEmailSender?: string;
+  errandClosedEmailTemplate?: string;
+  errandClosedEmailHTMLTemplate?: string;
+  errandNewEmailSender?: string;
+  errandNewEmailTemplate?: string;
+  errandNewEmailHTMLTemplate?: string;
+  daysOfInactivityBeforeReject?: number;
+  statusForNew: string;
+  triggerStatusChangeOn?: string;
+  statusChangeTo?: string;
+  inactiveStatus?: string;
+  addSenderAsStakeholder?: boolean;
+  stakeholderRole?: string;
+  errandChannel?: string;
+  ignoreAutoReply: boolean;
+  ignoreNoReply: boolean;
 }
 
-export interface CategoryRequestDto {
-  name: string;
-  displayName?: string;
-  sortOrder?: number;
-  types?: CategoryTypeDto[];
-  namespace: string;
-}
-
-export interface CategoryUpdateDto {
-  displayName?: string;
-  sortOrder?: number;
-  types?: CategoryTypeDto[];
+export interface EmailIntegrationData {
+  enabled: boolean;
+  errandClosedEmailSender?: string;
+  errandClosedEmailTemplate?: string;
+  errandClosedEmailHTMLTemplate?: string;
+  errandNewEmailSender?: string;
+  errandNewEmailTemplate?: string;
+  errandNewEmailHTMLTemplate?: string;
+  daysOfInactivityBeforeReject?: number;
+  statusForNew: string;
+  triggerStatusChangeOn?: string;
+  statusChangeTo?: string;
+  inactiveStatus?: string;
+  addSenderAsStakeholder?: boolean;
+  stakeholderRole?: string;
+  errandChannel?: string;
+  ignoreAutoReply: boolean;
+  ignoreNoReply: boolean;
   namespace?: string;
-}
-
-export interface CategoryType {
-  name: string;
-  displayName?: string;
-  escalationEmail?: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
-export interface Category {
-  id: string;
-  name: string;
-  displayName?: string;
-  sortOrder?: number;
-  types?: CategoryType[];
-  namespace?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface CategoryDeleteApiResponse {
-  data: boolean;
-  message: string;
-}
-
-export interface CategoriesApiResponse {
-  data: Category[];
-  message: string;
-}
-
-export interface CategoryApiResponse {
-  data: Category;
+export interface EmailIntegrationApiResponse {
+  data: EmailIntegrationData;
   message: string;
 }
 

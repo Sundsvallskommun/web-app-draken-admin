@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class ContactReasonRequestDto {
   @IsString()
@@ -6,6 +6,9 @@ export class ContactReasonRequestDto {
   @IsString()
   @IsOptional()
   displayName?: string;
+  @IsBoolean()
+  @IsOptional()
+  deprecated?: boolean;
   @IsString()
   namespace: string;
 }
@@ -17,6 +20,10 @@ export class ContactReasonUpdateDto {
   @IsString()
   @IsOptional()
   displayName?: string;
+  @IsBoolean()
+  @IsOptional()
+  deprecated?: boolean;
   @IsString()
-  namespace: string;
+  @IsOptional()
+  namespace?: string;
 }
