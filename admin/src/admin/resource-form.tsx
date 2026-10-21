@@ -23,10 +23,12 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Switch } from '@components/ui/switch';
 import { Textarea } from '@components/ui/textarea';
+import { toCategoryTypePayload, toCategoryTypeRows } from '@admin/category-types';
+import { CategoryTypesField } from '@admin/category-types-field';
 import { MonacoField } from '@admin/monaco-field';
 import { listToText, textToList } from '@admin/list-field';
 import { type FieldDef, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
-import { requiredRuleFor } from '@admin/resource-form-validation';
+import { validationRulesFor } from '@admin/resource-form-validation';
 import { useNamespaces } from '@admin/use-namespaces';
 import { createRow, getResourceDefaults, getResourceRequiredFields, removeRow, updateRow } from '@admin/use-resource-data';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
@@ -63,6 +65,7 @@ const TextEditor = dynamic<TextEditorProps>(() => import('@sk-web-gui/text-edito
 type RichTextValue = NonNullable<TextEditorProps['value']>;
 
 function defaultFor(field: FieldDef, initial: ResourceRow | undefined, defaults: Record<string, unknown>) {
+  if (field.type === 'categoryTypes') return toCategoryTypeRows(initial?.[field.key] ?? defaults[field.key]);
   const v = initial?.[field.key];
   if (field.list) return listToText(v ?? defaults[field.key]);
   if (v !== undefined) return v;
@@ -79,10 +82,7 @@ function defaultFor(field: FieldDef, initial: ResourceRow | undefined, defaults:
     if (syncedValue !== undefined && syncedValue !== null && syncedValue !== '') return syncedValue;
   }
   const d = defaults[field.key];
-  if (d !== undefined) {
-    if (field.key === 'types' && Array.isArray(d)) return d.map((item) => String((item as { name?: unknown }).name ?? item)).join(', ');
-    return d;
-  }
+  if (d !== undefined) return d;
   return field.type === 'switch' ? false : field.type === 'number' ? '' : '';
 }
 
@@ -115,16 +115,8 @@ function normalizeValues(resource: ResourceConfig, values: Record<string, unknow
       const value = normalized[field.key];
       normalized[field.key] = value === '' || value == null ? undefined : Number(value);
     }
-    if (field.key === 'types') {
-      const raw = normalized[field.key];
-      normalized[field.key] =
-        typeof raw === 'string'
-          ? raw
-              .split(',')
-              .map((part) => part.trim())
-              .filter(Boolean)
-              .map((name) => ({ name }))
-          : raw;
+    if (field.type === 'categoryTypes') {
+      normalized[field.key] = toCategoryTypePayload(normalized[field.key]);
     }
   }
   return normalized;
@@ -173,16 +165,16 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="flex max-w-xl flex-col gap-6">
-        {resource.fields.map((field) => {
+        {resource.fields.filter((field) => !(isNew && field.hiddenOnCreate)).map((field) => {
           if (field.readOnly && isNew) return null;
-          const disabled = field.readOnly || (!isNew && field.lockedOnEdit);
+          const disabled = !isNew && field.lockedOnEdit;
           const required = field.required || requiredFields.includes(field.key);
           return (
             <FormField
               key={field.key}
               control={form.control}
               name={field.key}
-              rules={requiredRuleFor(field, required)}
+              rules={validationRulesFor(field, required)}
               render={({ field: rhf }) => {
                 if (field.type === 'switch') {
                   return (
@@ -222,6 +214,13 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
                           ))}
                         </SelectContent>
                       </Select>
+                    ) : field.type === 'categoryTypes' ? (
+                      <CategoryTypesField
+                        value={rhf.value}
+                        onChange={rhf.onChange}
+                        existingTypeCount={toCategoryTypeRows(initial?.[field.key]).length}
+                        disabled={disabled}
+                      />
                     ) : field.type === 'code' ? (
                       <MonacoField
                         value={(rhf.value as string) ?? ''}

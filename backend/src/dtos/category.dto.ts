@@ -1,5 +1,6 @@
+import { EmptyStringToUndefined } from '@/utils/empty-string-to-undefined';
 import { Type } from 'class-transformer';
-import { IsEmail, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsEmail, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class CategoryTypeDto {
   @IsString()
@@ -7,9 +8,13 @@ export class CategoryTypeDto {
   @IsString()
   @IsOptional()
   displayName?: string;
+  @EmptyStringToUndefined()
   @IsEmail()
   @IsOptional()
   escalationEmail?: string;
+  @IsBoolean()
+  @IsOptional()
+  deprecated?: boolean;
 }
 
 export class CategoryRequestDto {
@@ -21,6 +26,9 @@ export class CategoryRequestDto {
   @IsNumber()
   @IsOptional()
   sortOrder?: number;
+  @IsBoolean()
+  @IsOptional()
+  deprecated?: boolean;
   @ValidateNested({ each: true })
   @Type(() => CategoryTypeDto)
   @IsOptional()
@@ -36,10 +44,14 @@ export class CategoryUpdateDto {
   @IsNumber()
   @IsOptional()
   sortOrder?: number;
+  @IsBoolean()
+  @IsOptional()
+  deprecated?: boolean;
   @ValidateNested({ each: true })
   @Type(() => CategoryTypeDto)
   @IsOptional()
   types?: CategoryTypeDto[];
   @IsString()
-  namespace: string;
+  @IsOptional()
+  namespace?: string;
 }

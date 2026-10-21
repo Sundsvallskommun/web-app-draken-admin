@@ -103,6 +103,22 @@ export interface NamespaceConfig {
   resourceAccessControl?: boolean;
   /** If set to true an errand may hold at most one decision. Leave false where interim decisions, partial decisions or reconsideration occur. If no value is set it defaults to false. */
   singleDecisionPerErrand?: boolean;
+  /** If set to true, errands created or updated via EmailReader are notified to Telia ACE as work items. If no value is set it defaults to false. */
+  teliaAceWorkItemEnabled?: boolean;
+  /**
+   * Base URL used to build the Draken link sent to Telia ACE, e.g. https://draken.sundsvall.se/kontaktsundsvall. Required when teliaAceWorkItemEnabled is true.
+   * @minLength 0
+   * @maxLength 230
+   * @pattern ^https?://\S+$
+   */
+  teliaAceWorkItemBaseUrl?: string;
+  /** If set to true emails sent to subscribers only name the errands that were updated, without describing what happened to them. If no value is set it defaults to false. */
+  excludeEventDescriptionsInEmail?: boolean;
+  /**
+   * Base url of the web application handling errands in this namespace. Links to errands are made as <baseUrl>/<municipalityId>/<namespace>/errands/<errandNumber>. Leaving it out means emails carry no links to errands.
+   * @pattern ^https?://\S+$
+   */
+  baseUrl?: string;
   /** What a user whose labels only grant them limited read for an errand may reach on it. Limited read always reaches the errand itself, listing resources here extends it beyond that, up to what read access gives. The fields apply instead of the fields of any role the user holds */
   limitedReadAccess?: LimitedReadAccess;
   /** Access given to the reporter of an errand. Leaving it out means reporters get nothing beyond what their labels already grant */
@@ -264,6 +280,7 @@ export interface JsonNode {
   number?: boolean;
   string?: boolean;
   boolean?: boolean;
+  integralNumber?: boolean;
   missingNode?: boolean;
   valueNode?: boolean;
   container?: boolean;
@@ -279,7 +296,6 @@ export interface JsonNode {
   textual?: boolean;
   binary?: boolean;
   nodeType?: JsonNodeNodeTypeEnum;
-  integralNumber?: boolean;
   embeddedValue?: boolean;
 }
 
@@ -289,7 +305,7 @@ export interface JsonParameter {
    * Parameter key/name
    * @minLength 1
    * @maxLength 255
-   * @pattern [A-Za-z0-9._-]+
+   * @pattern [A-Za-z0-9_-]+
    */
   key: string;
   /**
@@ -3085,6 +3101,61 @@ export interface ErrandResourceAccess {
   resource?: string;
   /** What the user may do with the resource */
   level?: ErrandResourceAccessLevelEnum;
+}
+
+export interface CountResponse {
+  /** @format int64 */
+  count?: number;
+}
+
+/** One value of the column grouped by, and how many errands carry it */
+export interface CountBucket {
+  /**
+   * The value
+   * @example "NEW"
+   */
+  value?: string;
+  /**
+   * How many of the matching errands carry it
+   * @format int64
+   * @example 91
+   */
+  count?: number;
+}
+
+/** How a count divides over one column of the errand. The buckets, withoutValue and withheld together account for the count */
+export interface CountGroup {
+  /**
+   * The property grouped by
+   * @example "status"
+   */
+  property?: string;
+  /** The values and their counts, largest first */
+  buckets?: CountBucket[];
+  /**
+   * How many of the counted errands carry nothing in the column
+   * @format int64
+   * @example 3
+   */
+  withoutValue?: number;
+  /**
+   * How many of the counted errands carry a column this user may not read
+   * @format int64
+   * @example 0
+   */
+  withheld?: number;
+}
+
+/** How many errands a search matches, and optionally how that number divides over one column */
+export interface SearchCountResponse {
+  /**
+   * Number of matching errands
+   * @format int64
+   * @example 137
+   */
+  count?: number;
+  /** The breakdown, absent unless a grouping was asked for */
+  group?: CountGroup;
 }
 
 export interface CountResponse {

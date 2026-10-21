@@ -21,7 +21,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-export type FieldType = 'text' | 'textarea' | 'code' | 'richtext' | 'number' | 'switch' | 'select';
+export type FieldType = 'text' | 'textarea' | 'code' | 'richtext' | 'number' | 'switch' | 'select' | 'categoryTypes';
 
 export interface FieldDef {
   key: string;
@@ -32,6 +32,8 @@ export interface FieldDef {
   lockedOnEdit?: boolean;
   /** Server-owned value (e.g. timestamps): shown but never editable or submitted. */
   readOnly?: boolean;
+  /** Only shown when editing an existing record (e.g. deprecated). */
+  hiddenOnCreate?: boolean;
   /** Options for non-namespace selects (namespace options are fetched live). */
   options?: { value: string; label: string }[];
   help?: string;
@@ -92,6 +94,15 @@ const nsField = (): FieldDef => ({
   inTable: true,
 });
 
+const deprecatedField = (): FieldDef => ({
+  key: 'deprecated',
+  label: 'Deprecated',
+  type: 'switch',
+  hiddenOnCreate: true,
+  help: 'Avveckla i stället för att ta bort, så behåller befintliga ärenden sitt värde.',
+  inTable: true,
+});
+
 // Status values for the e-post-integration selects (a small config enum).
 const statusOptions = ['NEW', 'ONGOING', 'SOLVED', 'SUSPENDED'].map((s) => ({ value: s, label: s }));
 
@@ -137,6 +148,7 @@ export const resourceConfigs: ResourceConfig[] = [
       { key: 'name', label: 'Namn', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
       nsField(),
+      deprecatedField(),
     ],
   },
   {
@@ -165,6 +177,7 @@ export const resourceConfigs: ResourceConfig[] = [
         inTable: true,
       },
       nsField(),
+      deprecatedField(),
       { key: 'updatedAt', label: 'Uppdaterad', type: 'text', inTable: true },
     ],
   },
@@ -179,6 +192,7 @@ export const resourceConfigs: ResourceConfig[] = [
       { key: 'reason', label: 'Orsak', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
       nsField(),
+      deprecatedField(),
     ],
   },
   {
@@ -192,8 +206,14 @@ export const resourceConfigs: ResourceConfig[] = [
       { key: 'name', label: 'Namn', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'displayName', label: 'Visningsnamn', type: 'text', inTable: true },
       { key: 'sortOrder', label: 'Sorteringsordning', type: 'number', inTable: true },
-      { key: 'types', label: 'Typer (kommaseparerat)', type: 'text', help: 'T.ex. "STÖRNING, AVBROTT".' },
       nsField(),
+      deprecatedField(),
+      {
+        key: 'types',
+        label: 'Typer',
+        type: 'categoryTypes',
+        help: 'Eskaleringsadressen förifylls som mottagare när ett ärende med typen överlämnas via e-post.',
+      },
     ],
   },
   {

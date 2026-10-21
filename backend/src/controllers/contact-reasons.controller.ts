@@ -27,6 +27,7 @@ export class ContactReasonsController {
       id: contactReason.id,
       reason: contactReason.reason,
       displayName: contactReason.displayName,
+      deprecated: contactReason.deprecated ?? false,
       namespace,
       createdAt: contactReason.created,
       updatedAt: contactReason.modified,
@@ -49,6 +50,7 @@ export class ContactReasonsController {
       const contactReasonData: supportmanagementContactReason = {
         reason: body.reason,
         displayName: body.displayName,
+        deprecated: body.deprecated,
       };
 
       const postRes = await this.apiService.post<supportmanagementContactReason>({ url, data: contactReasonData }, req.user);
@@ -160,6 +162,9 @@ export class ContactReasonsController {
       };
       if (body.displayName !== undefined) {
         patchData.displayName = body.displayName;
+      }
+      if (body.deprecated !== undefined) {
+        patchData.deprecated = body.deprecated;
       }
 
       await this.apiService.patch<supportmanagementContactReason>({ url, data: patchData }, req.user);

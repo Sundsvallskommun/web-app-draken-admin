@@ -22,6 +22,7 @@ export class RolesController {
       id: role.id,
       name: role.name,
       displayName: role.displayName,
+      deprecated: role.deprecated ?? false,
       namespace,
       createdAt: role.created,
       updatedAt: role.modified,
@@ -44,6 +45,7 @@ export class RolesController {
       const roleData: supportmanagementRole = {
         name: body.name,
         displayName: body.displayName,
+        deprecated: body.deprecated,
       };
 
       const postRes = await this.apiService.post<supportmanagementRole>({ url, data: roleData }, req.user);
@@ -157,6 +159,9 @@ export class RolesController {
       };
       if (body.displayName !== undefined) {
         patchData.displayName = body.displayName;
+      }
+      if (body.deprecated !== undefined) {
+        patchData.deprecated = body.deprecated;
       }
 
       await this.apiService.patch<supportmanagementRole>({ url, data: patchData }, req.user);

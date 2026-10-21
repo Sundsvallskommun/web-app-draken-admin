@@ -121,18 +121,21 @@ export interface NamespacesApiResponse {
 export interface RoleRequestDto {
   name: string;
   displayName: string;
+  deprecated?: boolean;
   namespace: string;
 }
 
 export interface RoleUpdateDto {
   displayName?: string;
-  namespace: string;
+  deprecated?: boolean;
+  namespace?: string;
 }
 
 export interface Role {
   id: string;
   name: string;
   displayName?: string;
+  deprecated?: boolean;
   namespace?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -158,12 +161,14 @@ export interface StatusRequestDto {
   namespace: string;
   displayName?: string;
   externalDisplayName?: string;
+  deprecated?: boolean;
 }
 
 export interface StatusUpdateDto {
   displayName?: string;
   externalDisplayName?: string;
-  namespace: string;
+  deprecated?: boolean;
+  namespace?: string;
 }
 
 export interface Status {
@@ -171,6 +176,7 @@ export interface Status {
   name: string;
   displayName?: string;
   externalDisplayName?: string;
+  deprecated?: boolean;
   namespace?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -368,12 +374,14 @@ export interface CategoryTypeDto {
   displayName?: string;
   /** @format email */
   escalationEmail?: string;
+  deprecated?: boolean;
 }
 
 export interface CategoryRequestDto {
   name: string;
   displayName?: string;
   sortOrder?: number;
+  deprecated?: boolean;
   types?: CategoryTypeDto[];
   namespace: string;
 }
@@ -381,14 +389,16 @@ export interface CategoryRequestDto {
 export interface CategoryUpdateDto {
   displayName?: string;
   sortOrder?: number;
+  deprecated?: boolean;
   types?: CategoryTypeDto[];
-  namespace: string;
+  namespace?: string;
 }
 
 export interface CategoryType {
   name: string;
   displayName?: string;
   escalationEmail?: string;
+  deprecated?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -398,6 +408,7 @@ export interface Category {
   name: string;
   displayName?: string;
   sortOrder?: number;
+  deprecated?: boolean;
   types?: CategoryType[];
   namespace?: string;
   createdAt?: string;
@@ -422,19 +433,22 @@ export interface CategoryApiResponse {
 export interface ContactReasonRequestDto {
   reason: string;
   displayName?: string;
+  deprecated?: boolean;
   namespace: string;
 }
 
 export interface ContactReasonUpdateDto {
   reason?: string;
   displayName?: string;
-  namespace: string;
+  deprecated?: boolean;
+  namespace?: string;
 }
 
 export interface ContactReason {
   id: string;
   reason: string;
   displayName?: string;
+  deprecated?: boolean;
   namespace?: string;
   createdAt?: string;
   updatedAt?: string;

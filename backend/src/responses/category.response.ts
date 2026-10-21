@@ -12,6 +12,9 @@ export class CategoryType implements supportmanagementType {
   @IsString()
   @IsOptional()
   escalationEmail?: string;
+  @IsBoolean()
+  @IsOptional()
+  deprecated?: boolean;
   @IsString()
   @IsOptional()
   createdAt?: string;
@@ -31,6 +34,9 @@ export class Category implements supportmanagementCategory {
   @IsNumber()
   @IsOptional()
   sortOrder?: number;
+  @IsBoolean()
+  @IsOptional()
+  deprecated?: boolean;
   @ValidateNested({ each: true })
   @Type(() => CategoryType)
   @IsOptional()

@@ -12,7 +12,7 @@ import {
   DecisionOutcome,
   DecisionOutcomeRequestDto,
   DecisionOutcomeUpdateDto,
-  EmailIntegrationData as EmailIntegration,
+  EmailIntegrationData,
   EmailIntegrationDto,
   FeatureFlag,
   FeatureFlagRequestDto,
@@ -302,7 +302,7 @@ const labels: Resource<LabelNode> = {
   requiredFields: ['classification', 'resourceName'],
 };
 
-const emailIntegration: Resource<EmailIntegration, EmailIntegrationDto, EmailIntegrationDto> = {
+const emailIntegration: Resource<EmailIntegrationData, EmailIntegrationDto, EmailIntegrationDto> = {
   name: 'emailIntegration',
   getMany: async (municipalityId: number, query?: { namespace?: string }) => {
     if (query?.namespace) {
