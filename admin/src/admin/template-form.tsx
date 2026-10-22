@@ -35,6 +35,7 @@ import {
   TEST_STATUS_APPROVED,
   TEST_STATUS_KEY,
 } from '@utils/template-metadata';
+import { errorMessage } from '@utils/error-message';
 import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import type { TextEditorProps } from '@sk-web-gui/text-editor';
@@ -105,8 +106,6 @@ function templateKind(value: string): TemplateKind | null {
   return null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
 
 export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew: boolean }) {
   const router = useRouter();
@@ -236,7 +235,7 @@ export function TemplateForm({ initial, isNew }: { initial?: ResourceRow; isNew:
       if (isNew) await router.replace(`/templates/${encodeURIComponent(data.identifier)}`);
       return true;
     } catch (err) {
-      toast.error(`Kunde inte spara: ${errMsg(err)}`);
+      toast.error(`Kunde inte spara: ${errorMessage(err)}`);
       return false;
     } finally {
       setSaving(false);

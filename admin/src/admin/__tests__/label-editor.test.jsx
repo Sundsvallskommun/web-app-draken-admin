@@ -3,6 +3,7 @@ import {
   canCreateLabelBelow,
   defaultClassificationForParent,
   flattenLabelParents,
+  labelsForNewNamespace,
   labelsForSave,
   rehydrateLabelPath,
   removeLabel,
@@ -305,5 +306,37 @@ describe('label-editor', () => {
 
     expect(next[0].labels).toEqual([{ classification: 'TYPE', resourceName: 'KO', labels: [] }]);
     expect(labels[0].labels).toHaveLength(2);
+  });
+
+  it('copies a label tree for a new namespace without ids or deprecated branches', () => {
+    const labels = [
+      {
+        id: 'category-id',
+        classification: 'CATEGORY',
+        resourceName: 'HOUSING',
+        resourcePath: 'HOUSING',
+        attributes: [{ key: 'escalationEmail', value: 'housing@example.com' }],
+        labels: [
+          { id: 'rent-id', classification: 'TYPE', resourceName: 'RENT', resourcePath: 'HOUSING/RENT', labels: [] },
+          {
+            id: 'old-id',
+            classification: 'TYPE',
+            resourceName: 'OLD',
+            deprecated: true,
+            labels: [{ id: 'old-child-id', classification: 'SUBTYPE', resourceName: 'OLD_CHILD', labels: [] }],
+          },
+        ],
+      },
+      { id: 'retired-id', classification: 'CATEGORY', resourceName: 'RETIRED', deprecated: true, labels: [] },
+    ];
+
+    expect(labelsForNewNamespace(labels)).toEqual([
+      {
+        classification: 'CATEGORY',
+        resourceName: 'HOUSING',
+        attributes: [{ key: 'escalationEmail', value: 'housing@example.com' }],
+        labels: [{ classification: 'TYPE', resourceName: 'RENT', labels: [] }],
+      },
+    ]);
   });
 });

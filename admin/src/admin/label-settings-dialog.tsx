@@ -34,6 +34,7 @@ export function LabelSettingsDialog({
   open,
   saving,
   canRemove,
+  canDeprecate = true,
   onOpenChange,
   onSave,
   onDeprecatedChange,
@@ -43,6 +44,8 @@ export function LabelSettingsDialog({
   open: boolean;
   saving: boolean;
   canRemove: boolean;
+  /** Hides the status section, e.g. for labels that are not saved yet. */
+  canDeprecate?: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (values: LabelSettingsValues) => Promise<void>;
   onDeprecatedChange: (deprecated: boolean) => void;
@@ -167,36 +170,38 @@ export function LabelSettingsDialog({
             </div>
           </section>
 
-          <section className="space-y-3 border-t pt-4" aria-labelledby="label-settings-status">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 id="label-settings-status" className="text-sm font-medium">
-                  Status
-                </h3>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Avveckling påverkar även alla underliggande etiketter.
-                </p>
+          {canDeprecate && (
+            <section className="space-y-3 border-t pt-4" aria-labelledby="label-settings-status">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h3 id="label-settings-status" className="text-sm font-medium">
+                    Status
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Avveckling påverkar även alla underliggande etiketter.
+                  </p>
+                </div>
+                <Badge variant={isDeprecated ? 'outline' : 'secondary'}>{isDeprecated ? 'Deprecated' : 'Aktiv'}</Badge>
               </div>
-              <Badge variant={isDeprecated ? 'outline' : 'secondary'}>{isDeprecated ? 'Deprecated' : 'Aktiv'}</Badge>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full justify-start"
-              disabled={saving || !unchanged}
-              onClick={() => onDeprecatedChange(!isDeprecated)}
-            >
-              {isDeprecated ?
-                <RotateCcw className="size-4" />
-              : <Ban className="size-4" />}
-              {isDeprecated ? 'Återaktivera etikett' : 'Avveckla etikett'}
-            </Button>
-            {!unchanged && (
-              <p className="text-xs text-muted-foreground">
-                Spara eller återställ fältändringarna innan du ändrar status.
-              </p>
-            )}
-          </section>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start"
+                disabled={saving || !unchanged}
+                onClick={() => onDeprecatedChange(!isDeprecated)}
+              >
+                {isDeprecated ?
+                  <RotateCcw className="size-4" />
+                : <Ban className="size-4" />}
+                {isDeprecated ? 'Återaktivera etikett' : 'Avveckla etikett'}
+              </Button>
+              {!unchanged && (
+                <p className="text-xs text-muted-foreground">
+                  Spara eller återställ fältändringarna innan du ändrar status.
+                </p>
+              )}
+            </section>
+          )}
 
           {canRemove && (
             <section
