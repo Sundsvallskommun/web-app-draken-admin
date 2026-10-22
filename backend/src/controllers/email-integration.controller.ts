@@ -8,8 +8,32 @@ import ApiService from '@/services/api.service';
 import { logger } from '@/utils/logger';
 import authMiddleware from '@middlewares/auth.middleware';
 import { Response } from 'express';
-import { Body, Controller, Get, Param, Put, Req, Res, UseBefore } from 'routing-controllers';
+import { Body, Controller, Get, Param, Post, Put, Req, Res, UseBefore } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
+
+export function toEmailIntegrationPayload(body: EmailIntegrationDto): EmailIntegration {
+  return {
+    enabled: body.enabled,
+    errandClosedEmailSender: body.errandClosedEmailSender,
+    errandClosedEmailTemplate: body.errandClosedEmailTemplate,
+    errandClosedEmailHTMLTemplate: body.errandClosedEmailHTMLTemplate,
+    errandNewEmailSender: body.errandNewEmailSender,
+    errandNewEmailTemplate: body.errandNewEmailTemplate,
+    errandNewEmailHTMLTemplate: body.errandNewEmailHTMLTemplate,
+    // The supportmanagement contract types these as string|null, so serialise the
+    // DTO's number/boolean to string before sending. mapEmailIntegration reverses this on read.
+    daysOfInactivityBeforeReject: body.daysOfInactivityBeforeReject?.toString(),
+    statusForNew: body.statusForNew,
+    triggerStatusChangeOn: body.triggerStatusChangeOn,
+    statusChangeTo: body.statusChangeTo,
+    inactiveStatus: body.inactiveStatus,
+    addSenderAsStakeholder: body.addSenderAsStakeholder?.toString(),
+    stakeholderRole: body.stakeholderRole,
+    errandChannel: body.errandChannel,
+    ignoreAutoReply: body.ignoreAutoReply,
+    ignoreNoReply: body.ignoreNoReply,
+  };
+}
 
 @Controller()
 export class EmailIntegrationController {
@@ -67,6 +91,32 @@ export class EmailIntegrationController {
     }
   }
 
+  @Post('/email-integration/:municipalityId/:namespace')
+  @OpenAPI({ summary: 'Create email integration config for a namespace' })
+  @UseBefore(authMiddleware)
+  @ResponseSchema(EmailIntegrationApiResponse)
+  async createEmailIntegration(
+    @Req() req: RequestWithUser,
+    @Body() body: EmailIntegrationDto,
+    @Res() response: Response<EmailIntegrationApiResponse>,
+    @Param('municipalityId') municipalityId: number,
+    @Param('namespace') namespace: string,
+  ): Promise<Response<EmailIntegrationApiResponse>> {
+    try {
+      const url = `${this.SERVICE}/${municipalityId}/${namespace}/email-integration-config`;
+
+      await this.apiService.post<EmailIntegration>({ url, data: toEmailIntegrationPayload(body) }, req.user);
+
+      const res = await this.apiService.get<EmailIntegration>({ url }, req.user);
+      const data = this.mapEmailIntegration(res.data, namespace);
+
+      return response.send({ data, message: 'success' });
+    } catch (error) {
+      logger.error('Error creating email integration', error);
+      throw new HttpException(error?.status ?? 500, error?.message ?? 'Internal Server Error');
+    }
+  }
+
   @Put('/email-integration/:municipalityId/:namespace')
   @OpenAPI({ summary: 'Update email integration config for a namespace' })
   @UseBefore(authMiddleware)
@@ -81,29 +131,7 @@ export class EmailIntegrationController {
     try {
       const url = `${this.SERVICE}/${municipalityId}/${namespace}/email-integration-config`;
 
-      const emailData: EmailIntegration = {
-        enabled: body.enabled,
-        errandClosedEmailSender: body.errandClosedEmailSender,
-        errandClosedEmailTemplate: body.errandClosedEmailTemplate,
-        errandClosedEmailHTMLTemplate: body.errandClosedEmailHTMLTemplate,
-        errandNewEmailSender: body.errandNewEmailSender,
-        errandNewEmailTemplate: body.errandNewEmailTemplate,
-        errandNewEmailHTMLTemplate: body.errandNewEmailHTMLTemplate,
-        // The supportmanagement contract types these as string|null, so serialise the
-        // DTO's number/boolean to string before sending. mapEmailIntegration reverses this on read.
-        daysOfInactivityBeforeReject: body.daysOfInactivityBeforeReject?.toString(),
-        statusForNew: body.statusForNew,
-        triggerStatusChangeOn: body.triggerStatusChangeOn,
-        statusChangeTo: body.statusChangeTo,
-        inactiveStatus: body.inactiveStatus,
-        addSenderAsStakeholder: body.addSenderAsStakeholder?.toString(),
-        stakeholderRole: body.stakeholderRole,
-        errandChannel: body.errandChannel,
-        ignoreAutoReply: body.ignoreAutoReply,
-        ignoreNoReply: body.ignoreNoReply,
-      };
-
-      await this.apiService.put<EmailIntegration>({ url, data: emailData }, req.user);
+      await this.apiService.put<EmailIntegration>({ url, data: toEmailIntegrationPayload(body) }, req.user);
 
       const res = await this.apiService.get<EmailIntegration>({ url }, req.user);
       const data = this.mapEmailIntegration(res.data, namespace);
