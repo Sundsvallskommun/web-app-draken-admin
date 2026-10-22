@@ -290,7 +290,10 @@ const labels: Resource<LabelNode> = {
   requiredFields: ['classification', 'resourceName'],
 };
 
-const emailIntegration: Resource<EmailIntegrationData, EmailIntegrationDto, EmailIntegrationDto> = {
+// The create endpoint takes the namespace in the url, so the create payload carries it like the other resources.
+type EmailIntegrationCreateDto = EmailIntegrationDto & { namespace?: string };
+
+const emailIntegration: Resource<EmailIntegrationData, EmailIntegrationCreateDto, EmailIntegrationDto> = {
   name: 'emailIntegration',
   getMany: async (municipalityId: number, query?: { namespace?: string }) => {
     if (query?.namespace) {
@@ -313,6 +316,10 @@ const emailIntegration: Resource<EmailIntegrationData, EmailIntegrationDto, Emai
   },
   getOne: (municipalityId, id) => {
     return apiService.emailIntegrationControllerGetEmailIntegration(municipalityId, id as string);
+  },
+  create: (municipalityId, { namespace, ...data }) => {
+    if (!namespace) throw new Error('namespace saknas för e-postintegration');
+    return apiService.emailIntegrationControllerCreateEmailIntegration(municipalityId, namespace, data);
   },
   update: (municipalityId, id, data) => {
     return apiService.emailIntegrationControllerUpdateEmailIntegration(municipalityId, id as string, data);
