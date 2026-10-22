@@ -28,6 +28,18 @@ export function createInitialDraft(municipalityId: number): NamespaceWizardDraft
   };
 }
 
+/** Whether the lists differ from a fresh draft, i.e. a template would overwrite something the user did. */
+export function draftHasListContent(draft: NamespaceWizardDraft): boolean {
+  const initial = createInitialDraft(draft.municipalityId);
+  return (
+    JSON.stringify(draft.statuses) !== JSON.stringify(initial.statuses) ||
+    draft.roles.length > 0 ||
+    draft.contactReasons.length > 0 ||
+    draft.labels.length > 0 ||
+    draft.emailIntegration.configure
+  );
+}
+
 export function createInitialState(municipalityId: number): NamespaceWizardState {
   return {
     schemaVersion: 1,

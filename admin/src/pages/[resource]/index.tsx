@@ -2,7 +2,7 @@ import { Button } from '@components/ui/button';
 import { AdminLayout } from '@admin/admin-layout';
 import { getResourceConfig } from '@admin/resource-config';
 import { ResourceTable } from '@admin/resource-table';
-import { Plus } from 'lucide-react';
+import { Plus, Wand2 } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
@@ -13,7 +13,9 @@ export const getServerSideProps: GetServerSideProps = async () => ({ props: {} }
 
 export default function ResourceListPage() {
   const router = useRouter();
-  const resource = getResourceConfig(Array.isArray(router.query.resource) ? router.query.resource[0] : router.query.resource);
+  const resource = getResourceConfig(
+    Array.isArray(router.query.resource) ? router.query.resource[0] : router.query.resource
+  );
 
   if (!router.isReady) {
     return (
@@ -36,14 +38,26 @@ export default function ResourceListPage() {
       title={resource.label}
       breadcrumb="Resurser"
       actions={
-        resource.canCreate ? (
-          <Button asChild size="sm">
-            <NextLink href={`/${resource.name}/new`}>
-              <Plus className="size-4" />
-              Skapa
-            </NextLink>
-          </Button>
-        ) : null
+        resource.canCreate || resource.createWizard ?
+          <div className="flex items-center gap-2">
+            {resource.createWizard && (
+              <Button asChild size="sm" variant="outline">
+                <NextLink href={resource.createWizard.href}>
+                  <Wand2 className="size-4" />
+                  {resource.createWizard.label}
+                </NextLink>
+              </Button>
+            )}
+            {resource.canCreate && (
+              <Button asChild size="sm">
+                <NextLink href={`/${resource.name}/new`}>
+                  <Plus className="size-4" />
+                  Skapa
+                </NextLink>
+              </Button>
+            )}
+          </div>
+        : null
       }
     >
       {resource.readOnly && (

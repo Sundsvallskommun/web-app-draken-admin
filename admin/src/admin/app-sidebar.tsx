@@ -31,6 +31,7 @@ import { LogoMark } from '@admin/logo-mark';
 import { type ResourceConfig, type ResourceNavItem, resourceConfigs } from '@admin/resource-config';
 import { useUserStore } from '@services/user-service/user-service';
 import { cn } from '@utils/cn';
+import { MUNICIPALITIES } from '@utils/municipalities';
 import { useAdminEnvironment } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { ChevronRight, ChevronsUpDown, ExternalLink, LogOut } from 'lucide-react';
@@ -42,6 +43,7 @@ import { ModeToggle } from './mode-toggle';
 function subItems(resource: ResourceConfig, showTestFeatures: boolean): ResourceNavItem[] {
   const items: ResourceNavItem[] = [{ label: 'Lista alla', href: `/${resource.name}` }];
   if (resource.canCreate) items.push({ label: 'Skapa ny', href: `/${resource.name}/new` });
+  if (resource.createWizard) items.push(resource.createWizard);
   if (resource.extraNav) items.push(...resource.extraNav.filter((item) => !item.testOnly || showTestFeatures));
   return items;
 }
@@ -126,8 +128,11 @@ export function AppSidebar() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2281">Sundsvall</SelectItem>
-              <SelectItem value="2260">Ånge</SelectItem>
+              {MUNICIPALITIES.map((municipality) => (
+                <SelectItem key={municipality.id} value={String(municipality.id)}>
+                  {municipality.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
