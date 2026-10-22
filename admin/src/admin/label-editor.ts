@@ -193,3 +193,15 @@ export function labelsForSave(labels: LabelNode[]): LabelNode[] {
     return saveLabel;
   });
 }
+
+/** A label tree copied from another namespace: deprecated branches dropped and ids removed, so it saves as new labels. */
+export function labelsForNewNamespace(labels: LabelNode[]): LabelNode[] {
+  return labelsForSave(labels)
+    .filter((label) => label.deprecated !== true)
+    .map((label) => {
+      const newLabel = { ...label };
+      delete newLabel.id;
+      newLabel.labels = labelsForNewNamespace(label.labels ?? []);
+      return newLabel;
+    });
+}

@@ -71,6 +71,8 @@ export interface ResourceConfig {
   requiresNamespace?: boolean;
   /** Extra sidebar sub-links (e.g. templates: search / compare / test-status). */
   extraNav?: ResourceNavItem[];
+  /** Guided create flow, linked next to "Skapa ny" in the sidebar and the list page. */
+  createWizard?: ResourceNavItem;
   fields: FieldDef[];
 }
 
@@ -92,8 +94,11 @@ const deprecatedField = (): FieldDef => ({
   inTable: true,
 });
 
+/** The statuses a namespace usually has; also the options for the e-post-integration selects. */
+export const DEFAULT_STATUS_NAMES = ['NEW', 'ONGOING', 'SOLVED', 'SUSPENDED'];
+
 // Status values for the e-post-integration selects (a small config enum).
-const statusOptions = ['NEW', 'ONGOING', 'SOLVED', 'SUSPENDED'].map((s) => ({ value: s, label: s }));
+const statusOptions = DEFAULT_STATUS_NAMES.map((s) => ({ value: s, label: s }));
 
 export const resourceConfigs: ResourceConfig[] = [
   {
@@ -250,6 +255,7 @@ export const resourceConfigs: ResourceConfig[] = [
     icon: Boxes,
     canCreate: true,
     canRemove: false,
+    createWizard: { label: 'Skapa via guide', href: '/namespaces/wizard' },
     fields: [
       { key: 'namespace', label: 'Namespace', type: 'text', required: true, lockedOnEdit: true, inTable: true },
       { key: 'displayName', label: 'Visningsnamn', type: 'text', required: true, inTable: true },

@@ -10,6 +10,7 @@ import { type ResourceRow } from '@admin/resource-config';
 import { SchemaBuilder } from '@admin/schema-builder';
 import { createRow, updateRow, useResourceRecord } from '@admin/use-resource-data';
 import { JsonEditor } from '@components/json-editor/json-editor';
+import { errorMessage } from '@utils/error-message';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
 import { cn } from '@utils/cn';
 import { ArrowLeft, Braces, Eye, FileJson, LayoutTemplate, Save } from 'lucide-react';
@@ -29,8 +30,6 @@ const emptySchema = {
   properties: {},
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const errMsg = (e: any) => e?.response?.data?.message ?? e?.message ?? 'fel';
 
 function nextVersion(currentVersion: string, increment: 'MINOR' | 'MAJOR') {
   const [majorRaw, minorRaw] = currentVersion.split('.').map(Number);
@@ -123,7 +122,7 @@ function Editor({ initial, isNew }: { initial?: ResourceRow; isNew: boolean }) {
       toast.success(`${isNew ? 'Skapade' : 'Sparade'} schema "${name}".`);
       router.push(savedId ? `/jsonSchemas/${savedId}` : '/jsonSchemas');
     } catch (err) {
-      toast.error(`Kunde inte spara schema: ${errMsg(err)}`);
+      toast.error(`Kunde inte spara schema: ${errorMessage(err)}`);
     }
   };
 

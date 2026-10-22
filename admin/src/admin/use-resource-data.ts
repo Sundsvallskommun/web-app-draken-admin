@@ -97,6 +97,23 @@ export async function fetchResourceRecord(
   return data ? ({ ...data, __key: computeRowId(resource, data) } as ResourceRow) : undefined;
 }
 
+/** All rows of a resource, optionally for one namespace. Throws when the resource has no list endpoint. */
+export async function fetchResourceRows(
+  name: string,
+  municipalityId: number,
+  namespace?: string
+): Promise<ResourceRow[]> {
+  const resource = getResourceConfig(name);
+  const getMany = svc(name)?.getMany;
+  if (!resource || !getMany) throw new Error(`getMany saknas för ${name}`);
+
+  const res = (await getMany(municipalityId, namespace ? { namespace } : undefined)) as DataResponse<
+    Record<string, unknown>[]
+  >;
+  const raw = ('data' in res && res.data && 'data' in res.data ? res.data.data : []) ?? [];
+  return prepareResourceRows(resource, raw);
+}
+
 interface RowsState {
   rows: ResourceRow[];
   loading: boolean;
@@ -126,18 +143,14 @@ export function useResourceRows(
       setState({ rows: [], loading: false, error: 'unknown-resource' });
       return;
     }
-    const getMany = svc(resource.name)?.getMany;
-    if (!getMany) {
+    if (!svc(resource.name)?.getMany) {
       setState({ rows: [], loading: false, error: 'no-endpoint' });
       return;
     }
     setState((s) => ({ ...s, loading: true }));
     try {
-      const res = (await getMany(municipalityId, namespace ? { namespace } : undefined)) as DataResponse<
-        Record<string, unknown>[]
-      >;
-      const raw = ('data' in res && res.data && 'data' in res.data ? res.data.data : []) ?? [];
-      setState({ rows: prepareResourceRows(resource, raw), loading: false, error: null });
+      const rows = await fetchResourceRows(resource.name, municipalityId, namespace);
+      setState({ rows, loading: false, error: null });
     } catch (e) {
       setState({ rows: [], loading: false, error: errorCode(e) });
     }

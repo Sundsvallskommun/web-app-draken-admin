@@ -1,57 +1,43 @@
-import { Button } from '@components/ui/button';
-import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { LabelCreateDialog } from '@admin/label-create-dialog';
-import { LabelColumns } from '@admin/label-columns';
-import { LabelDeleteDialog } from '@admin/label-delete-dialog';
-import { LabelDeprecatedDialog } from '@admin/label-deprecated-dialog';
-import { LabelSettingsDialog, type LabelSettingsTarget, type LabelSettingsValues } from '@admin/label-settings-dialog';
-import {
-  canCreateLabelBelow,
-  labelsForSave,
-  removeLabel,
-  ROOT_PARENT_VALUE,
-  setLabelDeprecated,
-  setLabelDisplayName,
-  setLabelEscalationEmail,
-} from '@admin/label-editor';
-import { LabelTree, type LabelNode } from '@admin/label-tree';
+import { labelsForSave } from '@admin/label-editor';
+import { type LabelNode } from '@admin/label-tree';
+import { type LabelChange, LabelWorkspace } from '@admin/label-workspace';
 import { AdminLayout } from '@admin/admin-layout';
 import { useNamespaces } from '@admin/use-namespaces';
 import { useResourceRows } from '@admin/use-resource-data';
 import { saveLabels } from '@services/label-service';
-import { cn } from '@utils/cn';
+import { errorMessage } from '@utils/error-message';
 import { useIsProductionEnv } from '@utils/use-is-production-env.hook';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
-import { Columns3, ListTree, Loader2, Plus, Search, Tags, TriangleAlert } from 'lucide-react';
+import { Tags, TriangleAlert } from 'lucide-react';
 import type { GetServerSideProps } from 'next';
 import * as React from 'react';
 import { toast } from 'sonner';
 
 export const getServerSideProps: GetServerSideProps = async () => ({ props: {} });
 
-type View = 'tree' | 'columns';
+const successMessage = (change: LabelChange) => {
+  switch (change.kind) {
+    case 'create':
+      return 'Etiketten skapades.';
+    case 'settings':
+      return 'Etikettinställningarna sparades.';
+    case 'deprecated':
+      return change.deprecated ? 'Etiketten avvecklades.' : 'Etiketten återaktiverades.';
+    case 'remove':
+      return 'Etiketten togs bort permanent.';
+  }
+};
 
-type SaveError = { response?: { data?: { message?: unknown } }; message?: unknown };
-type DeprecatedTarget = { label: LabelNode; labelValue: string; deprecated: boolean };
-type RemoveTarget = { label: LabelNode; labelValue: string };
-
-const saveErrorMessage = (error: unknown) => {
-  const err = error as SaveError;
-  if (typeof err.response?.data?.message === 'string') return err.response.data.message;
-  if (typeof err.message === 'string') return err.message;
-  return 'fel';
+const failurePrefix: Record<LabelChange['kind'], string> = {
+  create: 'Kunde inte skapa etikett',
+  settings: 'Kunde inte spara etikettinställningar',
+  deprecated: 'Kunde inte uppdatera etikett',
+  remove: 'Kunde inte ta bort etikett',
 };
 
 export default function LabelsPage() {
   const [namespace, setNamespace] = React.useState('');
-  const [query, setQuery] = React.useState('');
-  const [view, setView] = React.useState<View>('columns');
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [createParentValue, setCreateParentValue] = React.useState(ROOT_PARENT_VALUE);
-  const [deprecatedTarget, setDeprecatedTarget] = React.useState<DeprecatedTarget | null>(null);
-  const [settingsTarget, setSettingsTarget] = React.useState<LabelSettingsTarget | null>(null);
-  const [removeTarget, setRemoveTarget] = React.useState<RemoveTarget | null>(null);
   const [saving, setSaving] = React.useState(false);
   const { isProduction, loaded: productionLoaded } = useIsProductionEnv();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
@@ -60,85 +46,18 @@ export default function LabelsPage() {
   const labelRows = rows as unknown as LabelNode[];
   const canDeleteLabels = productionLoaded && !isProduction;
 
-  const createLabel = async (nextLabels: LabelNode[]) => {
-    if (!namespace) return;
+  const saveLabelChange = async (nextLabels: LabelNode[], change: LabelChange) => {
+    if (!namespace) return false;
     setSaving(true);
     try {
-      const savedLabels = await saveLabels(
-        municipalityId,
-        namespace,
-        labelsForSave(nextLabels),
-        labelRows.length === 0
-      );
+      const isFirstSave = change.kind === 'create' && labelRows.length === 0;
+      const savedLabels = await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), isFirstSave);
       replaceRows(savedLabels);
-      toast.success('Etiketten skapades.');
-      setCreateOpen(false);
+      toast.success(successMessage(change));
+      return true;
     } catch (err) {
-      toast.error(`Kunde inte skapa etikett: ${saveErrorMessage(err)}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const openCreateDialog = (parentValue = ROOT_PARENT_VALUE) => {
-    if (!canCreateLabelBelow(labelRows, parentValue)) {
-      toast.error('Det går inte att lägga till etiketter under en deprecated etikett.');
-      return;
-    }
-    setCreateParentValue(parentValue);
-    setCreateOpen(true);
-  };
-
-  const saveDeprecatedState = async () => {
-    if (!namespace || !deprecatedTarget) return;
-    setSaving(true);
-    try {
-      const nextLabels = setLabelDeprecated(labelRows, deprecatedTarget.labelValue, deprecatedTarget.deprecated);
-      const savedLabels = await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
-      replaceRows(savedLabels);
-      toast.success(deprecatedTarget.deprecated ? 'Etiketten avvecklades.' : 'Etiketten återaktiverades.');
-      setDeprecatedTarget(null);
-    } catch (err) {
-      toast.error(`Kunde inte uppdatera etikett: ${saveErrorMessage(err)}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const saveSettings = async ({ displayName, escalationEmail }: LabelSettingsValues) => {
-    if (!namespace || !settingsTarget) return;
-    setSaving(true);
-    try {
-      let nextLabels = setLabelDisplayName(labelRows, settingsTarget.labelValue, displayName);
-      if (escalationEmail !== undefined) {
-        nextLabels = setLabelEscalationEmail(nextLabels, settingsTarget.labelValue, escalationEmail);
-      }
-      const savedLabels = await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
-      replaceRows(savedLabels);
-      toast.success('Etikettinställningarna sparades.');
-      setSettingsTarget(null);
-    } catch (err) {
-      toast.error(`Kunde inte spara etikettinställningar: ${saveErrorMessage(err)}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const removeSelectedLabel = async () => {
-    if (!namespace || !removeTarget) return;
-    if (!canDeleteLabels) {
-      toast.error('Permanent borttagning är blockerad i produktion. Använd deprecated i stället.');
-      return;
-    }
-    setSaving(true);
-    try {
-      const nextLabels = removeLabel(labelRows, removeTarget.labelValue);
-      const savedLabels = await saveLabels(municipalityId, namespace, labelsForSave(nextLabels), false);
-      replaceRows(savedLabels);
-      toast.success('Etiketten togs bort permanent.');
-      setRemoveTarget(null);
-    } catch (err) {
-      toast.error(`Kunde inte ta bort etikett: ${saveErrorMessage(err)}`);
+      toast.error(`${failurePrefix[change.kind]}: ${errorMessage(err)}`);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -154,132 +73,38 @@ export default function LabelsPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative max-w-xs flex-1">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Sök bland etiketter…"
-              className="pl-9"
-              disabled={!namespace}
-            />
-          </div>
-          <Select value={namespace} onValueChange={setNamespace} disabled={saving}>
-            <SelectTrigger className="w-[16rem]" aria-label="Namespace">
-              <SelectValue placeholder="Välj namespace" />
-            </SelectTrigger>
-            <SelectContent>
-              {namespaceOptions.map((ns) => (
-                <SelectItem key={ns.value} value={ns.value}>
-                  {ns.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Visningsläge: macOS-liknande kolumnnavigering eller träd */}
-          <div className="flex items-center rounded-md border p-0.5">
-            <Button
-              type="button"
-              size="sm"
-              variant={view === 'columns' ? 'secondary' : 'ghost'}
-              className={cn('h-7 gap-1.5 px-2', view !== 'columns' && 'text-muted-foreground')}
-              onClick={() => setView('columns')}
-              aria-pressed={view === 'columns'}
-            >
-              <Columns3 className="size-4" />
-              Kolumner
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={view === 'tree' ? 'secondary' : 'ghost'}
-              className={cn('h-7 gap-1.5 px-2', view !== 'tree' && 'text-muted-foreground')}
-              onClick={() => setView('tree')}
-              aria-pressed={view === 'tree'}
-            >
-              <ListTree className="size-4" />
-              Träd
-            </Button>
-          </div>
-
-          {loading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
-
-          <Button
-            type="button"
-            className="ml-auto gap-1.5"
-            disabled={!namespace || loading || saving}
-            onClick={() => openCreateDialog()}
-          >
-            <Plus className="size-4" />
-            Lägg till etikett
-          </Button>
-        </div>
-
-        {!namespace ?
-          <div className="flex flex-col items-center gap-2 rounded-md border border-dashed py-12 text-center text-muted-foreground">
-            <Tags className="size-6" />
-            <p className="text-sm">Välj ett namespace för att visa etiketter.</p>
-          </div>
-        : view === 'columns' ?
-          <LabelColumns
-            data={labelRows}
-            query={query}
-            resetKey={namespace}
-            onAdd={openCreateDialog}
-            onSearchResultSelect={() => setQuery('')}
-            onSettings={(label, labelValue) => setSettingsTarget({ label, labelValue })}
-          />
-        : <LabelTree
-            data={labelRows}
-            query={query}
-            onSettings={(label, labelValue) => setSettingsTarget({ label, labelValue })}
-          />
-        }
+        <LabelWorkspace
+          labels={labelRows}
+          onLabelsChange={saveLabelChange}
+          saving={saving}
+          loading={loading}
+          disabled={!namespace}
+          canRemove={canDeleteLabels}
+          resetKey={namespace}
+          toolbar={
+            <Select value={namespace} onValueChange={setNamespace} disabled={saving}>
+              <SelectTrigger className="w-[16rem]" aria-label="Namespace">
+                <SelectValue placeholder="Välj namespace" />
+              </SelectTrigger>
+              <SelectContent>
+                {namespaceOptions.map((ns) => (
+                  <SelectItem key={ns.value} value={ns.value}>
+                    {ns.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+          placeholder={
+            namespace ? undefined : (
+              <div className="flex flex-col items-center gap-2 rounded-md border border-dashed py-12 text-center text-muted-foreground">
+                <Tags className="size-6" />
+                <p className="text-sm">Välj ett namespace för att visa etiketter.</p>
+              </div>
+            )
+          }
+        />
       </div>
-
-      <LabelCreateDialog
-        data={labelRows}
-        open={createOpen}
-        saving={saving}
-        initialParentValue={createParentValue}
-        onOpenChange={setCreateOpen}
-        onCreate={createLabel}
-      />
-      <LabelSettingsDialog
-        target={settingsTarget}
-        open={Boolean(settingsTarget)}
-        saving={saving}
-        canRemove={canDeleteLabels}
-        onOpenChange={(open) => !open && setSettingsTarget(null)}
-        onSave={saveSettings}
-        onDeprecatedChange={(deprecated) => {
-          if (!settingsTarget) return;
-          setDeprecatedTarget({ ...settingsTarget, deprecated });
-          setSettingsTarget(null);
-        }}
-        onRemove={() => {
-          if (!settingsTarget) return;
-          setRemoveTarget(settingsTarget);
-          setSettingsTarget(null);
-        }}
-      />
-      <LabelDeprecatedDialog
-        target={deprecatedTarget}
-        open={Boolean(deprecatedTarget)}
-        saving={saving}
-        onOpenChange={(open) => !open && setDeprecatedTarget(null)}
-        onConfirm={saveDeprecatedState}
-      />
-      <LabelDeleteDialog
-        label={removeTarget?.label ?? null}
-        open={Boolean(removeTarget)}
-        saving={saving}
-        productionBlocked={!canDeleteLabels}
-        onOpenChange={(open) => !open && setRemoveTarget(null)}
-        onDelete={removeSelectedLabel}
-      />
     </AdminLayout>
   );
 }

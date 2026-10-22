@@ -43,7 +43,12 @@ module.exports = {
     '^.+\\.(js|jsx|ts|tsx)$': [
       'babel-jest',
       {
-        presets: ['next/babel', ['@babel/preset-env', { targets: { node: 'current' } }]],
+        // Automatic JSX runtime: the classic one injects an ESM React import after modules are
+        // converted, which breaks components that don't import React themselves.
+        presets: [
+          ['next/babel', { 'preset-react': { runtime: 'automatic' } }],
+          ['@babel/preset-env', { targets: { node: 'current' } }],
+        ],
         plugins: ['@babel/plugin-transform-private-methods'],
       },
     ],

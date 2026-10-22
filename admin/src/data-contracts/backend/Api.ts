@@ -928,6 +928,27 @@ export class Api<
    * No description
    *
    * @tags Email Integration
+   * @name EmailIntegrationControllerCreateEmailIntegration
+   * @summary Create email integration config for a namespace
+   * @request POST:/api/email-integration/{municipalityId}/{namespace}
+   */
+  emailIntegrationControllerCreateEmailIntegration = (
+    municipalityId: number,
+    namespace: string,
+    data?: EmailIntegrationDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<EmailIntegrationApiResponse, any>({
+      path: `/api/email-integration/${municipalityId}/${namespace}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Email Integration
    * @name EmailIntegrationControllerUpdateEmailIntegration
    * @summary Update email integration config for a namespace
    * @request PUT:/api/email-integration/{municipalityId}/{namespace}

@@ -10,44 +10,28 @@ import {
   AlertDialogTrigger,
 } from '@components/ui/alert-dialog';
 import { Button } from '@components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@components/ui/form';
-import { Input } from '@components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { Switch } from '@components/ui/switch';
-import { Textarea } from '@components/ui/textarea';
-import { toCategoryTypePayload, toCategoryTypeRows } from '@admin/category-types';
-import { CategoryTypesField } from '@admin/category-types-field';
-import { MonacoField } from '@admin/monaco-field';
-import { type FieldDef, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
+import { Form } from '@components/ui/form';
+import { toCategoryTypeRows } from '@admin/category-types';
+import { type ResourceConfig, type ResourceRow } from '@admin/resource-config';
+import { ResourceFieldControl } from '@admin/resource-field-control';
+import { defaultFieldValues, normalizeResourceValues } from '@admin/resource-form-values';
 import { validationRulesFor } from '@admin/resource-form-validation';
 import { useNamespaces } from '@admin/use-namespaces';
-import { createRow, getResourceDefaults, getResourceRequiredFields, removeRow, updateRow } from '@admin/use-resource-data';
+import {
+  createRow,
+  getResourceDefaults,
+  getResourceRequiredFields,
+  removeRow,
+  updateRow,
+} from '@admin/use-resource-data';
+import { errorMessage } from '@utils/error-message';
 import { useLocalStorage } from '@utils/use-localstorage.hook';
-import type { TextEditorProps } from '@sk-web-gui/text-editor';
 import { Trash2 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { type FieldErrors, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
-
-const stringValue = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
-
-const errMsg = (error: unknown) => {
-  if (!isRecord(error)) return 'fel';
-  const response = isRecord(error.response) ? error.response : undefined;
-  const data = isRecord(response?.data) ? response.data : undefined;
-  return stringValue(data?.message) ?? stringValue(error.message) ?? 'fel';
-};
 
 const fieldErrorMessage = (errors: FieldErrors<Record<string, unknown>>): string | undefined => {
   for (const error of Object.values(errors)) {
@@ -56,70 +40,21 @@ const fieldErrorMessage = (errors: FieldErrors<Record<string, unknown>>): string
   return undefined;
 };
 
-const TextEditor = dynamic<TextEditorProps>(() => import('@sk-web-gui/text-editor').then((mod) => mod.TextEditor), {
-  ssr: false,
-  loading: () => <div className="flex h-[260px] items-center justify-center text-sm text-muted-foreground">Laddar editor...</div>,
-});
-
-type RichTextValue = NonNullable<TextEditorProps['value']>;
-
-function defaultFor(field: FieldDef, initial: ResourceRow | undefined, defaults: Record<string, unknown>) {
-  if (field.type === 'categoryTypes') return toCategoryTypeRows(initial?.[field.key] ?? defaults[field.key]);
-  const v = initial?.[field.key];
-  if (v !== undefined) return v;
-  if (field.richTextTargets) {
-    const plainText = initial?.[field.richTextTargets.plainText] ?? defaults[field.richTextTargets.plainText];
-    const markup = initial?.[field.richTextTargets.markup] ?? defaults[field.richTextTargets.markup];
-    return {
-      plainText: typeof plainText === 'string' ? plainText : '',
-      markup: typeof markup === 'string' ? markup : undefined,
-    };
-  }
-  for (const key of field.syncKeys ?? []) {
-    const syncedValue = initial?.[key] ?? defaults[key];
-    if (syncedValue !== undefined && syncedValue !== null && syncedValue !== '') return syncedValue;
-  }
-  const d = defaults[field.key];
-  if (d !== undefined) return d;
-  return field.type === 'switch' ? false : field.type === 'number' ? '' : '';
-}
-
-function normalizeValues(resource: ResourceConfig, values: Record<string, unknown>) {
-  const normalized = { ...values };
-  for (const field of resource.fields) {
-    if (field.richTextTargets) {
-      const value = normalized[field.key] as RichTextValue | string | undefined;
-      const plainText = typeof value === 'object' ? value.plainText : typeof value === 'string' ? value : '';
-      const markup = typeof value === 'object' ? value.markup : typeof value === 'string' ? value : '';
-      normalized[field.richTextTargets.plainText] = plainText ?? '';
-      normalized[field.richTextTargets.markup] = markup ?? '';
-      delete normalized[field.key];
-    }
-    if (field.syncKeys?.length) {
-      const value = normalized[field.key] ?? '';
-      field.syncKeys.forEach((key) => {
-        normalized[key] = value;
-      });
-      delete normalized[field.key];
-    }
-    if (field.type === 'number') {
-      const value = normalized[field.key];
-      normalized[field.key] = value === '' || value == null ? undefined : Number(value);
-    }
-    if (field.type === 'categoryTypes') {
-      normalized[field.key] = toCategoryTypePayload(normalized[field.key]);
-    }
-  }
-  return normalized;
-}
-
-export function ResourceForm({ resource, initial, isNew }: { resource: ResourceConfig; initial?: ResourceRow; isNew: boolean }) {
+export function ResourceForm({
+  resource,
+  initial,
+  isNew,
+}: {
+  resource: ResourceConfig;
+  initial?: ResourceRow;
+  isNew: boolean;
+}) {
   const router = useRouter();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const namespaceOptions = useNamespaces();
   const contractDefaults = getResourceDefaults(resource.name);
   const requiredFields = getResourceRequiredFields(resource.name);
-  const defaultValues = Object.fromEntries(resource.fields.map((f) => [f.key, defaultFor(f, initial, contractDefaults)]));
+  const defaultValues = defaultFieldValues(resource.fields, initial, contractDefaults);
   const form = useForm<Record<string, unknown>>({ defaultValues });
   const isDirty = form.formState.isDirty;
 
@@ -127,14 +62,14 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
 
   const onSubmit = async (values: Record<string, unknown>) => {
     const name = String(values[resource.fields[0].key] ?? '');
-    const data = normalizeValues(resource, values);
+    const data = normalizeResourceValues(resource, values);
     try {
       if (isNew) await createRow(resource.name, municipalityId, data);
       else await updateRow(resource.name, municipalityId, initial as ResourceRow, data);
       toast.success(`${isNew ? 'Skapade' : 'Sparade'} ${resource.label.toLowerCase()} "${name}".`);
       router.push(`/${resource.name}`);
     } catch (err) {
-      toast.error(`Kunde inte spara: ${errMsg(err)}`);
+      toast.error(`Kunde inte spara: ${errorMessage(err)}`);
     }
   };
 
@@ -149,110 +84,31 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
       toast.success(`${title} togs bort.`);
       router.push(`/${resource.name}`);
     } catch (err) {
-      toast.error(`Kunde inte ta bort: ${errMsg(err)}`);
+      toast.error(`Kunde inte ta bort: ${errorMessage(err)}`);
     }
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="flex max-w-xl flex-col gap-6">
-        {resource.fields.filter((field) => !(isNew && field.hiddenOnCreate)).map((field) => {
-          const disabled = !isNew && field.lockedOnEdit;
-          const required = field.required || requiredFields.includes(field.key);
-          return (
-            <FormField
-              key={field.key}
-              control={form.control}
-              name={field.key}
-              rules={validationRulesFor(field, required)}
-              render={({ field: rhf }) => {
-                if (field.type === 'switch') {
-                  return (
-                    <FormItem className="rounded-lg border p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="space-y-0.5">
-                          <FormLabel>{field.label}</FormLabel>
-                          {field.help && <FormDescription>{field.help}</FormDescription>}
-                        </div>
-                        <FormControl>
-                          <Switch checked={Boolean(rhf.value)} onCheckedChange={rhf.onChange} disabled={disabled} />
-                        </FormControl>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }
-
-                return (
-                  <FormItem>
-                    <FormLabel>
-                      {field.label}
-                      {required && ' *'}
-                    </FormLabel>
-                    {field.type === 'select' ? (
-                      <Select onValueChange={rhf.onChange} value={(rhf.value as string) ?? ''} disabled={disabled}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Välj ett alternativ" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {(field.key === 'namespace' ? namespaceOptions : field.options)?.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : field.type === 'categoryTypes' ? (
-                      <CategoryTypesField
-                        value={rhf.value}
-                        onChange={rhf.onChange}
-                        existingTypeCount={toCategoryTypeRows(initial?.[field.key]).length}
-                        disabled={disabled}
-                      />
-                    ) : field.type === 'code' ? (
-                      <MonacoField
-                        value={(rhf.value as string) ?? ''}
-                        onChange={rhf.onChange}
-                        disabled={disabled}
-                        language={resource.name === 'jsonSchemas' ? 'json' : 'markdown'}
-                      />
-                    ) : field.type === 'richtext' ? (
-                      <FormControl>
-                        <TextEditor
-                          className="h-[420px] min-h-[320px] resize-y overflow-auto"
-                          value={
-                            typeof rhf.value === 'object' && rhf.value !== null
-                              ? (rhf.value as RichTextValue)
-                              : { markup: (rhf.value as string) ?? '' }
-                          }
-                          readOnly={disabled}
-                          onChange={(event) => rhf.onChange(event.target.value)}
-                        />
-                      </FormControl>
-                    ) : field.type === 'textarea' ? (
-                      <FormControl>
-                        <Textarea {...rhf} value={(rhf.value as string) ?? ''} disabled={disabled} rows={3} />
-                      </FormControl>
-                    ) : (
-                      <FormControl>
-                        <Input
-                          {...rhf}
-                          value={(rhf.value as string | number) ?? ''}
-                          type={field.type === 'number' ? 'number' : 'text'}
-                          disabled={disabled}
-                        />
-                      </FormControl>
-                    )}
-                    {field.help && <FormDescription>{field.help}</FormDescription>}
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-          );
-        })}
+        {resource.fields
+          .filter((field) => !(isNew && field.hiddenOnCreate))
+          .map((field) => {
+            const required = field.required || requiredFields.includes(field.key);
+            return (
+              <ResourceFieldControl
+                key={field.key}
+                field={field}
+                control={form.control}
+                rules={validationRulesFor(field, required)}
+                required={required}
+                disabled={!isNew && field.lockedOnEdit}
+                options={field.key === 'namespace' ? namespaceOptions : field.options}
+                codeLanguage={resource.name === 'jsonSchemas' ? 'json' : 'markdown'}
+                existingCategoryTypeCount={toCategoryTypeRows(initial?.[field.key]).length}
+              />
+            );
+          })}
 
         <div className="flex flex-wrap items-center gap-3 border-t pt-6">
           <Button type="submit" disabled={!isDirty}>
