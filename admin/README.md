@@ -79,6 +79,29 @@ yarn generate:contracts
 
 5. Uppdatera [./src/config/resources.ts](./src/config/resources.ts)
 
+### End-to-end-tester
+
+End-to-end-testerna använder Playwright och ligger i [./e2e](./e2e). API-anrop mockas i den gemensamma
+fixture-filen så att adminflöden kan testas utan att starta backend.
+
+Installera Chromium första gången:
+
+```sh
+yarn playwright install chromium
+```
+
+Kör testerna. Playwright startar automatiskt adminappen på port 3003:
+
+```sh
+yarn test:e2e
+```
+
+För interaktiv felsökning:
+
+```sh
+yarn test:e2e:ui
+```
+
 ### Språkstöd
 
 För språkstöd används [next-i18next](https://github.com/i18next/next-i18next).
