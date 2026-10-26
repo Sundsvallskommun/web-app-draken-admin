@@ -64,8 +64,110 @@ describe('label settings UI', () => {
       expect(onSave).toHaveBeenCalledWith({
         displayName: 'Hyresfrågor',
         escalationEmail: 'housing@example.com',
+        attributes: [],
       })
     );
+  });
+
+  const labelWithAttributes = {
+    ...label,
+    attributes: [
+      { key: 'escalationEmail', value: 'rent@example.com' },
+      { key: 'ownerGroup', value: 'Fastighet' },
+    ],
+  };
+
+  const attributeProps = (overrides = {}) =>
+    dialogProps({ target: { label: labelWithAttributes, labelValue: '0' }, ...overrides });
+
+  it('lists the label attributes from metadata', () => {
+    render(React.createElement(LabelSettingsDialog, attributeProps()));
+
+    expect(screen.getByText('Attribut')).toBeInTheDocument();
+    expect(screen.getByLabelText('Attributnyckel 1')).toHaveValue('ownerGroup');
+    expect(screen.getByLabelText('Attributvärde 1')).toHaveValue('Fastighet');
+    // escalationEmail keeps its own editable field instead of appearing in the list
+    expect(screen.queryByLabelText('Attributnyckel 2')).not.toBeInTheDocument();
+  });
+
+  it('edits an existing attribute', async () => {
+    const onSave = jest.fn().mockResolvedValue(undefined);
+    render(React.createElement(LabelSettingsDialog, attributeProps({ onSave })));
+
+    fireEvent.change(screen.getByLabelText('Attributvärde 1'), { target: { value: '  Service Center  ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Spara' }));
+
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith({
+        displayName: 'Hyra',
+        escalationEmail: 'rent@example.com',
+        attributes: [{ key: 'ownerGroup', value: 'Service Center' }],
+      })
+    );
+  });
+
+  it('adds and removes attributes', async () => {
+    const onSave = jest.fn().mockResolvedValue(undefined);
+    render(React.createElement(LabelSettingsDialog, attributeProps({ onSave })));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lägg till attribut' }));
+    fireEvent.change(screen.getByLabelText('Attributnyckel 2'), { target: { value: 'sla' } });
+    fireEvent.change(screen.getByLabelText('Attributvärde 2'), { target: { value: '48h' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ta bort attribut ownerGroup' }));
+    expect(await screen.findByText('Ta bort attributet ownerGroup?')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Ta bort' }));
+    await waitFor(() => expect(screen.queryByText('Ta bort attributet ownerGroup?')).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Spara' }));
+
+    await waitFor(() =>
+      expect(onSave).toHaveBeenCalledWith({
+        displayName: 'Hyra',
+        escalationEmail: 'rent@example.com',
+        attributes: [{ key: 'sla', value: '48h' }],
+      })
+    );
+  });
+
+  it('rejects attributes without a key and duplicate keys', async () => {
+    const onSave = jest.fn();
+    render(React.createElement(LabelSettingsDialog, attributeProps({ onSave })));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lägg till attribut' }));
+    fireEvent.change(screen.getByLabelText('Attributvärde 2'), { target: { value: 'utan nyckel' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Spara' }));
+    expect(await screen.findByText('Alla attribut måste ha en nyckel.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Attributnyckel 2'), { target: { value: 'ownerGroup' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Spara' }));
+    expect(await screen.findByText('Varje attributnyckel får bara förekomma en gång.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Attributnyckel 2'), { target: { value: 'escalationEmail' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Spara' }));
+    expect(await screen.findByText(/Använd fältet Eskaleringsadress/)).toBeInTheDocument();
+
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('keeps save disabled until something changes', async () => {
+    render(React.createElement(LabelSettingsDialog, attributeProps()));
+
+    expect(screen.getByRole('button', { name: 'Spara' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Ta bort attribut ownerGroup' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Ta bort' }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Spara' })).toBeEnabled());
+  });
+
+  it('drops an empty attribute row without confirming', () => {
+    render(React.createElement(LabelSettingsDialog, attributeProps()));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lägg till attribut' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ta bort attribut 2' }));
+
+    expect(screen.queryByText(/Ta bort attributet/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Attributnyckel 2')).not.toBeInTheDocument();
   });
 
   it('validates escalation email before saving', async () => {

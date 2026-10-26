@@ -26,6 +26,9 @@ import { Textarea } from '@components/ui/textarea';
 import { toCategoryTypePayload, toCategoryTypeRows } from '@admin/category-types';
 import { CategoryTypesField } from '@admin/category-types-field';
 import { MonacoField } from '@admin/monaco-field';
+import { NamespaceDeleteButton } from '@admin/namespace-delete-dialog';
+import { useAdminEnvironment } from '@utils/use-is-production-env.hook';
+import { listToText, textToList } from '@admin/list-field';
 import { type FieldDef, type ResourceConfig, type ResourceRow } from '@admin/resource-config';
 import { validationRulesFor } from '@admin/resource-form-validation';
 import { useNamespaces } from '@admin/use-namespaces';
@@ -66,6 +69,7 @@ type RichTextValue = NonNullable<TextEditorProps['value']>;
 function defaultFor(field: FieldDef, initial: ResourceRow | undefined, defaults: Record<string, unknown>) {
   if (field.type === 'categoryTypes') return toCategoryTypeRows(initial?.[field.key] ?? defaults[field.key]);
   const v = initial?.[field.key];
+  if (field.list) return listToText(v ?? defaults[field.key]);
   if (v !== undefined) return v;
   if (field.richTextTargets) {
     const plainText = initial?.[field.richTextTargets.plainText] ?? defaults[field.richTextTargets.plainText];
@@ -87,6 +91,10 @@ function defaultFor(field: FieldDef, initial: ResourceRow | undefined, defaults:
 function normalizeValues(resource: ResourceConfig, values: Record<string, unknown>) {
   const normalized = { ...values };
   for (const field of resource.fields) {
+    if (field.readOnly) {
+      delete normalized[field.key];
+      continue;
+    }
     if (field.richTextTargets) {
       const value = normalized[field.key] as RichTextValue | string | undefined;
       const plainText = typeof value === 'object' ? value.plainText : typeof value === 'string' ? value : '';
@@ -101,6 +109,9 @@ function normalizeValues(resource: ResourceConfig, values: Record<string, unknow
         normalized[key] = value;
       });
       delete normalized[field.key];
+    }
+    if (field.list) {
+      normalized[field.key] = textToList(normalized[field.key]);
     }
     if (field.type === 'number') {
       const value = normalized[field.key];
@@ -124,6 +135,8 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
   const isDirty = form.formState.isDirty;
 
   const title = String(initial?.[resource.fields[0].key] ?? '');
+  const namespaceToDelete = !isNew && resource.name === 'namespaces' && typeof initial?.namespace === 'string' ? initial.namespace : null;
+  const { namespaceDeleteEnabled } = useAdminEnvironment();
 
   const onSubmit = async (values: Record<string, unknown>) => {
     const name = String(values[resource.fields[0].key] ?? '');
@@ -157,6 +170,7 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="flex max-w-xl flex-col gap-6">
         {resource.fields.filter((field) => !(isNew && field.hiddenOnCreate)).map((field) => {
+          if (field.readOnly && isNew) return null;
           const disabled = !isNew && field.lockedOnEdit;
           const required = field.required || requiredFields.includes(field.key);
           return (
@@ -261,6 +275,10 @@ export function ResourceForm({ resource, initial, isNew }: { resource: ResourceC
           <Button type="button" variant="outline" onClick={() => router.push(`/${resource.name}`)}>
             Avbryt
           </Button>
+
+          {namespaceToDelete && namespaceDeleteEnabled && (
+            <NamespaceDeleteButton namespace={namespaceToDelete} onDeleted={() => router.push('/namespaces')} />
+          )}
 
           {!isNew && resource.canRemove && (
             <AlertDialog>

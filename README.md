@@ -10,6 +10,8 @@ Dessa APIer används i projektet, applikationsanvändaren i WSO2 måste prenumer
 | SupportManagement |    12.4 |
 | Templating        |     2.0 |
 
+Sätt `USE_API_VERSION=false` i backendens env för att anropa APIerna utan versionsnummer i URLen, då går anropet till senaste versionen.
+
 ## Utveckling
 
 ### Krav

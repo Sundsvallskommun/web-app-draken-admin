@@ -11,6 +11,11 @@
  */
 
 import {
+  AttachmentPurposeApiResponse,
+  AttachmentPurposeDeleteApiResponse,
+  AttachmentPurposeRequestDto,
+  AttachmentPurposesApiResponse,
+  AttachmentPurposeUpdateDto,
   CategoriesApiResponse,
   CategoryApiResponse,
   CategoryDeleteApiResponse,
@@ -21,6 +26,11 @@ import {
   ContactReasonRequestDto,
   ContactReasonsApiResponse,
   ContactReasonUpdateDto,
+  DecisionOutcomeApiResponse,
+  DecisionOutcomeDeleteApiResponse,
+  DecisionOutcomeRequestDto,
+  DecisionOutcomesApiResponse,
+  DecisionOutcomeUpdateDto,
   DetailedTemplateResponseDTO,
   EmailIntegrationApiResponse,
   EmailIntegrationDto,
@@ -30,14 +40,28 @@ import {
   FeatureFlagsApiResponse,
   JsonSchemaRequestDto,
   LabelsApiResponse,
+  MeasureTypeApiResponse,
+  MeasureTypeDeleteApiResponse,
+  MeasureTypeRequestDto,
+  MeasureTypesApiResponse,
+  MeasureTypeUpdateDto,
   NamespaceApiResponse,
   NamespaceRequestDto,
   NamespacesApiResponse,
+  NamespaceDeleteApiResponse,
+  NamespaceExportApiResponse,
+  NamespaceImportApiResponse,
+  NamespaceImportDto,
   RoleApiResponse,
   RoleDeleteApiResponse,
   RoleRequestDto,
   RolesApiResponse,
   RoleUpdateDto,
+  StatementOutcomeApiResponse,
+  StatementOutcomeDeleteApiResponse,
+  StatementOutcomeRequestDto,
+  StatementOutcomesApiResponse,
+  StatementOutcomeUpdateDto,
   StatusApiResponse,
   StatusDeleteApiResponse,
   StatusesApiResponse,
@@ -470,6 +494,71 @@ export class Api<
   /**
    * No description
    *
+   * @tags Namespace Import
+   * @name NamespaceImportControllerImportNamespace
+   * @summary Validate (dryRun=true) or import a whole namespace from a document
+   * @request POST:/api/namespaces/{municipalityId}/import
+   */
+  namespaceImportControllerImportNamespace = (
+    municipalityId: number,
+    query?: {
+      dryRun?: boolean;
+      allowExisting?: boolean;
+    },
+    data?: NamespaceImportDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespaceImportApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}/import`,
+      method: "POST",
+      query: query,
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Namespace Import
+   * @name NamespaceImportControllerExportNamespace
+   * @summary Export a namespace with its metadata, labels, email integration and feature flags as an import document
+   * @request GET:/api/namespaces/{municipalityId}/{namespace}/export
+   */
+  namespaceImportControllerExportNamespace = (
+    municipalityId: number,
+    namespace: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespaceExportApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}/${namespace}/export`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * @description Deletes the email integration, action configs, phases, labels, every metadata kind, the namespace config and the admin's feature flags, most dependent first. Refused while the namespace still has errands. Always answers 200 with a NamespaceDeleteReport.
+   *
+   * @tags Namespace Import
+   * @name NamespaceImportControllerDeleteNamespace
+   * @summary Inspect (dryRun=true) or delete a whole namespace
+   * @request DELETE:/api/namespaces/{municipalityId}/{namespace}
+   */
+  namespaceImportControllerDeleteNamespace = (
+    municipalityId: number,
+    namespace: string,
+    query?: {
+      dryRun?: boolean;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<NamespaceDeleteApiResponse, any>({
+      path: `/api/namespaces/${municipalityId}/${namespace}`,
+      method: "DELETE",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
    * @tags Roles
    * @name RolesControllerCreateRole
    * @summary Create new role
@@ -666,6 +755,410 @@ export class Api<
   ) =>
     this.request<StatusDeleteApiResponse, any>({
       path: `/api/statuses/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Attachment Purposes
+   * @name AttachmentPurposesControllerCreateAttachmentPurpose
+   * @summary Create new attachment purpose
+   * @request POST:/api/attachment-purposes/{municipalityId}
+   */
+  attachmentPurposesControllerCreateAttachmentPurpose = (
+    municipalityId: number,
+    data?: AttachmentPurposeRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<AttachmentPurposeApiResponse, any>({
+      path: `/api/attachment-purposes/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Attachment Purposes
+   * @name AttachmentPurposesControllerGetAttachmentPurposes
+   * @summary Get all attachment purposes
+   * @request GET:/api/attachment-purposes/{municipalityId}
+   */
+  attachmentPurposesControllerGetAttachmentPurposes = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<AttachmentPurposesApiResponse, any>({
+      path: `/api/attachment-purposes/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Attachment Purposes
+   * @name AttachmentPurposesControllerGetAttachmentPurpose
+   * @summary Get an attachment purpose by UUID
+   * @request GET:/api/attachment-purposes/{municipalityId}/{namespace}/{id}
+   */
+  attachmentPurposesControllerGetAttachmentPurpose = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<AttachmentPurposeApiResponse, any>({
+      path: `/api/attachment-purposes/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Attachment Purposes
+   * @name AttachmentPurposesControllerUpdateAttachmentPurpose
+   * @summary Update an attachment purpose by UUID
+   * @request PATCH:/api/attachment-purposes/{municipalityId}/{namespace}/{id}
+   */
+  attachmentPurposesControllerUpdateAttachmentPurpose = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: AttachmentPurposeUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<AttachmentPurposeApiResponse, any>({
+      path: `/api/attachment-purposes/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Attachment Purposes
+   * @name AttachmentPurposesControllerDeleteAttachmentPurpose
+   * @summary Delete an attachment purpose by UUID
+   * @request DELETE:/api/attachment-purposes/{municipalityId}/{namespace}/{id}
+   */
+  attachmentPurposesControllerDeleteAttachmentPurpose = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<AttachmentPurposeDeleteApiResponse, any>({
+      path: `/api/attachment-purposes/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Measure Types
+   * @name MeasureTypesControllerCreateMeasureType
+   * @summary Create new measure type
+   * @request POST:/api/measure-types/{municipalityId}
+   */
+  measureTypesControllerCreateMeasureType = (
+    municipalityId: number,
+    data?: MeasureTypeRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<MeasureTypeApiResponse, any>({
+      path: `/api/measure-types/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Measure Types
+   * @name MeasureTypesControllerGetMeasureTypes
+   * @summary Get all measure types
+   * @request GET:/api/measure-types/{municipalityId}
+   */
+  measureTypesControllerGetMeasureTypes = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<MeasureTypesApiResponse, any>({
+      path: `/api/measure-types/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Measure Types
+   * @name MeasureTypesControllerGetMeasureType
+   * @summary Get a measure type by UUID
+   * @request GET:/api/measure-types/{municipalityId}/{namespace}/{id}
+   */
+  measureTypesControllerGetMeasureType = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<MeasureTypeApiResponse, any>({
+      path: `/api/measure-types/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Measure Types
+   * @name MeasureTypesControllerUpdateMeasureType
+   * @summary Update a measure type by UUID
+   * @request PATCH:/api/measure-types/{municipalityId}/{namespace}/{id}
+   */
+  measureTypesControllerUpdateMeasureType = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: MeasureTypeUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<MeasureTypeApiResponse, any>({
+      path: `/api/measure-types/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Measure Types
+   * @name MeasureTypesControllerDeleteMeasureType
+   * @summary Delete a measure type by UUID
+   * @request DELETE:/api/measure-types/{municipalityId}/{namespace}/{id}
+   */
+  measureTypesControllerDeleteMeasureType = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<MeasureTypeDeleteApiResponse, any>({
+      path: `/api/measure-types/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Decision Outcomes
+   * @name DecisionOutcomesControllerCreateDecisionOutcome
+   * @summary Create new decision outcome
+   * @request POST:/api/decision-outcomes/{municipalityId}
+   */
+  decisionOutcomesControllerCreateDecisionOutcome = (
+    municipalityId: number,
+    data?: DecisionOutcomeRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<DecisionOutcomeApiResponse, any>({
+      path: `/api/decision-outcomes/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Decision Outcomes
+   * @name DecisionOutcomesControllerGetDecisionOutcomes
+   * @summary Get all decision outcomes
+   * @request GET:/api/decision-outcomes/{municipalityId}
+   */
+  decisionOutcomesControllerGetDecisionOutcomes = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<DecisionOutcomesApiResponse, any>({
+      path: `/api/decision-outcomes/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Decision Outcomes
+   * @name DecisionOutcomesControllerGetDecisionOutcome
+   * @summary Get a decision outcome by UUID
+   * @request GET:/api/decision-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  decisionOutcomesControllerGetDecisionOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<DecisionOutcomeApiResponse, any>({
+      path: `/api/decision-outcomes/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Decision Outcomes
+   * @name DecisionOutcomesControllerUpdateDecisionOutcome
+   * @summary Update a decision outcome by UUID
+   * @request PATCH:/api/decision-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  decisionOutcomesControllerUpdateDecisionOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: DecisionOutcomeUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<DecisionOutcomeApiResponse, any>({
+      path: `/api/decision-outcomes/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Decision Outcomes
+   * @name DecisionOutcomesControllerDeleteDecisionOutcome
+   * @summary Delete a decision outcome by UUID
+   * @request DELETE:/api/decision-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  decisionOutcomesControllerDeleteDecisionOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<DecisionOutcomeDeleteApiResponse, any>({
+      path: `/api/decision-outcomes/${municipalityId}/${namespace}/${id}`,
+      method: "DELETE",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statement Outcomes
+   * @name StatementOutcomesControllerCreateStatementOutcome
+   * @summary Create new statement outcome
+   * @request POST:/api/statement-outcomes/{municipalityId}
+   */
+  statementOutcomesControllerCreateStatementOutcome = (
+    municipalityId: number,
+    data?: StatementOutcomeRequestDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatementOutcomeApiResponse, any>({
+      path: `/api/statement-outcomes/${municipalityId}`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statement Outcomes
+   * @name StatementOutcomesControllerGetStatementOutcomes
+   * @summary Get all statement outcomes
+   * @request GET:/api/statement-outcomes/{municipalityId}
+   */
+  statementOutcomesControllerGetStatementOutcomes = (
+    municipalityId: number,
+    query?: {
+      namespace?: string;
+    },
+    params: RequestParams = {},
+  ) =>
+    this.request<StatementOutcomesApiResponse, any>({
+      path: `/api/statement-outcomes/${municipalityId}`,
+      method: "GET",
+      query: query,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statement Outcomes
+   * @name StatementOutcomesControllerGetStatementOutcome
+   * @summary Get a statement outcome by UUID
+   * @request GET:/api/statement-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  statementOutcomesControllerGetStatementOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatementOutcomeApiResponse, any>({
+      path: `/api/statement-outcomes/${municipalityId}/${namespace}/${id}`,
+      method: "GET",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statement Outcomes
+   * @name StatementOutcomesControllerUpdateStatementOutcome
+   * @summary Update a statement outcome by UUID
+   * @request PATCH:/api/statement-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  statementOutcomesControllerUpdateStatementOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    data?: StatementOutcomeUpdateDto,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatementOutcomeApiResponse, any>({
+      path: `/api/statement-outcomes/${municipalityId}/${namespace}/${id}`,
+      method: "PATCH",
+      body: data,
+      type: ContentType.Json,
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Statement Outcomes
+   * @name StatementOutcomesControllerDeleteStatementOutcome
+   * @summary Delete a statement outcome by UUID
+   * @request DELETE:/api/statement-outcomes/{municipalityId}/{namespace}/{id}
+   */
+  statementOutcomesControllerDeleteStatementOutcome = (
+    municipalityId: number,
+    namespace: string,
+    id: string,
+    params: RequestParams = {},
+  ) =>
+    this.request<StatementOutcomeDeleteApiResponse, any>({
+      path: `/api/statement-outcomes/${municipalityId}/${namespace}/${id}`,
       method: "DELETE",
       ...params,
     });

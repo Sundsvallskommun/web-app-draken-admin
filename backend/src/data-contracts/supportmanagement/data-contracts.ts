@@ -30,6 +30,19 @@ export interface ConstraintViolationProblem {
   /** @format uri */
   instance?: string;
   detail?: string;
+  causeAsProblem?: ThrowableProblem;
+}
+
+export interface ThrowableProblem {
+  /** @format uri */
+  type?: string;
+  title?: string;
+  /** @format int32 */
+  status?: number;
+  detail?: string;
+  /** @format uri */
+  instance?: string;
+  causeAsProblem?: ThrowableProblem;
 }
 
 export interface Violation {
@@ -3088,6 +3101,11 @@ export interface ErrandResourceAccess {
   resource?: string;
   /** What the user may do with the resource */
   level?: ErrandResourceAccessLevelEnum;
+}
+
+export interface CountResponse {
+  /** @format int64 */
+  count?: number;
 }
 
 /** One value of the column grouped by, and how many errands carry it */

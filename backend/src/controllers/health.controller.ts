@@ -1,19 +1,19 @@
 import { User } from '@/interfaces/users.interface';
 import ApiService from '@/services/api.service';
 import { logger } from '@/utils/logger';
-import { APIS } from '@config';
+import { apiServiceName } from '@/config/api-config';
 import { Controller, Get } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 
 @Controller()
 export class HealthController {
   private apiService = new ApiService();
-  public api = APIS.find(x => x.name === 'simulatorserver');
+  SERVICE = apiServiceName('simulatorserver');
 
   @Get('/health/up')
   @OpenAPI({ summary: 'Return health check' })
   async up() {
-    const url = `${this.api.name}/${this.api.version}/simulations/response?status=200%20OK`;
+    const url = `${this.SERVICE}/simulations/response?status=200%20OK`;
     const data = {
       status: 'OK',
     };
