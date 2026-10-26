@@ -19,10 +19,16 @@ interface ResolvedEnvironment {
 let cachedEnvironment: Promise<ResolvedEnvironment> | null = null;
 const getAdminEnvironment = (): Promise<ResolvedEnvironment> => {
   if (!cachedEnvironment) {
-    cachedEnvironment = fetchAdminEnvironment().then((info) => ({
-      state: adminEnvironmentFromKind(info.kind),
-      namespaceDeleteEnabled: info.namespaceDeleteEnabled,
-    }));
+    cachedEnvironment = fetchAdminEnvironment()
+      .then((info) => ({
+        state: adminEnvironmentFromKind(info.kind),
+        namespaceDeleteEnabled: info.namespaceDeleteEnabled,
+      }))
+      .catch((err: unknown) => {
+        // Drop the failed lookup so the next mount retries instead of staying stuck on "checking".
+        cachedEnvironment = null;
+        throw err;
+      });
   }
   return cachedEnvironment;
 };
@@ -40,11 +46,15 @@ export function useAdminEnvironment(): {
 
   useEffect(() => {
     let cancelled = false;
-    getAdminEnvironment().then((resolved) => {
-      if (cancelled) return;
-      setEnvironment(resolved.state);
-      setNamespaceDeleteEnabled(resolved.namespaceDeleteEnabled);
-    });
+    getAdminEnvironment()
+      .then((resolved) => {
+        if (cancelled) return;
+        setEnvironment(resolved.state);
+        setNamespaceDeleteEnabled(resolved.namespaceDeleteEnabled);
+      })
+      .catch(() => {
+        // Unknown environment is treated as production by shouldTreatAsProduction, so nothing to set here.
+      });
     return () => {
       cancelled = true;
     };
