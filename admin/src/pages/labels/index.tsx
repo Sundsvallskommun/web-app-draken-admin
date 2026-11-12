@@ -54,7 +54,7 @@ export default function LabelsPage() {
   const [settingsTarget, setSettingsTarget] = React.useState<LabelSettingsTarget | null>(null);
   const [removeTarget, setRemoveTarget] = React.useState<RemoveTarget | null>(null);
   const [saving, setSaving] = React.useState(false);
-  const { isProduction, loaded: productionLoaded } = useIsProductionEnv();
+  const { loaded: productionLoaded } = useIsProductionEnv();
   const municipalityId = useLocalStorage((s) => s.municipalityId);
   const namespaceOptions = useNamespaces();
   const { rows, loading, error, replaceRows } = useResourceRows('labels', namespace || undefined);
