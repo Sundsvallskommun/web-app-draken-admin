@@ -59,7 +59,7 @@ export default function LabelsPage() {
   const namespaceOptions = useNamespaces();
   const { rows, loading, error, replaceRows } = useResourceRows('labels', namespace || undefined);
   const labelRows = rows as unknown as LabelNode[];
-  const canDeleteLabels = productionLoaded && !isProduction;
+  const canDeleteLabels = productionLoaded // && !isProduction;
 
   const createLabel = async (nextLabels: LabelNode[]) => {
     if (!namespace) return;
