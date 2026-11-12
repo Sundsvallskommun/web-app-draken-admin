@@ -10,7 +10,7 @@ export const APIS = [
   },
   {
     name: 'supportmanagement',
-    version: '17.2',
+    version: '18.4',
   },
   {
     name: 'support-management-alkt-sprint',
